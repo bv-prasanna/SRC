@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 const page=readFileSync('index.html','utf8');
-for(const x of ['SRC Enterprises','id="categories"','id="catalogue"','id="demos"','function renderDashboard','function safeUrl','https://srcenterprises.in/']) {
+for(const x of ['SRC Enterprises','id="categories"','id="catalogue"','id="demos"','function renderDashboard','function safeUrl','https://srcenterprises.in/','id="offers"','id="promotionsGrid"','/api/catalog/promotions']) {
  assert(page.includes(x), 'Missing '+x);
 }
 assert(!/api\.razorpay\.com|checkout\.razorpay\.com|new Razorpay\(/.test(page),'Fireworks payment functionality must remain disabled');
