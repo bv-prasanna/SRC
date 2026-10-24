@@ -5,11 +5,12 @@ import { z } from "zod";
 import type { Pool } from "pg";
 import { sectionsRouter } from "./sections.js";
 import { schemeRouter } from "./schemes.js";
+import { contentRouter } from "./content.js";
 export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true)});
 export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;corsOrigin:string}){
  const app=express();app.disable("x-powered-by");app.use(helmet());app.use(cors({origin:config.corsOrigin}));app.use(express.json({limit:"100kb"}));
  const admin:express.RequestHandler=(req,res,next)=>{const h=req.header("authorization");if(!config.adminToken||h!==`Bearer ${config.adminToken}`){res.status(401).json({error:"Unauthorized"});return;}next()};
- app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));
+ app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));
  app.get("/health",(_req,res)=>res.json({status:"ok"}));
  app.get("/api/catalog/products",async(_req,res)=>{try{const r=await pool.query("select id,name,category,description,image_url as \"imageUrl\",demo_video_url as \"demoVideoUrl\",published,fireworks from products where published=true order by name");res.json(r.rows)}catch{res.status(503).json({error:"Catalogue unavailable"})}});
  app.get("/api/admin/products",admin,async(_req,res)=>{try{const r=await pool.query("select * from products order by id desc");res.json(r.rows)}catch{res.status(503).json({error:"Database unavailable"})}});
