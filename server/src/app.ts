@@ -1,0 +1,17 @@
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import { z } from "zod";
+import type { Pool } from "pg";
+export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true)});
+export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;corsOrigin:string}){
+ const app=express();app.disable("x-powered-by");app.use(helmet());app.use(cors({origin:config.corsOrigin}));app.use(express.json({limit:"100kb"}));
+ const admin:express.RequestHandler=(req,res,next)=>{const h=req.header("authorization");if(!config.adminToken||h!==`Bearer ${config.adminToken}`){res.status(401).json({error:"Unauthorized"});return;}next()};
+ app.get("/health",(_req,res)=>res.json({status:"ok"}));
+ app.get("/api/catalog/products",async(_req,res)=>{try{const r=await pool.query("select id,name,category,description,image_url as \"imageUrl\",demo_video_url as \"demoVideoUrl\",published,fireworks from products where published=true order by name");res.json(r.rows)}catch{res.status(503).json({error:"Catalogue unavailable"})}});
+ app.get("/api/admin/products",admin,async(_req,res)=>{try{const r=await pool.query("select * from products order by id desc");res.json(r.rows)}catch{res.status(503).json({error:"Database unavailable"})}});
+ app.post("/api/admin/products",admin,async(req,res)=>{const parsed=catalogueSchema.safeParse(req.body);if(!parsed.success){res.status(400).json({error:"Validation failed",details:parsed.error.flatten()});return;}const p=parsed.data;try{const r=await pool.query("insert into products(name,category,description,image_url,demo_video_url,published,fireworks) values($1,$2,$3,$4,$5,$6,$7) returning *",[p.name,p.category,p.description,p.imageUrl||null,p.demoVideoUrl||null,p.published,p.fireworks]);res.status(201).json(r.rows[0])}catch{res.status(503).json({error:"Database unavailable"})}});
+ app.put("/api/admin/products/:id",admin,async(req,res)=>{const id=Number(req.params.id),parsed=catalogueSchema.safeParse(req.body);if(!Number.isSafeInteger(id)||id<1||!parsed.success){res.status(400).json({error:"Invalid product"});return;}const p=parsed.data;try{const r=await pool.query("update products set name=$1,category=$2,description=$3,image_url=$4,demo_video_url=$5,published=$6,fireworks=$7 where id=$8 returning *",[p.name,p.category,p.description,p.imageUrl||null,p.demoVideoUrl||null,p.published,p.fireworks,id]);res.status(r.rowCount?200:404).json(r.rows[0]||{error:"Not found"})}catch{res.status(503).json({error:"Database unavailable"})}});
+ app.delete("/api/admin/products/:id",admin,async(req,res)=>{const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid id"});return;}try{const r=await pool.query("delete from products where id=$1",[id]);res.status(r.rowCount?204:404).end()}catch{res.status(503).json({error:"Database unavailable"})}});
+ app.use((_req,res)=>res.status(404).json({error:"Not found"}));return app;
+}
