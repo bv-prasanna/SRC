@@ -45,7 +45,7 @@ if ($UseDockerDb) {
     Start-Sleep -Seconds 1
   }
   if (-not $ready) { throw "PostgreSQL did not become ready" }
-  foreach ($sql in @("001_init.sql","002_business_sections.sql","003_scheme_drafts.sql","004_content.sql","005_standard_orders.sql")) {
+  foreach ($sql in @("001_init.sql","002_business_sections.sql","003_scheme_drafts.sql","004_content.sql","005_standard_orders.sql","006_inventory.sql")) {
     $content = Get-Content -Raw (Join-Path $repo "server/sql/$sql")
     $content | docker exec -i src-postgres-local psql -v ON_ERROR_STOP=1 -U src -d src
     if ($LASTEXITCODE -ne 0) { throw "Migration failed: $sql" }
