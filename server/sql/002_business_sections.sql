@@ -18,16 +18,8 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS section_slug varchar(64);
 UPDATE products SET section_slug=CASE WHEN fireworks THEN 'crackers' ELSE 'housekeeping' END WHERE section_slug IS NULL;
 ALTER TABLE products ALTER COLUMN section_slug SET NOT NULL;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price_paise integer NOT NULL DEFAULT 0;
-DO $
-BEGIN
- IF NOT EXISTS (
-  SELECT 1 FROM pg_constraint
-  WHERE conname = 'products_price_nonnegative'
-    AND conrelid = 'products'::regclass
- ) THEN
-  ALTER TABLE products ADD CONSTRAINT products_price_nonnegative CHECK (price_paise >= 0);
- END IF;
-END $;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS products_price_nonnegative;
+ALTER TABLE products ADD CONSTRAINT products_price_nonnegative CHECK (price_paise >= 0);
 CREATE INDEX IF NOT EXISTS products_section_published_idx ON products(section_slug,published);
 -- An explicit guard prevents firework orders even if a future developer implements checkout elsewhere.
 CREATE TABLE IF NOT EXISTS retail_orders (
