@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "node --import tsx --test src/app.test.ts src/orders.test.ts src/schemes.test.ts src/sections.test.ts src/inventory.test.ts"
+    "test": "node --import tsx --test src/app.test.ts src/orders.test.ts src/schemes.test.ts src/sections.test.ts src/inventory.test.ts src/identity.test.ts"
   },
   "dependencies": {
     "express": "^4.21.2",
