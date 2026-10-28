@@ -23,7 +23,7 @@ ALTER TABLE products ADD CONSTRAINT products_price_nonnegative CHECK (price_pais
 CREATE INDEX IF NOT EXISTS products_section_published_idx ON products(section_slug,published);
 -- An explicit guard prevents firework orders even if a future developer implements checkout elsewhere.
 CREATE TABLE IF NOT EXISTS retail_orders (
- id bigint GENERATED ALWAYS AS ID PRIMARY KEY,
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  section_slug varchar(64) NOT NULL REFERENCES business_sections(slug),
  status varchar(24) NOT NULL DEFAULT 'DRAFT',
  created_at timestamptz NOT NULL DEFAULT now(),
