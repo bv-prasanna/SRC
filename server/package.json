@@ -7,8 +7,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "node --import tsx --test src/app.test.ts src/orders.test.ts src/schemes.test.ts src/sections.test.ts src/inventory.test.ts src/identity.test.ts src/fulfillment.test.ts",
-    "promote-admin": "tsx src/promote-admin.ts"
+    "test": "node --import tsx --test src/app.test.ts src/orders.test.ts src/schemes.test.ts src/sections.test.ts src/inventory.test.ts src/identity.test.ts src/fulfillment.test.ts src/commerce.test.ts src/access.test.ts",
+    "promote-admin": "tsx src/promote-admin.ts",
+    "coverage": "node --experimental-test-coverage --import tsx --test src/app.test.ts src/orders.test.ts src/schemes.test.ts src/sections.test.ts src/inventory.test.ts src/identity.test.ts src/fulfillment.test.ts src/commerce.test.ts src/access.test.ts"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -16,7 +17,9 @@
     "cors": "^2.8.5",
     "pg": "^8.13.1",
     "zod": "^3.24.2",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "nodemailer": "^6.10.1",
+    "express-rate-limit": "^7.5.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -24,6 +27,7 @@
     "@types/node": "^22.13.0",
     "@types/pg": "^8.11.11",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "@types/nodemailer": "^6.4.17"
   }
 }
