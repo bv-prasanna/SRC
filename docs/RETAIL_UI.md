@@ -46,3 +46,24 @@ The seed products have no claimed stock or real selling prices. The frontend dif
 - Browser visual, accessibility, integration, performance, payment and full end-to-end tests have **not** been run in this environment.
 - Housekeeping/stationery cart and enquiry requests use existing API functions. Razorpay remains disabled by default until compliance, gateway test mode and reconciliation are verified.
 - This redesign does not deploy or change `srcenterprises.in`.
+
+## October 29 — corporate-logo retail upgrade
+- The exact **SRC Enterprises Corporate Logo** uploaded in chat was converted to a small WebP web asset at `assets/src-corporate-logo.webp` and committed. No generic substitute should be used in the storefront.
+- Home has its own configurable hero slider. Each business department also has an independent 3-slide fallback carousel with previous/next controls and dots; published HERO media with category matching the department slug overrides the fallback.
+- Each department has its own catalogue, category chips, search, and a photographic campaign card.
+- Sample UI fallback catalogues include 6 crackers items, 8 housekeeping items and 8 stationery items; every fallback is marked DEMO and cannot be purchased.
+- `server/sql/dev_seed_catalogue_v2.sql` inserts the same 22 explicitly labelled no-price/no-stock local demo products into PostgreSQL. The Windows local setup script applies this automatically **only with -UseDockerDb**, unless `-SkipDemoSeed` is specified. The script is idempotent.
+- Published real products take precedence over fallback content in their respective departments.
+- The crackers scheme appears only inside Crackers plus an information teaser on the homepage. There are no online crackers bookings, deliveries, scheme enrolments or payments.
+
+## Quick preview
+```powershell
+cd C:\Projects\SRC
+git pull origin main
+node .\scripts\check.mjs
+powershell -ExecutionPolicy Bypass -File .\scripts\local-setup.ps1 -Directory . -SkipClone -UseDockerDb -StartApi -StartWeb
+```
+
+Use Ctrl + Shift + R on `http://localhost:8000` after pulling. Direct department routes: `#section/crackers`, `#section/housekeeping`, `#section/stationery`.
+
+**Visual caveat:** The screenshot and local browser rendering have not been validated in a live browser in this environment; the source changes and static JavaScript/DOM checks are verified only.
