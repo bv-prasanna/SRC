@@ -3,7 +3,9 @@ param(
   [switch]$SkipClone,
   [switch]$StartApi,
   [switch]$StartWeb,
-  [switch]$UseDockerDb
+  [switch]$UseDockerDb,
+  [switch]$RunIntegrationTests,
+  [switch]$RunCoverage
 )
 $ErrorActionPreference = 'Stop'
 function Require-Command([string]$Name) {
@@ -61,10 +63,12 @@ try {
     Copy-Item ".env.example" ".env"
     Write-Warning "Created server/.env; review before starting API."
   }
-  if ($UseDockerDb) {
+  if ($UseDockerDb -and ((Get-Content ".env" -Raw) -match "src_user:change_me")) {
     $token=([guid]::NewGuid().ToString("N")+[guid]::NewGuid().ToString("N"))
-    @("PORT=8080","DATABASE_URL=postgresql://src:src_dev_only@127.0.0.1:5433/src","CORS_ORIGIN=http://localhost:8000","SRC_ADMIN_TOKEN=$token") | Set-Content ".env"
-    Write-Host "Local-only test credentials generated in .env. Never commit this file."
+    @("PORT=8080","DATABASE_URL=postgresql://src:src_dev_only@127.0.0.1:5433/src","CORS_ORIGIN=http://localhost:8000","SRC_ADMIN_TOKEN=$token","SRC_PAYMENTS_ENABLED=false") | Set-Content ".env"
+    Write-Host "Created local-only .env configuration. Never commit this file."
+  } elseif ($UseDockerDb) {
+    Write-Host "Preserving your existing .env secrets and settings."
   }
   npm install --no-audit --no-fund
   if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
@@ -72,6 +76,25 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "TypeScript build failed" }
   npm test
   if ($LASTEXITCODE -ne 0) { throw "Node tests failed" }
+  if ($RunCoverage) {
+    npm run coverage
+    if ($LASTEXITCODE -ne 0) { throw "Coverage run failed" }
+  }
+  if ($RunIntegrationTests) {
+    if (-not $UseDockerDb) { throw "Use -UseDockerDb with -RunIntegrationTests" }
+    $existingDb = docker exec src-postgres-local psql -U src -d src -tAc "SELECT 1 FROM pg_database WHERE datname='src_test'"
+    if (-not (($existingDb | Out-String).Trim() -eq "1")) {
+      docker exec src-postgres-local createdb -U src src_test
+      if ($LASTEXITCODE -ne 0) { throw "Could not create isolated src_test database" }
+    }
+    $env:SRC_TEST_DATABASE_URL = "postgresql://src:src_dev_only@127.0.0.1:5433/src_test"
+    $prevPayments=$env:SRC_PAYMENTS_ENABLED
+    $env:SRC_PAYMENTS_ENABLED="false"
+    try {
+      npm run test:integration
+      if ($LASTEXITCODE -ne 0) { throw "Integration tests failed" }
+    } finally { Remove-Item Env:SRC_TEST_DATABASE_URL -ErrorAction SilentlyContinue; $env:SRC_PAYMENTS_ENABLED=$prevPayments }
+  }
   Write-Host "Node build and test commands passed." -ForegroundColor Green
   if ($StartApi) {
     Start-Process -FilePath "npm.cmd" -ArgumentList "run","dev" -WorkingDirectory (Get-Location).Path
