@@ -64,7 +64,7 @@ function openDepartment(slug){
  $("deptCrumb").textContent=sec.name;$("deptHeading").textContent=sec.name+" products";
  const img=photos[slug]||photos.housekeeping;
  $("deptBanner").style.setProperty("--banner-image",'url("'+img+'")');
- $("crackersExtra").classList.toggle("hide",slug!=="crackers");
+ $("crackersExtra").classList.toggle("hide",slug!=="crackers");$("schemeQuickLink").classList.toggle("hide",slug!=="crackers");
  $("deptSearch").value="";$("deptCategory").value="";renderProducts();
  if(slug==="crackers")renderVideos()
 }
