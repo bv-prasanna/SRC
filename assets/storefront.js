@@ -10,7 +10,7 @@ const price=n=>Number(n)>0?"₹"+(Number(n)/100).toLocaleString("en-IN",{minimum
 try{const stored=JSON.parse(sessionStorage.getItem("src_cart")||"[]");if(Array.isArray(stored))state.cart=stored.filter(x=>["housekeeping","stationery"].includes(x.section)&&Number.isSafeInteger(x.productId)&&Number.isSafeInteger(x.quantity)&&x.quantity>=1)}catch{}
 function saveCart(){sessionStorage.setItem("src_cart",JSON.stringify(state.cart));$("cartCount").textContent=state.cart.reduce((sum,x)=>sum+x.quantity,0)}
 async function request(path,options={}){
- const headers={Accept:"application/json",...(options.body?{"Content-Type":"application/json"}:{}),...(state.token?Authorization:"Bearer "+state.token:{}),...(options.headers||{})};
+ const headers={Accept:"application/json",...(options.body?{"Content-Type":"application/json"}:{}),...(state.token?{Authorization:"Bearer "+state.token}:{}),...(options.headers||{})};
  const resp=await fetch(API+path,{...options,headers});if(resp.status===204)return {};
  const data=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(data.error||"Request failed: "+resp.status);return data;
 }
