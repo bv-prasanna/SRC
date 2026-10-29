@@ -45,7 +45,7 @@ if ($UseDockerDb) {
     Start-Sleep -Seconds 1
   }
   if (-not $ready) { throw "PostgreSQL did not become ready" }
-  foreach ($sql in @("001_init.sql","002_business_sections.sql","003_scheme_drafts.sql","004_content.sql","005_standard_orders.sql","006_inventory.sql","007_identity.sql","008_fulfillment.sql")) {
+  foreach ($sql in @("001_init.sql","002_business_sections.sql","003_scheme_drafts.sql","004_content.sql","005_standard_orders.sql","006_inventory.sql","007_identity.sql","008_fulfillment.sql","009_commerce.sql")) {
     $hostSql = Join-Path $repo "server/sql/$sql"
     $containerSql = "/tmp/src_$sql"
     Write-Host "Applying database migration: $sql" -ForegroundColor Cyan
