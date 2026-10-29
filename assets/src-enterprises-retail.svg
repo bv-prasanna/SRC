@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 132" role="img" aria-labelledby="t">
+<title id="t">SRC Enterprises Bengaluru</title>
+<defs>
+<linearGradient id="s" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#0784d5"/><stop offset="1" stop-color="#073365"/></linearGradient>
+<linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb01e"/><stop offset=".52" stop-color="#ff5b23"/><stop offset="1" stop-color="#d52e29"/></linearGradient>
+<linearGradient id="c" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#63ce45"/><stop offset="1" stop-color="#076f43"/></linearGradient>
+</defs>
+<g font-family="Arial,Helvetica,sans-serif" font-style="italic" font-size="89" font-weight="900" letter-spacing="-11">
+<text x="12" y="91" fill="url(#s)">S</text>
+<text x="80" y="91" fill="url(#r)">R</text>
+<text x="161" y="91" fill="url(#c)">C</text>
+</g>
+<path d="M13 94 C65 117 135 103 218 93" fill="none" stroke="#f48a21" stroke-width="4.4" stroke-linecap="round"/>
+<g fill="none" stroke="#0c335b" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round" transform="translate(251 51)">
+<path d="M0 0 h9 l9 35 h47 l9-25 H14"/><path d="M20 19 h49 M22 27 h44"/><circle cx="27" cy="44" r="4" fill="#0c335b"/><circle cx="61" cy="44" r="4" fill="#0c335b"/>
+</g>
+<g transform="translate(288 24)" stroke-linecap="round" stroke-width="2.6">
+<path d="M0 10 V-12 M0 10 L-12-3 M0 10 L11-4 M0 10 L-20 7 M0 10 L20 5" stroke="#ed6530"/>
+<path d="M0 -18 V-22 M-16 -10 l-3 -3 M16 -10 l3 -3 M-25 6 l-4 -2 M26 6 l5 -2" stroke="#008dcc"/>
+<circle cx="0" cy="-27" r="3.2" fill="#ea403c"/><circle cx="-27" cy="-13" r="2.5" fill="#63b843"/><circle cx="26" cy="-12" r="2.5" fill="#f7ac22"/><circle cx="-34" cy="8" r="2.5" fill="#008dcc"/><circle cx="35" cy="8" r="2.5" fill="#f05d32"/>
+</g>
+<text x="19" y="116" font-family="Arial,Helvetica,sans-serif" fill="#122c49" font-size="20.5" font-weight="900" letter-spacing="4.7">ENTERPRISES</text>
+<text x="114" y="130" font-family="Arial,Helvetica,sans-serif" fill="#63738a" font-size="9" font-weight="700" letter-spacing="6.2">BENGALURU</text>
+</svg>
