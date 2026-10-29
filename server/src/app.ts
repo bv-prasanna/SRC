@@ -1,4 +1,5 @@
 import express from "express";
+import {createHash} from "node:crypto";
 import cors from "cors";
 import helmet from "helmet";
 import { z } from "zod";
@@ -13,7 +14,18 @@ import { fulfillmentRouter } from "./fulfillment.js";
 export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true),sectionSlug:z.string().default('crackers'),pricePaise:z.number().int().min(0).default(0)});
 export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;corsOrigin:string}){
  const app=express();app.disable("x-powered-by");app.use(helmet());app.use(cors({origin:config.corsOrigin}));app.use(express.json({limit:"100kb"}));
- const admin:express.RequestHandler=(req,res,next)=>{const h=req.header("authorization");if(!config.adminToken||h!==`Bearer ${config.adminToken}`){res.status(401).json({error:"Unauthorized"});return;}next()};
+ const admin:express.RequestHandler=async(req,res,next)=>{
+ const h=req.header("authorization")||"";
+ if(config.adminToken.length>=32&&h===`Bearer ${config.adminToken}`){next();return}
+ const token=h.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
+ if(!token){res.status(401).json({error:"Unauthorized"});return}
+ try{
+  const digest=createHash("sha256").update(token).digest("hex");
+  const user=await pool.query("SELECT u.id FROM user_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now() AND u.active=true AND u.role='ADMIN'",[digest]);
+  if(!user.rowCount){res.status(403).json({error:"Admin access required"});return}
+  next()
+ }catch{res.status(503).json({error:"Authorization unavailable"})}
+};
  app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));
  app.get("/health",(_req,res)=>res.json({status:"ok"}));
  app.get("/api/catalog/products",async(_req,res)=>{try{const r=await pool.query("select id,name,category,description,image_url as \"imageUrl\",demo_video_url as \"demoVideoUrl\",published,fireworks,section_slug as \"sectionSlug\",price_paise as \"pricePaise\" from products where published=true order by name");res.json(r.rows)}catch{res.status(503).json({error:"Catalogue unavailable"})}});
