@@ -2,7 +2,7 @@
 const API=(window.SRC_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
 const photos={crackers:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=85&fit=crop",housekeeping:"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1200&q=85&fit=crop",stationery:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1200&q=85&fit=crop"};
 const defaults=[{slug:"crackers",name:"Crackers",description:"Festive collections, demonstrations and scheme information. Catalogue only.",commerceMode:"CATALOGUE_ONLY"},{slug:"housekeeping",name:"Housekeeping Materials",description:"Hygiene, cleaning and building-maintenance essentials.",commerceMode:"STANDARD"},{slug:"stationery",name:"Stationery",description:"School, office and workplace supplies.",commerceMode:"STANDARD"}];
-const state={sections:defaults,products:[],media:[],active:"home",department:"housekeeping",slide:0,slides:[],token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
+const state={sections:defaults,products:[],media:[],promotions:[],active:"home",department:"housekeeping",slide:0,slides:[],token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeURL=x=>{try{const u=new URL(x);return u.protocol==="https:"?u.href:""}catch{return ""}};
@@ -56,7 +56,7 @@ function drawDots(){
 function slide(delta){if(!state.slides.length)return;state.slide=(state.slide+delta+state.slides.length)%state.slides.length;drawDots()}
 function jumpSlide(i){state.slide=i;drawDots()}
 function show(view){state.active=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view));nav();window.scrollTo(0,0)}
-function go(view){show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="account")renderAuth()}
+function go(view){show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
 function openDepartment(slug){
  const sec=state.sections.find(s=>s.slug===slug);if(!sec)return;
  state.department=slug;show("department");history.replaceState(null,"","#section/"+slug);
@@ -110,6 +110,14 @@ function featured(section){
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
 function openScheme(){openDepartment("crackers");setTimeout(()=>document.getElementById("crackersScheme")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}
+function renderOffers(){
+ const root=$("offersGrid");if(!root)return;
+ const promos=state.promotions.filter(p=>p.published!==false);
+ root.innerHTML=promos.length?promos.map(p=>{
+ const img=safeURL(p.image_url||p.imageUrl);
+ return '<article class="department offer-card">'+(img?'<div class="department-photo"><img src="'+esc(img)+'" alt="'+esc(p.title)+'" loading="lazy"></div>':'')+'<div class="department-body"><span class="tag">SRC promotion</span><h3>'+esc(p.title)+'</h3><p>'+esc(p.description||"Promotion details available from SRC.")+'</p><span class="muted" style="font-size:11px">'+esc(p.category||"Department offer")+'</span></div></article>'
+ }).join(""):'<div class="empty"><h3>No active offers published yet</h3><p class="muted">SRC administrators can publish promotions under the relevant department.</p><button class="btn" onclick="SRC.openDepartment(\'housekeeping\')">Explore housekeeping</button></div>';
+}
 function renderVideos(){
  const list=state.media.filter(m=>m.type==="VIDEO"&&safeURL(m.url));
  $("crackerVideos").innerHTML=list.length?list.map(v=>'<article class="product"><div class="product-photo"><span class="photo-fallback">VIDEO</span></div><div class="product-info"><h3>'+esc(v.title)+'</h3><p>'+esc(v.subtitle||"Approved demonstration")+'</p><a class="btn" target="_blank" rel="noopener noreferrer" href="'+esc(safeURL(v.url))+'">View media ↗</a></div></article>').join(''):'<div class="empty"><h3>Demonstration media coming soon</h3><p class="muted">Only administrator-approved videos are displayed.</p></div>';
@@ -173,11 +181,24 @@ async function authSubmit(e){
 }
 async function recoverSubmit(e){e.preventDefault();const email=new FormData(e.target).get("email");try{const d=await request("/api/auth/password/forgot",{method:"POST",body:JSON.stringify({email})});$("recoverFeedback").textContent=d.message}catch(err){$("recoverFeedback").textContent=err.message}}
 async function load(){
- try{const [sections,products,media,payments]=await Promise.all([request("/api/catalog/sections"),request("/api/catalog/products"),request("/api/catalog/media"),request("/api/payments/config")]);
- state.sections=sections.filter(s=>s.slug&&s.name);state.products=products;state.media=media;state.payment=payments;
- }catch(e){console.warn("SRC API not connected; sections shown without inventory.",e)}
- sectionsCards();hero();nav();saveCart();featured(selectedFeatured);
- const route=location.hash.slice(1);if(route.startsWith("section/"))openDepartment(route.split("/")[1]);else go(["home","cart","account","orders","recover"].includes(route)?route:"home");
+ const calls=await Promise.allSettled([
+   request("/api/catalog/sections"),
+   request("/api/catalog/products"),
+   request("/api/catalog/media"),
+   request("/api/payments/config"),
+   request("/api/catalog/promotions")
+ ]);
+ const [sections,products,media,payments,promotions]=calls;
+ if(sections.status==="fulfilled"&&Array.isArray(sections.value)&&sections.value.length)state.sections=sections.value.filter(x=>x.slug&&x.name);
+ if(products.status==="fulfilled"&&Array.isArray(products.value))state.products=products.value;
+ if(media.status==="fulfilled"&&Array.isArray(media.value))state.media=media.value;
+ if(payments.status==="fulfilled"&&payments.value)state.payment=payments.value;
+ if(promotions.status==="fulfilled"&&Array.isArray(promotions.value))state.promotions=promotions.value;
+ if(calls.some(x=>x.status==="rejected"))console.warn("Some SRC APIs are unavailable. Other departments remain browsable.");
+ sectionsCards();hero();nav();saveCart();featured(selectedFeatured);renderOffers();
+ const route=location.hash.slice(1);
+ if(route.startsWith("section/"))openDepartment(route.split("/")[1]);
+ else go(["home","cart","account","orders","recover","offers"].includes(route)?route:"home");
 }
 $("deptSearch").addEventListener("input",renderProducts);$("deptCategory").addEventListener("change",renderProducts);
 $("globalSearch").addEventListener("submit",e=>{e.preventDefault();const term=$("siteSearch").value.trim();const found=state.products.find(p=>(p.name+" "+p.category).toLowerCase().includes(term.toLowerCase()));if(found){openDepartment(found.sectionSlug);$("deptSearch").value=term;renderProducts()}else alert("No matching published product found. Choose a department to browse.")});
