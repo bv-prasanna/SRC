@@ -1,0 +1,23 @@
+# Staging only. Render free web instances sleep when idle.
+services:
+  - type: web
+    name: src-enterprises-staging-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: SRC_PAYMENTS_ENABLED
+        value: "false"
+      - key: CORS_ORIGIN
+        value: https://srcenterprises.in,https://www.srcenterprises.in
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_PUBLIC_URL
+        value: https://srcenterprises.in
