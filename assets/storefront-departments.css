@@ -49,3 +49,12 @@
 @media(max-width:1100px){#deptProducts{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){.logo{height:68px;max-width:35vw;width:150px}.dept-carousel,.dept-carousel .page-banner-content{min-height:320px}.dept-carousel .page-banner-content{padding-top:40px;padding-bottom:60px}#deptProducts{grid-template-columns:repeat(2,minmax(0,1fr))}#deptProducts .product-photo{height:185px}}
 @media(max-width:620px){.logo{width:125px;max-width:35vw;height:72px}.mast-inner{gap:8px}.dept-carousel,.dept-carousel .page-banner-content{min-height:355px}.dept-carousel .page-banner-content{padding:55px 43px 63px}.dept-carousel .page-banner-content h1{font-size:32px}.dept-carousel .page-banner-content p{font-size:13px}.dept-carousel::before{background:linear-gradient(90deg,#082947f5,#082947c2 75%,#08294785)}.dept-carousel .hero-arrow.prev{left:3px}.dept-carousel .hero-arrow.next{right:3px}#deptProducts{gap:11px}#deptProducts .product-photo{height:145px}#deptProducts .product-info{padding:13px}#deptProducts .product-info h3{font-size:13px}#deptProducts .product-info p{font-size:11px;min-height:65px}#deptProducts .product-info .btn{padding:8px;font-size:10px}#crackersScheme h2{font-size:27px}}
+
+.department-spotlight{display:grid;grid-template-columns:1.1fr .9fr;background:#eef4fa;border-radius:16px;overflow:hidden;margin:42px 0 10px;min-height:245px}
+.spotlight-copy{padding:38px 42px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.spotlight-copy h2{font-size:30px;margin:8px 0 12px}
+.spotlight-copy p{color:#536c81;font-size:13px;line-height:1.75;max-width:590px;margin-bottom:20px}
+.spotlight-art{min-height:245px;overflow:hidden}
+.spotlight-art img{width:100%;height:100%;object-fit:cover;display:block}
+.dept-carousel .page-banner-content .btn{box-shadow:0 5px 17px #05162b35}
+@media(max-width:740px){.department-spotlight{grid-template-columns:1fr}.spotlight-copy{padding:29px 26px}.spotlight-copy h2{font-size:25px}.spotlight-art{max-height:190px;min-height:160px}}
