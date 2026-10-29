@@ -84,9 +84,9 @@ function addToCart(id){
  if(!p||p.fireworks||p.sectionSlug==="crackers"||!["housekeeping","stationery"].includes(p.sectionSlug)){alert("This item is not eligible for an online cart.");return}
  const line=state.cart.find(x=>x.productId===id&&x.section===p.sectionSlug);
  if(line)line.quantity=Math.min(100,line.quantity+1);else state.cart.push({productId:id,quantity:1,section:p.sectionSlug});
- saveCart();go("cart");
+ sessionStorage.removeItem('src_checkout_idem_'+p.sectionSlug);saveCart();go("cart");
 }
-function removeCart(index){state.cart.splice(index,1);saveCart();renderCart()}
+function removeCart(index){const old=state.cart[index];if(old)sessionStorage.removeItem("src_checkout_idem_"+old.section);state.cart.splice(index,1);saveCart();renderCart()}
 function renderCart(){
  if(!state.cart.length){$("cartContent").innerHTML='<div class="empty"><h3>Your cart is empty</h3><p>Choose housekeeping or stationery to add products.</p><button class="btn" onclick="SRC.openDepartment(\'housekeeping\')">Browse housekeeping</button></div>';return}
  $("cartContent").innerHTML=['housekeeping','stationery'].filter(s=>state.cart.some(x=>x.section===s)).map(section=>{
@@ -104,16 +104,16 @@ async function submitCart(event,section){
  const btn=form.querySelector("button[type=submit]");btn.disabled=true;
  try{
   if(canPay){
-   const checkout=await request("/api/checkout/orders",{method:"POST",body:JSON.stringify({sectionSlug:section,address:info.address,warehouseCode:"MAIN",items:lines.map(x=>({productId:x.productId,quantity:x.quantity})),idempotencyKey:crypto.randomUUID()})});
+   const checkout=await request("/api/checkout/orders",{method:"POST",body:JSON.stringify({sectionSlug:section,address:info.address,warehouseCode:"MAIN",items:lines.map(x=>({productId:x.productId,quantity:x.quantity})),idempotencyKey:(sessionStorage.getItem("src_checkout_idem_"+section)||(()=>{const v=crypto.randomUUID();sessionStorage.setItem("src_checkout_idem_"+section,v);return v})())})});
    await ensureRazorpay();
    const instance=new window.Razorpay({key:checkout.keyId,order_id:checkout.razorpayOrderId,amount:checkout.amountPaise,currency:"INR",name:"SRC Enterprises",description:"Standard goods only",handler:async p=>{
-    try{await request("/api/payments/verify",{method:"POST",body:JSON.stringify({orderId:Number(checkout.orderId),...p})});state.cart=state.cart.filter(x=>x.section!==section);saveCart();go("orders");alert("Payment captured and order confirmed.")}
+    try{await request("/api/payments/verify",{method:"POST",body:JSON.stringify({orderId:Number(checkout.orderId),...p})});state.cart=state.cart.filter(x=>x.section!==section);sessionStorage.removeItem("src_checkout_idem_"+section);saveCart();go("orders");alert("Payment captured and order confirmed.")}
     catch(err){alert("Payment status requires reconciliation. Do not retry until you check your orders. "+err.message)}
    },prefill:{name:info.customerName,email:info.email,contact:info.phone}});
    instance.open();
   }else{
    const enquiry=await request("/api/enquiries",{method:"POST",body:JSON.stringify({customerName:info.customerName,email:info.email,phone:info.phone,sectionSlug:section,lines:lines.map(x=>({productId:x.productId,quantity:x.quantity}))})});
-   state.cart=state.cart.filter(x=>x.section!==section);saveCart();go("cart");alert("Enquiry #"+enquiry.id+" submitted. No payment collected.");
+   state.cart=state.cart.filter(x=>x.section!==section);sessionStorage.removeItem("src_checkout_idem_"+section);saveCart();go("cart");alert("Enquiry #"+enquiry.id+" submitted. No payment collected.");
   }
  }catch(err){alert("Unable to submit: "+err.message)}finally{btn.disabled=false}
 }
