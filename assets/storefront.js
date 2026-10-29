@@ -18,7 +18,7 @@ function badge(name){return name==="crackers"?"Catalogue only":"Products & enqui
 function nav(){
  const current=state.active==="department"?state.department:state.active;
  const deptButtons=state.sections.map(sec=>'<button data-route="'+esc(sec.slug)+'" onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+(sec.slug==="crackers"?' <span class="nav-info">Info</span>':'')+'</button>').join('');
- $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button><div class="nav-category-panel" id="allCategoryMenu">'+state.sections.map(sec=>'<button onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('')+'</div></div><button data-route="home" onclick="SRC.go(\'home\')">Home</button>'+deptButtons+'<button onclick="SRC.go(\'offers\')">Deals & Offers</button><button onclick="SRC.openDepartment(\'housekeeping\')">Bulk Enquiries</button>';
+ $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button><div class="nav-category-panel" id="allCategoryMenu">'+state.sections.map(sec=>'<button onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('')+'</div></div><button data-route="home" onclick="SRC.go(\'home\')">Home</button>'+deptButtons+'<button data-route="offers" onclick="SRC.go(\'offers\')">Deals & Offers</button><button onclick="SRC.openDepartment(\'housekeeping\')">Bulk Enquiries</button>';
  $("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\''+esc(x.slug)+'\')">'+esc(x.name)+'</button>').join("");
  document.querySelectorAll(".nav-inner>button").forEach(b=>b.classList.toggle("active",b.dataset.route===current));
 }
@@ -77,7 +77,7 @@ function renderProducts(){
  const shown=all.filter(p=>(!category||p.category===category)&&(!q||(p.name+" "+p.category+" "+(p.description||"")).toLowerCase().includes(q)));
  $("resultCount").textContent=shown.length+" product"+(shown.length!==1?"s":"");
  $("deptProducts").innerHTML=shown.length?shown.map(p=>{
-  const image=safeURL(p.imageUrl);const authorized=section!=="crackers"&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
+  const image=safeURL(p.imageUrl);const authorized=["housekeeping","stationery"].includes(section)&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
   return '<article class="product"><div class="product-photo">'+(image?'<img loading="lazy" src="'+esc(image)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag '+(section==="crackers"?"warn":"")+'">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"See product details with SRC.")+'</p>'+(section==="crackers"?'<span class="tag warn">Licensed in-person information only</span>':'<strong>'+price(p.pricePaise)+'</strong>'+(authorized?'<button class="btn" onclick="SRC.addToCart('+Number(p.id)+')">Add to cart</button>':''))+'</div></article>'
  }).join(""):'<div class="empty"><h3>No published products here yet</h3><p class="muted">An SRC administrator can publish products for this department. Demo items must be explicitly added to your local database.</p></div>';
 }
