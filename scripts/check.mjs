@@ -1,9 +1,29 @@
-import { readFileSync } from 'node:fs';
-import assert from 'node:assert/strict';
-const page=readFileSync('index.html','utf8');
-for(const x of ['SRC Enterprises','id="categories"','id="catalogue"','id="demos"','function renderDashboard','function safeUrl','https://srcenterprises.in/','id="offers"','id="promotionsGrid"','/api/catalog/promotions']) {
- assert(page.includes(x), 'Missing '+x);
-}
-assert(!/api\.razorpay\.com|checkout\.razorpay\.com|new Razorpay\(/.test(page),'Fireworks payment functionality must remain disabled');
-assert(page.includes('does not accept online orders'),'Public disclosure missing');
-console.log('SRC static smoke checks passed (7 feature markers + payment guardrail).');
+import {readFileSync} from "node:fs";
+import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
+const page=readFileSync("index.html","utf8");
+const js=readFileSync("assets/storefront.js","utf8");
+const css=readFileSync("assets/storefront-retail.css","utf8");
+const logo=readFileSync("assets/src-enterprises-retail.svg","utf8");
+const requiredPageIds=["home","department","cart","account","offers","heroStage","heroDots","departmentCards","featuredProducts","featuredViewAll","feat-housekeeping","feat-stationery","mainNav","deptProducts","crackersScheme","crackerVideos","authForm","cartContent"];
+for(const id of requiredPageIds)assert(page.includes('id="'+id+'"'),"Missing page element #"+id);
+for(const feature of ["src-enterprises-retail.svg","storefront-retail.css","storefront.js","openScheme()","featured('housekeeping')","featured('stationery')"])assert(page.includes(feature),"Missing expected storefront feature "+feature);
+for(const fn of ["function nav()","function sectionsCards()","function hero()","function openDepartment(","function featured(","function openScheme(","function renderOffers(","function renderCart(","function submitCart(","function load()"])assert(js.includes(fn),"Missing frontend function "+fn);
+assert(js.includes('state.sections.map'),"Department navigation must come from section master");
+assert(js.includes('p.sectionSlug===section'),"Department product isolation missing");
+assert(js.includes('["housekeeping","stationery"]'),"Standard-goods checkout restriction missing");
+assert(js.includes('section==="crackers"'),"Crackers product restrictions missing");
+assert(js.includes('/api/catalog/promotions'),"Real promotions API not connected");
+assert(js.includes('/api/catalog/media'),"Hero media API not connected");
+assert(css.includes(".department[data-section"),"Department cards not styled");
+assert(css.includes(".home-products"),"Featured product layout missing");
+assert(logo.includes("<svg")&&logo.includes("ENTERPRISES"),"Selected SRC logo missing");
+execFileSync(process.execPath,["--check","assets/storefront.js"],{stdio:"pipe"});
+const tags=[...page.matchAll(/<\/?section\b/g)].map(x=>x[0]);
+assert.equal(tags.filter(x=>x.startsWith("</")).length,tags.filter(x=>!x.startsWith("</")).length,"Mismatched section tags");
+const ids=[...page.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
+assert.equal(new Set(ids).size,ids.length,"Duplicate HTML element IDs");
+const dynamicIds=new Set(["allCategoryMenu"]);
+for(const [,name] of js.matchAll(/\$\("([A-Za-z0-9_-]+)"\)/g))assert(ids.includes(name)||dynamicIds.has(name),"Unknown DOM id "+name);
+console.log("SRC retail storefront smoke: PASS");
+console.log("Validated department isolation, dynamic navigation, hero media, scheme, products, offers, cart restrictions and JavaScript syntax.");
