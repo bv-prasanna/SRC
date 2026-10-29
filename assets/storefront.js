@@ -109,8 +109,17 @@ function openDepartment(slug){
  $("deptCrumb").textContent=sec.name;$("deptHeading").textContent=sec.name+" catalogue";
  $("crackersExtra").classList.toggle("hide",slug!=="crackers");$("schemeQuickLink").classList.toggle("hide",slug!=="crackers");
  $("deptSearch").value="";$("deptCategory").value="";
- renderDepartmentHero(slug);renderProducts();
+ renderDepartmentHero(slug);renderProducts();renderDepartmentSpotlight(slug);
  if(slug==="crackers")renderVideos()
+}
+function renderDepartmentSpotlight(slug){
+ const promos={
+  crackers:{eyebrow:"Festival collection",title:"Explore. Learn. Celebrate responsibly.",text:"Approved demonstrations, catalogue information and proposed festival scheme details in one place. Visit licensed stores for permitted in-person purchases.",button:"Scheme information",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1000&q=78&fit=crop"},
+  housekeeping:{eyebrow:"Bulk & institutional supplies",title:"Cleaner homes. Better workplaces.",text:"Discover a wide selection of practical maintenance, cleaning and hygiene essentials for homes, offices and facilities.",button:"Explore floor care",photo:"https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1000&q=78&fit=crop"},
+  stationery:{eyebrow:"For classrooms and offices",title:"Good ideas deserve great essentials.",text:"Explore notebooks, writing instruments, files, paper and classroom essentials curated in SRC's stationery division.",button:"Browse stationery",photo:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1000&q=78&fit=crop"}
+ };
+ const item=promos[slug]||{eyebrow:"SRC Enterprises",title:"Products for every need.",text:"Explore this SRC business division.",button:"Browse catalogue",photo:photos.housekeeping};
+ $("deptSpotlight").innerHTML='<div class="spotlight-copy"><span class="eyebrow">'+esc(item.eyebrow)+'</span><h2>'+esc(item.title)+'</h2><p>'+esc(item.text)+'</p><button class="btn orange" onclick="'+(slug==="crackers"?"SRC.openScheme()":"document.getElementById(&quot;deptProducts&quot;).scrollIntoView({behavior:&quot;smooth&quot;})")+'">'+esc(item.button)+' →</button></div><div class="spotlight-art"><img loading="lazy" src="'+esc(item.photo)+'" alt=""></div>';
 }
 function setDepartmentCategory(category){$("deptCategory").value=category;renderProducts()}
 function renderProducts(){
