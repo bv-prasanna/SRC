@@ -11,7 +11,7 @@ Source code and *staging* deployment configuration only. Not deployed, not appro
 
 ## Staging prerequisites
 1. PostgreSQL database provisioned (do not use expiring free database for real customers).
-2. Run migrations 001–009 in order; the local Windows script handles Docker.
+2. Run migrations 001–010 in order; the local Windows script handles Docker.
 3. At least one ADMIN user provisioned locally via `npm run promote-admin -- email@example.org`.
 4. Configure a temporary staging HTTPS API domain, then set `config.js` `SRC_API_BASE` to that origin.
 5. Add the static GitHub repository to Cloudflare Pages; build command empty, output root `/`. Add domain `srcenterprises.in` after testing.
