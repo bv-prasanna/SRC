@@ -2,6 +2,7 @@ import express from "express";
 import {createHash} from "node:crypto";
 import cors from "cors";
 import helmet from "helmet";
+import {rateLimit} from "express-rate-limit";
 import { z } from "zod";
 import type { Pool } from "pg";
 import { sectionsRouter } from "./sections.js";
@@ -11,12 +12,20 @@ import { orderRouter } from "./orders.js";
 import { inventoryRouter } from "./inventory.js";
 import { identityRouter } from "./identity.js";
 import { fulfillmentRouter } from "./fulfillment.js";
+import { commerceRouter,paymentWebhook } from "./commerce.js";
+import { agentsRouter } from "./agents.js";
+import { recoveryRouter } from "./recovery.js";
 export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true),sectionSlug:z.string().default('crackers'),pricePaise:z.number().int().min(0).default(0)});
 export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;corsOrigin:string}){
- const app=express();app.disable("x-powered-by");app.use(helmet());app.use(cors({origin:config.corsOrigin}));app.use(express.json({limit:"100kb"}));
+ const app=express();app.disable("x-powered-by");app.set("trust proxy",process.env.TRUST_PROXY==="true"?1:false);app.use(helmet());app.use(cors({origin:config.corsOrigin}));
+ app.post("/api/payments/webhook",express.raw({type:"application/json",limit:"128kb"}),paymentWebhook(pool as Pool));
+ app.use(express.json({limit:"100kb"}));
+ const authLimiter=rateLimit({windowMs:15*60*1000,limit:8,standardHeaders:"draft-7",legacyHeaders:false,message:{error:"Too many attempts. Try later."}});
+ app.use(["/api/auth/login","/api/auth/register","/api/auth/password/forgot","/api/auth/password/reset"],authLimiter);
+
  const admin:express.RequestHandler=async(req,res,next)=>{
  const h=req.header("authorization")||"";
- if(config.adminToken.length>=32&&h===`Bearer ${config.adminToken}`){next();return}
+ if(process.env.NODE_ENV!=="production"&&config.adminToken.length>=32&&h===`Bearer ${config.adminToken}`){next();return}
  const token=h.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
  if(!token){res.status(401).json({error:"Unauthorized"});return}
  try{
@@ -26,7 +35,7 @@ export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;cors
   next()
  }catch{res.status(503).json({error:"Authorization unavailable"})}
 };
- app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));
+ app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));
  app.get("/health",(_req,res)=>res.json({status:"ok"}));
  app.get("/api/catalog/products",async(_req,res)=>{try{const r=await pool.query("select id,name,category,description,image_url as \"imageUrl\",demo_video_url as \"demoVideoUrl\",published,fireworks,section_slug as \"sectionSlug\",price_paise as \"pricePaise\" from products where published=true order by name");res.json(r.rows)}catch{res.status(503).json({error:"Catalogue unavailable"})}});
  app.get("/api/admin/products",admin,async(_req,res)=>{try{const r=await pool.query("select * from products order by id desc");res.json(r.rows)}catch{res.status(503).json({error:"Database unavailable"})}});
