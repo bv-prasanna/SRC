@@ -38,7 +38,7 @@ const fallbackSlides=[
  {title:"Festival moments,<br><span>beautifully planned.</span>",subtitle:"Explore fireworks catalogue information and the proposed SRC scheme. Licensed in-person sales only.",url:photos.crackers,category:"crackers"}
 ];
 function hero(){
- const published=state.media.filter(x=>x.type==="HERO"&&safeURL(x.url));
+ const published=state.media.filter(x=>x.type==="HERO"&&(!x.category||["home","Home"].includes(x.category))&&safeURL(x.url));
  state.slides=published.length?published.map(x=>({title:esc(x.title),subtitle:esc(x.subtitle||""),url:safeURL(x.url),category:state.sections.some(s=>s.slug===x.category)?x.category:"housekeeping"})):fallbackSlides;
  const label='SRC ENTERPRISES · BENGALURU';
  $("heroStage").innerHTML=state.slides.map((s,i)=>{
