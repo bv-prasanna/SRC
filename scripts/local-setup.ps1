@@ -5,7 +5,8 @@ param(
   [switch]$StartWeb,
   [switch]$UseDockerDb,
   [switch]$RunIntegrationTests,
-  [switch]$RunCoverage
+  [switch]$RunCoverage,
+  [switch]$SkipDemoSeed
 )
 $ErrorActionPreference = 'Stop'
 function Require-Command([string]$Name) {
@@ -55,6 +56,14 @@ if ($UseDockerDb) {
     if ($LASTEXITCODE -ne 0) { throw "Could not copy migration: $sql" }
     docker exec src-postgres-local psql -v ON_ERROR_STOP=1 -U src -d src -f $containerSql
     if ($LASTEXITCODE -ne 0) { throw "Migration failed: $sql (see PostgreSQL error above)" }
+  }
+  if (-not $SkipDemoSeed) {
+    Write-Host "Loading clearly marked sample products for LOCAL DEMO ONLY" -ForegroundColor Yellow
+    $seedFile = Join-Path $repo "server/sql/dev_seed_catalogue_v2.sql"
+    docker cp $seedFile "src-postgres-local:/tmp/dev_seed_catalogue_v2.sql"
+    if ($LASTEXITCODE -ne 0) { throw "Failed to copy local demo seed" }
+    docker exec src-postgres-local psql -v ON_ERROR_STOP=1 -U src -d src -f "/tmp/dev_seed_catalogue_v2.sql"
+    if ($LASTEXITCODE -ne 0) { throw "Local demo seed failed" }
   }
 }
 Push-Location (Join-Path $repo "server")
