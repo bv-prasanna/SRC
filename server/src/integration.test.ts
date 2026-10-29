@@ -14,9 +14,9 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
  const name=await db.query("SELECT current_database() AS name");
  assert.match(name.rows[0].name,/_test$/,"Refusing to test against a non-test database");
  const dir=resolve(dirname(fileURLToPath(import.meta.url)),"../sql");
- for(let i=1;i<=9;i++){
+ for(let i=1;i<=10;i++){
   const file=resolve(dir,String(i).padStart(3,"0")+"_"+({
-   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce"
+   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment"
   } as Record<number,string>)[i]+".sql");
   await db.query(readFileSync(file,"utf8"));
  }
