@@ -15,21 +15,27 @@ async function request(path,options={}){
  const data=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(data.error||"Request failed: "+resp.status);return data;
 }
 function badge(name){return name==="crackers"?"Catalogue only":"Products & enquiries"}
-function nav(){let out='<button data-route="home" onclick="SRC.go(\'home\')">Home</button>';for(const section of state.sections){out+='<button data-route="'+esc(section.slug)+'" onclick="SRC.openDepartment(\''+esc(section.slug)+'\')">'+esc(section.name)+'</button>'}
-$("mainNav").innerHTML=out;
-$("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\''+esc(x.slug)+'\')">'+esc(x.name)+'</button>').join("");
-document.querySelectorAll(".nav-inner button").forEach(b=>b.classList.toggle("active",b.dataset.route===(state.active==="department"?state.department:state.active)));
+function nav(){
+ const current=state.active==="department"?state.department:state.active;
+ const deptButtons=state.sections.map(sec=>'<button data-route="'+esc(sec.slug)+'" onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+(sec.slug==="crackers"?' <span class="nav-info">Info</span>':'')+'</button>').join('');
+ $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button><div class="nav-category-panel" id="allCategoryMenu">'+state.sections.map(sec=>'<button onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('')+'</div></div><button data-route="home" onclick="SRC.go(\'home\')">Home</button>'+deptButtons+'<button onclick="SRC.go(\'offers\')">Deals & Offers</button><button onclick="SRC.openDepartment(\'housekeeping\')">Bulk Enquiries</button>';
+ $("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\''+esc(x.slug)+'\')">'+esc(x.name)+'</button>').join("");
+ document.querySelectorAll(".nav-inner>button").forEach(b=>b.classList.toggle("active",b.dataset.route===current));
+}
+function toggleCategories(){
+ const menu=$("allCategoryMenu"),button=document.querySelector(".nav-category>button");if(!menu||!button)return;
+ const open=menu.classList.toggle("open");button.setAttribute("aria-expanded",String(open));
 }
 function sectionsCards(){
  $("departmentCards").innerHTML=state.sections.map(s=>{
  const img=photos[s.slug]||"https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000&q=80&fit=crop";
- return '<article class="department"><div class="department-photo"><img loading="lazy" src="'+esc(img)+'" alt="'+esc(s.name)+' collection"></div><div class="department-body"><span class="tag '+(s.slug==="crackers"?"warn":"")+'">'+badge(s.slug)+'</span><h3>'+esc(s.name)+'</h3><p>'+esc(s.description||"Discover SRC products in this department.")+'</p><button class="text-action" onclick="SRC.openDepartment(\''+esc(s.slug)+'\')">Explore department &nbsp; ↗</button></div></article>'
+ return '<article class="department" data-section="'+esc(s.slug)+'"><div class="department-photo"><img loading="lazy" src="'+esc(img)+'" alt="'+esc(s.name)+' collection"></div><div class="department-body"><span class="tag '+(s.slug==="crackers"?"warn":"")+'">'+badge(s.slug)+'</span><h3>'+esc(s.name)+'</h3><p>'+esc(s.description||"Discover SRC products in this department.")+'</p><button class="text-action" onclick="SRC.openDepartment(\''+esc(s.slug)+'\')">Explore department &nbsp; ↗</button></div></article>'
  }).join("")
 }
 const fallbackSlides=[
- {title:"Everyday essentials.<br><span>Better business.</span>",subtitle:"Professional housekeeping and facility supplies — explore the SRC department.",url:photos.housekeeping,category:"housekeeping"},
- {title:"Ideas begin<br><span>with essentials.</span>",subtitle:"Stationery and office products for school, home and workplace.",url:photos.stationery,category:"stationery"},
- {title:"Festive information,<br><span>thoughtfully curated.</span>",subtitle:"Explore crackers catalogues, demonstrations and festival scheme information. In-person licensed retail only.",url:photos.crackers,category:"crackers"}
+ {title:"Everyday essentials<br>for a <span>Brighter Tomorrow.</span>",subtitle:"Housekeeping, stationery, festive moments and more — discover what SRC Enterprises offers.",url:photos.housekeeping,category:"housekeeping"},
+ {title:"Everything for<br><span>Bright Ideas.</span>",subtitle:"Stationery and office essentials for schools, businesses and everyday needs.",url:photos.stationery,category:"stationery"},
+ {title:"Festival moments,<br><span>beautifully planned.</span>",subtitle:"Explore fireworks catalogue information and the proposed SRC scheme. Licensed in-person sales only.",url:photos.crackers,category:"crackers"}
 ];
 function hero(){
  const published=state.media.filter(x=>x.type==="HERO"&&safeURL(x.url));
@@ -75,6 +81,35 @@ function renderProducts(){
   return '<article class="product"><div class="product-photo">'+(image?'<img loading="lazy" src="'+esc(image)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag '+(section==="crackers"?"warn":"")+'">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"See product details with SRC.")+'</p>'+(section==="crackers"?'<span class="tag warn">Licensed in-person information only</span>':'<strong>'+price(p.pricePaise)+'</strong>'+(authorized?'<button class="btn" onclick="SRC.addToCart('+Number(p.id)+')">Add to cart</button>':''))+'</div></article>'
  }).join(""):'<div class="empty"><h3>No published products here yet</h3><p class="muted">An SRC administrator can publish products for this department. Demo items must be explicitly added to your local database.</p></div>';
 }
+const demoPhotos={
+ "floor cleaning":"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=520&q=78&fit=crop",
+ "microfiber":"https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=520&q=78&fit=crop",
+ "garbage bags":"https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=520&q=78&fit=crop",
+ "broom":"https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=520&q=78&fit=crop",
+ "notebook":"https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=520&q=78&fit=crop",
+ "pen":"https://images.unsplash.com/photo-1455390582262-044cdead277a?w=520&q=78&fit=crop",
+ "copy paper":"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=520&q=78&fit=crop",
+ "pencil":"https://images.unsplash.com/photo-1455390582262-044cdead277a?w=520&q=78&fit=crop"
+};
+function productImage(p){
+ const official=safeURL(p.imageUrl);if(official)return official;
+ if(!String(p.name||"").endsWith(" - Demo"))return "";
+ const k=Object.keys(demoPhotos).find(k=>p.name.toLowerCase().includes(k));return k?demoPhotos[k]:"";
+}
+let selectedFeatured="housekeeping";
+function featured(section){
+ if(!["housekeeping","stationery"].includes(section))return;
+ selectedFeatured=section;
+ for(const id of ["housekeeping","stationery"]){const btn=$("feat-"+id);if(btn){btn.classList.toggle("active",id===section);btn.setAttribute("aria-pressed",String(id===section))}}
+ const products=state.products.filter(x=>x.sectionSlug===section).slice(0,5);
+ $("featuredViewAll").textContent="View all "+(section==="stationery"?"stationery":"housekeeping")+" products →";
+ $("featuredViewAll").onclick=()=>openDepartment(section);
+ $("featuredProducts").innerHTML=products.length?products.map(p=>{
+ const src=productImage(p),demo=String(p.name||"").endsWith(" - Demo");
+ return '<article class="product"><div class="product-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3>'+(demo?'<span class="demo-label">Demo item · illustrative image</span>':'')+'<strong>'+price(p.pricePaise)+'</strong><button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry</button></div></article>'
+ }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
+}
+function openScheme(){openDepartment("crackers");setTimeout(()=>document.getElementById("crackersScheme")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}
 function renderVideos(){
  const list=state.media.filter(m=>m.type==="VIDEO"&&safeURL(m.url));
  $("crackerVideos").innerHTML=list.length?list.map(v=>'<article class="product"><div class="product-photo"><span class="photo-fallback">VIDEO</span></div><div class="product-info"><h3>'+esc(v.title)+'</h3><p>'+esc(v.subtitle||"Approved demonstration")+'</p><a class="btn" target="_blank" rel="noopener noreferrer" href="'+esc(safeURL(v.url))+'">View media ↗</a></div></article>').join(''):'<div class="empty"><h3>Demonstration media coming soon</h3><p class="muted">Only administrator-approved videos are displayed.</p></div>';
@@ -141,7 +176,7 @@ async function load(){
  try{const [sections,products,media,payments]=await Promise.all([request("/api/catalog/sections"),request("/api/catalog/products"),request("/api/catalog/media"),request("/api/payments/config")]);
  state.sections=sections.filter(s=>s.slug&&s.name);state.products=products;state.media=media;state.payment=payments;
  }catch(e){console.warn("SRC API not connected; sections shown without inventory.",e)}
- sectionsCards();hero();nav();saveCart();
+ sectionsCards();hero();nav();saveCart();featured(selectedFeatured);
  const route=location.hash.slice(1);if(route.startsWith("section/"))openDepartment(route.split("/")[1]);else go(["home","cart","account","orders","recover"].includes(route)?route:"home");
 }
 $("deptSearch").addEventListener("input",renderProducts);$("deptCategory").addEventListener("change",renderProducts);
@@ -149,6 +184,6 @@ $("globalSearch").addEventListener("submit",e=>{e.preventDefault();const term=$(
 $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEventListener("click",()=>{state.authMode=state.authMode==="login"?"register":"login";renderAuth()});
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
-window.SRC={go,openDepartment,slide,jumpSlide,addToCart,removeCart,submitCart,invoice};
+window.SRC={go,openDepartment,openScheme,toggleCategories,featured,slide,jumpSlide,addToCart,removeCart,submitCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1)},6500);
 })();
