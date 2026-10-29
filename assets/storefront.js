@@ -2,7 +2,7 @@
 const API=(window.SRC_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
 const photos={crackers:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=85&fit=crop",housekeeping:"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1200&q=85&fit=crop",stationery:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1200&q=85&fit=crop"};
 const defaults=[{slug:"crackers",name:"Crackers",description:"Festive collections, demonstrations and scheme information. Catalogue only.",commerceMode:"CATALOGUE_ONLY"},{slug:"housekeeping",name:"Housekeeping Materials",description:"Hygiene, cleaning and building-maintenance essentials.",commerceMode:"STANDARD"},{slug:"stationery",name:"Stationery",description:"School, office and workplace supplies.",commerceMode:"STANDARD"}];
-const state={sections:defaults,products:[],media:[],promotions:[],active:"home",department:"housekeeping",slide:0,slides:[],token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
+const state={sections:defaults,products:[],media:[],promotions:[],active:"home",department:"housekeeping",slide:0,slides:[],sectionSlides:[],sectionSlide:0,token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeURL=x=>{try{const u=new URL(x);return u.protocol==="https:"?u.href:""}catch{return ""}};
@@ -57,29 +57,81 @@ function slide(delta){if(!state.slides.length)return;state.slide=(state.slide+de
 function jumpSlide(i){state.slide=i;drawDots()}
 function show(view){state.active=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view));nav();window.scrollTo(0,0)}
 function go(view){show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
+const sectionCampaigns={
+ crackers:[
+  {title:"Make every celebration memorable.",description:"Discover festive collections, educational product demonstrations and in-store information.",photo:photos.crackers},
+  {title:"Crackers scheme & festival planning.",description:"Explore proposed plan durations and essential information. Applications and collections are not open online.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
+  {title:"Celebrate with safety in mind.",description:"Learn about product effects and safety guidance before visiting a licensed retail outlet.",photo:"https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1600&q=85&fit=crop"}
+ ],
+ housekeeping:[
+  {title:"Clean spaces. Better everyday.",description:"Discover essentials for housekeeping, facility care and workplace hygiene.",photo:photos.housekeeping},
+  {title:"Supplies for homes and businesses.",description:"From everyday cleaning tools to facility-maintenance products — one focused department.",photo:"https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=1600&q=85&fit=crop"},
+  {title:"Professional cleaning essentials.",description:"Compare product categories and request a quotation for your organisation.",photo:"https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1600&q=85&fit=crop"}
+ ],
+ stationery:[
+  {title:"Everything for bright ideas.",description:"Explore notebooks, writing instruments and school & office essentials.",photo:photos.stationery},
+  {title:"Ready for the school day.",description:"Practical classroom and stationery essentials for students and educators.",photo:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=1600&q=85&fit=crop"},
+  {title:"Set up your workspace.",description:"Office paper, folders and everyday writing essentials.",photo:"https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1600&q=85&fit=crop"}
+ ]
+};
+function catalogueFor(section){
+ const live=state.products.filter(p=>p.sectionSlug===section);
+ return live.length?live:(window.SRC_PREVIEW_PRODUCTS||[]).filter(p=>p.sectionSlug===section);
+}
+function renderDepartmentHero(slug){
+ const configured=state.media.filter(x=>x.type==="HERO"&&x.category===slug&&safeURL(x.url)).map(x=>({
+  title:x.title,description:x.subtitle||"",photo:safeURL(x.url)
+ }));
+ state.sectionSlides=configured.length?configured:(sectionCampaigns[slug]||[{title:state.sections.find(x=>x.slug===slug)?.name||"SRC Enterprises",description:"Discover our specialist business collection.",photo:photos.housekeeping}]);
+ state.sectionSlide=0;
+ $("deptHeroStage").innerHTML=state.sectionSlides.map((x,i)=>{
+  const src=safeURL(x.photo);
+  const media=/\.(mp4|webm)(\?|$)/i.test(src)?
+   '<video class="dept-hero-media" src="'+esc(src)+'" muted loop autoplay playsinline preload="none" aria-hidden="true"></video>':
+   '<img class="dept-hero-media" src="'+esc(src)+'" alt="" aria-hidden="true">';
+  return '<div class="dept-hero-image '+(i===0?"active":"")+'">'+media+'</div>'
+ }).join("");
+ $("deptBanner").dataset.section=slug;
+ updateDepartmentSlide()
+}
+function updateDepartmentSlide(){
+ const item=state.sectionSlides[state.sectionSlide];if(!item)return;
+ $("deptTitle").textContent=item.title;$("deptDescription").textContent=item.description;
+ document.querySelectorAll(".dept-hero-image").forEach((el,i)=>el.classList.toggle("active",i===state.sectionSlide));
+ $("deptHeroDots").innerHTML=state.sectionSlides.map((_,i)=>'<button type="button" class="'+(i===state.sectionSlide?"active":"")+'" aria-label="Department slide '+(i+1)+'" onclick="SRC.jumpDepartmentSlide('+i+')"></button>').join("");
+}
+function departmentSlide(delta){if(state.active!=="department"||!state.sectionSlides.length)return;state.sectionSlide=(state.sectionSlide+delta+state.sectionSlides.length)%state.sectionSlides.length;updateDepartmentSlide()}
+function jumpDepartmentSlide(i){if(i<0||i>=state.sectionSlides.length)return;state.sectionSlide=i;updateDepartmentSlide()}
 function openDepartment(slug){
  const sec=state.sections.find(s=>s.slug===slug);if(!sec)return;
  state.department=slug;show("department");history.replaceState(null,"","#section/"+slug);
- $("deptTitle").textContent=sec.name;$("deptLabel").textContent="SRC / "+sec.name;$("deptDescription").textContent=sec.description;
- $("deptCrumb").textContent=sec.name;$("deptHeading").textContent=sec.name+" products";
- const img=photos[slug]||photos.housekeeping;
- $("deptBanner").style.setProperty("--banner-image",'url("'+img+'")');
+ $("deptLabel").textContent="SRC ENTERPRISES / "+sec.name;
+ $("deptCrumb").textContent=sec.name;$("deptHeading").textContent=sec.name+" catalogue";
  $("crackersExtra").classList.toggle("hide",slug!=="crackers");$("schemeQuickLink").classList.toggle("hide",slug!=="crackers");
- $("deptSearch").value="";$("deptCategory").value="";renderProducts();
+ $("deptSearch").value="";$("deptCategory").value="";
+ renderDepartmentHero(slug);renderProducts();
  if(slug==="crackers")renderVideos()
 }
+function setDepartmentCategory(category){$("deptCategory").value=category;renderProducts()}
 function renderProducts(){
- const section=state.department;const q=$("deptSearch").value.trim().toLowerCase(),category=$("deptCategory").value;
- const all=state.products.filter(p=>p.sectionSlug===section);
+ const section=state.department,q=$("deptSearch").value.trim().toLowerCase(),category=$("deptCategory").value;
+ const all=catalogueFor(section);
  const cats=[...new Set(all.map(p=>p.category).filter(Boolean))].sort();
  $("deptCategory").innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
  $("deptCategory").value=cats.includes(category)?category:"";
+ $("deptCategoryChips").innerHTML=['',...cats].map(c=>'<button type="button" class="'+(category===c?"active":"")+'" onclick="SRC.setDepartmentCategory(\''+esc(c).replace(/'/g,"&#39;")+'\')">'+esc(c||"All products")+'</button>').join("");
  const shown=all.filter(p=>(!category||p.category===category)&&(!q||(p.name+" "+p.category+" "+(p.description||"")).toLowerCase().includes(q)));
- $("resultCount").textContent=shown.length+" product"+(shown.length!==1?"s":"");
+ $("resultCount").textContent=shown.length+" items";
+ const preview=all.some(p=>p.previewOnly);
+ $("deptDemoNote").innerHTML=preview?'<div class="notice">DEMO CATALOGUE · These are illustrative products and images for design review, not confirmed prices or inventory. Add and publish products through SRC Admin for the live catalogue.</div>':'';
  $("deptProducts").innerHTML=shown.length?shown.map(p=>{
-  const image=safeURL(p.imageUrl);const authorized=["housekeeping","stationery"].includes(section)&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
-  return '<article class="product"><div class="product-photo">'+(image?'<img loading="lazy" src="'+esc(image)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag '+(section==="crackers"?"warn":"")+'">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"See product details with SRC.")+'</p>'+(section==="crackers"?'<span class="tag warn">Licensed in-person information only</span>':'<strong>'+price(p.pricePaise)+'</strong>'+(authorized?'<button class="btn" onclick="SRC.addToCart('+Number(p.id)+')">Add to cart</button>':''))+'</div></article>'
- }).join(""):'<div class="empty"><h3>No published products here yet</h3><p class="muted">An SRC administrator can publish products for this department. Demo items must be explicitly added to your local database.</p></div>';
+  const img=productImage(p);
+  const isPreview=!!p.previewOnly||String(p.name).endsWith(" - Demo");
+  const authorized=!p.previewOnly&&["housekeeping","stationery"].includes(section)&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
+  return '<article class="product product-card"><div class="product-photo">'+(img?'<img loading="lazy" src="'+esc(img)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+(isPreview?'<span class="preview-ribbon">DEMO</span>':'')+'</div><div class="product-info"><span class="tag '+(section==="crackers"?"warn":"")+'">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"Explore product details with SRC.")+'</p>'+
+   (section==="crackers"?'<span class="tag warn">In-store information only</span>':
+   '<strong>'+price(p.pricePaise)+'</strong>'+(authorized?'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry →</button>':'<button class="btn light" disabled>'+(p.previewOnly?"Illustrative preview":"Contact for details")+'</button>'))+'</div></article>'
+ }).join(""):'<div class="empty"><h3>No matching products</h3><p class="muted">Try another category or search term.</p></div>';
 }
 const demoPhotos={
  "floor cleaning":"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=520&q=78&fit=crop",
@@ -101,11 +153,11 @@ function featured(section){
  if(!["housekeeping","stationery"].includes(section))return;
  selectedFeatured=section;
  for(const id of ["housekeeping","stationery"]){const btn=$("feat-"+id);if(btn){btn.classList.toggle("active",id===section);btn.setAttribute("aria-pressed",String(id===section))}}
- const products=state.products.filter(x=>x.sectionSlug===section).slice(0,5);
+ const products=catalogueFor(section).slice(0,5);
  $("featuredViewAll").textContent="View all "+(section==="stationery"?"stationery":"housekeeping")+" products →";
  $("featuredViewAll").onclick=()=>openDepartment(section);
  $("featuredProducts").innerHTML=products.length?products.map(p=>{
- const src=productImage(p),demo=String(p.name||"").endsWith(" - Demo");
+ const src=productImage(p),demo=!!p.previewOnly||String(p.name||"").endsWith(" - Demo");
  return '<article class="product"><div class="product-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3>'+(demo?'<span class="demo-label">Demo item · illustrative image</span>':'')+'<strong>'+price(p.pricePaise)+'</strong><button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry</button></div></article>'
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
@@ -205,6 +257,6 @@ $("globalSearch").addEventListener("submit",e=>{e.preventDefault();const term=$(
 $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEventListener("click",()=>{state.authMode=state.authMode==="login"?"register":"login";renderAuth()});
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
-window.SRC={go,openDepartment,openScheme,toggleCategories,featured,slide,jumpSlide,addToCart,removeCart,submitCart,invoice};
-load();setInterval(()=>{if(state.active==="home")slide(1)},6500);
+window.SRC={go,openDepartment,openScheme,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,invoice};
+load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
