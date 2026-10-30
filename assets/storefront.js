@@ -35,7 +35,7 @@ function sectionsCards(){
 const fallbackSlides=[
  {title:"Everyday essentials<br>for a <span>Brighter Tomorrow.</span>",subtitle:"Housekeeping, stationery, festive moments and more — discover what SRC Enterprises offers.",url:photos.housekeeping,category:"housekeeping"},
  {title:"Everything for<br><span>Bright Ideas.</span>",subtitle:"Stationery and office essentials for schools, businesses and everyday needs.",url:photos.stationery,category:"stationery"},
- {title:"Festival moments,<br><span>beautifully planned.</span>",subtitle:"Explore fireworks catalogue information and the proposed SRC scheme. Licensed in-person sales only.",url:photos.crackers,category:"crackers"}
+ {title:"Festival moments,<br><span>beautifully planned.</span>",subtitle:"Explore fireworks catalogue information and demonstrations. Licensed in-person sales only.",url:photos.crackers,category:"crackers"}
 ];
 function hero(){
  const published=state.media.filter(x=>x.type==="HERO"&&(!x.category||["home","Home"].includes(x.category))&&safeURL(x.url));
@@ -60,7 +60,7 @@ function go(view){show(view);history.replaceState(null,"","#"+view);if(view==="c
 const sectionCampaigns={
  crackers:[
   {title:"Make every celebration memorable.",description:"Discover festive collections, educational product demonstrations and in-store information.",photo:photos.crackers},
-  {title:"Crackers scheme & festival planning.",description:"Register free for a unique SRC festival membership ID. Bring the ID to our shop during Diwali; payment and sales remain in-store subject to approved terms.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
+  {title:"Crackers catalogue & product demonstrations.",description:"Learn about festive effects and product information before visiting a licensed store.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
   {title:"Celebrate with safety in mind.",description:"Learn about product effects and safety guidance before visiting a licensed retail outlet.",photo:"https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1600&q=85&fit=crop"}
  ],
  housekeeping:[
@@ -115,12 +115,12 @@ function openDepartment(slug){
 }
 function renderDepartmentSpotlight(slug){
  const promos={
-  crackers:{eyebrow:"Festival collection",title:"Explore. Learn. Celebrate responsibly.",text:"Approved demonstrations, catalogue information and proposed festival scheme details in one place. Visit licensed stores for permitted in-person purchases.",button:"Scheme information",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1000&q=78&fit=crop"},
+  crackers:{eyebrow:"Festival collection",title:"Explore. Learn. Celebrate responsibly.",text:"Approved demonstrations, catalogue information and safety guidance. Visit licensed stores for permitted in-person purchases.",button:"Browse crackers catalogue",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1000&q=78&fit=crop"},
   housekeeping:{eyebrow:"Bulk & institutional supplies",title:"Cleaner homes. Better workplaces.",text:"Discover a wide selection of practical maintenance, cleaning and hygiene essentials for homes, offices and facilities.",button:"Explore floor care",photo:"https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1000&q=78&fit=crop"},
   stationery:{eyebrow:"For classrooms and offices",title:"Good ideas deserve great essentials.",text:"Explore notebooks, writing instruments, files, paper and classroom essentials curated in SRC's stationery division.",button:"Browse stationery",photo:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1000&q=78&fit=crop"}
  };
  const item=promos[slug]||{eyebrow:"SRC Enterprises",title:"Products for every need.",text:"Explore this SRC business division.",button:"Browse catalogue",photo:photos.housekeeping};
- $("deptSpotlight").innerHTML='<div class="spotlight-copy"><span class="eyebrow">'+esc(item.eyebrow)+'</span><h2>'+esc(item.title)+'</h2><p>'+esc(item.text)+'</p><button class="btn orange" onclick="'+(slug==="crackers"?"SRC.openScheme()":"document.getElementById(&quot;deptProducts&quot;).scrollIntoView({behavior:&quot;smooth&quot;})")+'">'+esc(item.button)+' →</button></div><div class="spotlight-art"><img loading="lazy" src="'+esc(item.photo)+'" alt=""></div>';
+ $("deptSpotlight").innerHTML='<div class="spotlight-copy"><span class="eyebrow">'+esc(item.eyebrow)+'</span><h2>'+esc(item.title)+'</h2><p>'+esc(item.text)+'</p><button class="btn orange" onclick="'+"document.getElementById(&quot;deptProducts&quot;).scrollIntoView({behavior:&quot;smooth&quot;})"+'">'+esc(item.button)+' →</button></div><div class="spotlight-art"><img loading="lazy" src="'+esc(item.photo)+'" alt=""></div>';
 }
 function setDepartmentCategory(category){$("deptCategory").value=category;renderProducts()}
 function renderProducts(){
