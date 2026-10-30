@@ -83,7 +83,7 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   const freeRegistration=await call("/api/festival/enrol","POST",{fullName:"Festival UAT Customer",phone:mobile,email:"",durationMonths:10,consent:true});
   assert.equal(freeRegistration.code,201);
   assert.match(freeRegistration.data.membershipCode,/^SRC-[0-9]{4}-[A-F0-9]{24}$/);
-  const privateList=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,userToken);
+  const privateList=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,procSession);
   assert.equal(privateList.code,403);
   const lookup=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,adminSession);
   assert.equal(lookup.code,200);
