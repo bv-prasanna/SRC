@@ -32,7 +32,8 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal((await call("/health")).code,200);
   const sections=await call("/api/catalog/sections");
   assert.equal(sections.code,200);assert.equal(sections.data.some((s:any)=>s.slug==="crackers"),true);
-  const email="uat-"+randomUUID()+"@example.org",pass="LongUatPassword!2026";
+  assert.deepEqual(sections.data.slice(0,4).map((section:any)=>section.slug),["scheme","stationery","housekeeping","crackers"]);
+    const email="uat-"+randomUUID()+"@example.org",pass="LongUatPassword!2026";
   assert.equal((await call("/api/auth/register","POST",{email,password:pass})).code,201);
   const login=await call("/api/auth/login","POST",{email,password:pass});
   assert.equal(login.code,200);const userToken=login.data.token as string;
