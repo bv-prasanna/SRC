@@ -111,6 +111,20 @@ export function schemeManagementRouter(db:Pool){
    await client.query("COMMIT");res.json(q.rows[0]);
   }catch{if(client)await client.query("ROLLBACK").catch(()=>{});res.status(503).json({error:"Cannot change plan status"})}finally{client?.release()}
  });
+ r.get("/api/admin/scheme-plans/:id/gateway-preview",admin,async(req,res)=>{
+  const id=idParam(req.params.id);if(!id){res.status(400).json({error:"Invalid plan id"});return}
+  try{
+   const q=await db.query("SELECT code,name,frequency,billing_cycles,amount_paise,description,status FROM src_scheme_plans WHERE id=$1",[id]);
+   if(!q.rowCount){res.status(404).json({error:"Plan not found"});return}
+   const p=q.rows[0];
+   res.json({dryRun:true,collectionEnabled:false,merchantApprovalRequired:true,
+    proposedPlan:{period:p.frequency==="QUARTERLY"?"quarterly":"monthly",interval:1,
+     item:{name:p.name,amount:p.amount_paise,currency:"INR",description:p.description},
+     notes:{src_scheme_code:p.code}},
+    proposedBillingCycles:p.billing_cycles,
+    explanation:"This is a preview only. No Razorpay request, plan, mandate or subscription is created."});
+  }catch{res.status(503).json({error:"Plan preview unavailable"})}
+ });
  r.get("/api/admin/scheme-plans/:id/history",admin,async(req,res)=>{
   const id=idParam(req.params.id);if(!id){res.status(400).json({error:"Invalid id"});return}
   try{res.json((await db.query("SELECT id,action,actor_id,created_at FROM src_scheme_plan_audit WHERE scheme_plan_id=$1 ORDER BY id DESC LIMIT 100",[id])).rows)}
