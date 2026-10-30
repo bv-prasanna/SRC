@@ -67,3 +67,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\local-setup.ps1 -Directory . 
 Use Ctrl + Shift + R on `http://localhost:8000` after pulling. Direct department routes: `#section/crackers`, `#section/housekeeping`, `#section/stationery`.
 
 **Visual caveat:** The screenshot and local browser rendering have not been validated in a live browser in this environment; the source changes and static JavaScript/DOM checks are verified only.
+
+## Independent Scheme section
+The four-section storefront now displays **Scheme → Stationery → Housekeeping → Crackers** (migration `014_standalone_scheme_section.sql`). Scheme registration is at `#section/scheme`, not nested in the Crackers catalogue. Existing member IDs, staff verification and physical shop receipt references continue unchanged. Razorpay subscription collection for any plan intended to finance fireworks is not enabled; the scheme's purpose and regulatory treatment require legal and payment-provider approval, not merely a different title.
