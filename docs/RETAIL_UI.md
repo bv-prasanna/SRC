@@ -54,7 +54,7 @@ The seed products have no claimed stock or real selling prices. The frontend dif
 - Sample UI fallback catalogues include 6 crackers items, 8 housekeeping items and 8 stationery items; every fallback is marked DEMO and cannot be purchased.
 - `server/sql/dev_seed_catalogue_v2.sql` inserts the same 22 explicitly labelled no-price/no-stock local demo products into PostgreSQL. The Windows local setup script applies this automatically **only with -UseDockerDb**, unless `-SkipDemoSeed` is specified. The script is idempotent.
 - Published real products take precedence over fallback content in their respective departments.
-- The crackers scheme appears only inside Crackers plus an information teaser on the homepage. There are no online crackers bookings, deliveries, scheme enrolments or payments.
+- The crackers scheme appears only inside Crackers plus an information teaser on the homepage. Free festival scheme ID registration is available; there are no online crackers bookings, deliveries, advance collections or fireworks payments.
 
 ## Quick preview
 ```powershell
