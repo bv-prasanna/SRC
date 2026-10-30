@@ -135,8 +135,8 @@ function renderProducts(){
  $("deptDemoNote").innerHTML=preview?'<div class="notice">DEMO CATALOGUE · These are illustrative products and images for design review, not confirmed prices or inventory. Add and publish products through SRC Admin for the live catalogue.</div>':'';
  $("deptProducts").innerHTML=shown.length?shown.map(p=>{
   const img=productImage(p);
-  const isPreview=!!p.previewOnly||String(p.name).endsWith(" - Demo");
-  const authorized=!p.previewOnly&&["housekeeping","stationery"].includes(section)&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
+  const isPreview=!!p.previewOnly||String(p.name).endsWith(" - Demo")||String(p.name).endsWith("(DEMO)");
+  const authorized=!isPreview&&["housekeeping","stationery"].includes(section)&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
   return '<article class="product product-card"><div class="product-photo">'+(img?'<img loading="lazy" src="'+esc(img)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+(isPreview?'<span class="preview-ribbon">DEMO</span>':'')+'</div><div class="product-info"><span class="tag '+(section==="crackers"?"warn":"")+'">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"Explore product details with SRC.")+'</p>'+
    (section==="crackers"?'<span class="tag warn">In-store information only</span>':
    '<strong>'+price(p.pricePaise)+'</strong>'+(authorized?'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry →</button>':'<button class="btn light" disabled>'+(p.previewOnly?"Illustrative preview":"Contact for details")+'</button>'))+'</div></article>'
@@ -166,7 +166,7 @@ function featured(section){
  $("featuredViewAll").textContent="View all "+(section==="stationery"?"stationery":"housekeeping")+" products →";
  $("featuredViewAll").onclick=()=>openDepartment(section);
  $("featuredProducts").innerHTML=products.length?products.map(p=>{
- const src=productImage(p),demo=!!p.previewOnly||String(p.name||"").endsWith(" - Demo");
+ const src=productImage(p),demo=!!p.previewOnly||String(p.name||"").endsWith(" - Demo")||String(p.name||"").endsWith("(DEMO)");
  return '<article class="product"><div class="product-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3>'+(demo?'<span class="demo-label">Demo item · illustrative image</span>':'')+'<strong>'+price(p.pricePaise)+'</strong><button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry</button></div></article>'
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
