@@ -78,6 +78,20 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal((await call("/api/workspace/tasks/"+taskId+"/status","PATCH",{status:"COMPLETED",notes:"Integration-only procurement signoff"},procSession)).code,200);
   const progressed=await db.query("SELECT status FROM customer_orders WHERE id=$1",[order.id]);
   assert.equal(progressed.rows[0].status,"PACKING");
+  // Free festival registration, private member lookup and in-store verification only.
+  const mobile="9"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
+  const freeRegistration=await call("/api/festival/enrol","POST",{fullName:"Festival UAT Customer",phone:mobile,email:"",durationMonths:10,consent:true});
+  assert.equal(freeRegistration.code,201);
+  assert.match(freeRegistration.data.membershipCode,/^SRC-[0-9]{4}-[A-F0-9]{24}$/);
+  const privateList=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,userToken);
+  assert.equal(privateList.code,403);
+  const lookup=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,adminSession);
+  assert.equal(lookup.code,200);
+  assert.equal(lookup.data.some((m:any)=>m.membership_code===freeRegistration.data.membershipCode),true);
+  const verify=await call("/api/admin/festival/members/"+freeRegistration.data.membershipCode+"/verify","PATCH",{phoneLast4:mobile.slice(-4)},adminSession);
+  assert.equal(verify.code,200);
+  const visit=await call("/api/admin/festival/members/"+freeRegistration.data.membershipCode+"/visit","POST",{phoneLast4:mobile.slice(-4),notes:"UAT-only shop verification"},adminSession);
+  assert.equal(visit.code,201);
   const out=await call("/api/auth/logout","POST",{},userToken);assert.equal(out.code,204);
   assert.equal((await call("/api/auth/me","GET",undefined,userToken)).code,401);
  }finally{await new Promise<void>(r=>server.close(()=>r()));await db.end()}
