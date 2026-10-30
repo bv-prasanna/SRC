@@ -89,7 +89,7 @@ async function findFestivalMember(){
   root.innerHTML=festivalResults.length?festivalResults.map((m,i)=>
     '<article class="panel"><h3>'+esc(m.membership_code)+' <span class="tag">'+esc(m.status)+'</span></h3><p>'+esc(m.full_name)+' · Mobile: '+esc(m.phone)+' · '+Number(m.duration_months)+' months · Year: '+Number(m.scheme_year)+'</p><div class="task-action">'+
     (m.status==="REGISTERED"?'<button onclick="WORK.verifyFestival('+i+')">Verify member</button>':'')+
-    (m.status==="VERIFIED"?'<button onclick="WORK.visitFestival('+i+')">Log in-store visit</button>':'')+
+    (m.status==="VERIFIED"?'<button onclick="WORK.visitFestival('+i+')">Log in-store visit</button><button class="alt" onclick="WORK.counterReceipt('+i+')">Link shop receipt</button>':'')+
     '</div></article>').join(""):'<div class="empty">No member matches the ID or mobile number.</div>';
  }catch(err){status(err.message,true)}
 }
@@ -108,6 +108,17 @@ async function visitFestival(i){
  try{await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/visit",{method:"POST",body:JSON.stringify({phoneLast4:last4,notes})});status("Shop visit recorded; licensed-counter purchase handled separately.");await findFestivalMember()}
  catch(err){status(err.message,true)}
 }
+async function counterReceipt(i){
+ const m=festivalResults[i];if(!m||m.status!=="VERIFIED")return;
+ const phoneLast4=prompt("Confirm the customer's registered mobile: last 4 digits");
+ if(!phoneLast4||!/^[0-9]{4}$/.test(phoneLast4))return;
+ const receiptReference=prompt("Enter the receipt number ALREADY issued at the licensed SRC shop:");
+ if(!receiptReference||!/^[A-Za-z0-9][A-Za-z0-9_-]{2,59}$/.test(receiptReference))return;
+ try{
+  await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/counter-receipt",{method:"POST",body:JSON.stringify({phoneLast4,receiptReference,notes:"Physical store purchase receipt reference only"})});
+  status("Physical-store receipt linked to membership ID. No online sale or payment was processed.");
+ }catch(err){status(err.message,true)}
+}
 if($("festivalLookup"))$("festivalLookup").onclick=findFestivalMember;
-window.WORK={update,assign,details,verifyFestival,visitFestival};
+window.WORK={update,assign,details,verifyFestival,visitFestival,counterReceipt};
 })();
