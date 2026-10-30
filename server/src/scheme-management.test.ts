@@ -1,0 +1,13 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {billingCycles,planForm,projectedTotal,statusCanChange} from "./scheme-management.js";
+const valid={code:"DEEPAVALI_2027_10",name:"Deepavali Ten Month Scheme",schemeYear:2027,durationMonths:10,frequency:"MONTHLY",amountPaise:100000,description:"Free registration phase",benefits:"Proposed, subject to approval",termsSummary:"Terms under review",internalNotes:"Internal draft",startDate:null,endDate:null,maxMembers:500};
+test("valid 10 month admin scheme",()=>assert.equal(planForm.safeParse(valid).success,true));
+test("monthly ten contributions",()=>{assert.equal(billingCycles(10,"MONTHLY"),10);assert.equal(projectedTotal(100000,10,"MONTHLY"),1000000)});
+test("quarterly scheme counts",()=>{assert.equal(billingCycles(6,"QUARTERLY"),2);assert.equal(billingCycles(12,"QUARTERLY"),4)});
+test("reject unsupported scheme duration",()=>assert.equal(planForm.safeParse({...valid,durationMonths:13}).success,false));
+test("reject invalid codes and negative contribution",()=>{assert.equal(planForm.safeParse({...valid,code:"bad code"}).success,false);assert.equal(planForm.safeParse({...valid,amountPaise:-5}).success,false)});
+test("reject end date before start",()=>assert.equal(planForm.safeParse({...valid,startDate:"2027-10-15",endDate:"2027-09-12"}).success,false));
+test("reject financial or payment activation injection",()=>assert.equal(planForm.safeParse({...valid,razorpayEnabled:true}).success,false));
+test("draft follows internal review before display",()=>{assert.equal(statusCanChange("DRAFT","IN_REVIEW"),true);assert.equal(statusCanChange("DRAFT","PUBLISHED"),false);assert.equal(statusCanChange("IN_REVIEW","PUBLISHED"),true)});
+test("published plans are immutable and can be archived",()=>{assert.equal(statusCanChange("PUBLISHED","DRAFT"),false);assert.equal(statusCanChange("PUBLISHED","ARCHIVED"),true);assert.equal(statusCanChange("ARCHIVED","PUBLISHED"),false)});
