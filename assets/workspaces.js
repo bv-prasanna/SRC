@@ -78,5 +78,36 @@ async function startOrder(){
 }
 if(role==="OPERATIONS")$("operatorActions").classList.remove("hidden");
 $("startOrder").onclick=startOrder;
-window.WORK={update,assign,details};
+let festivalResults=[];
+async function findFestivalMember(){
+ const term=$("festivalQuery")?.value.trim()||"";
+ if(!/^SRC-[0-9]{4}-[A-F0-9]{24}$/.test(term)&&!/^[6-9][0-9]{9}$/.test(term)){status("Enter a full SRC membership ID or registered 10-digit mobile number",true);return}
+ try{
+  const list=await api("/api/admin/festival/members?search="+encodeURIComponent(term));
+  festivalResults=list.filter(x=>x.membership_code===term||x.phone===term);
+  const root=$("festivalDeskResults");
+  root.innerHTML=festivalResults.length?festivalResults.map((m,i)=>
+    '<article class="panel"><h3>'+esc(m.membership_code)+' <span class="tag">'+esc(m.status)+'</span></h3><p>'+esc(m.full_name)+' · Mobile: '+esc(m.phone)+' · '+Number(m.duration_months)+' months · Year: '+Number(m.scheme_year)+'</p><div class="task-action">'+
+    (m.status==="REGISTERED"?'<button onclick="WORK.verifyFestival('+i+')">Verify member</button>':'')+
+    (m.status==="VERIFIED"?'<button onclick="WORK.visitFestival('+i+')">Log in-store visit</button>':'')+
+    '</div></article>').join(""):'<div class="empty">No member matches the ID or mobile number.</div>';
+ }catch(err){status(err.message,true)}
+}
+async function verifyFestival(i){
+ const m=festivalResults[i];if(!m)return;
+ const last4=prompt("Confirm the customer's registered mobile: last four digits");
+ if(!last4||!/^[0-9]{4}$/.test(last4))return;
+ try{await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/verify",{method:"PATCH",body:JSON.stringify({phoneLast4:last4})});status("Member ID verified. No financial transaction recorded.");await findFestivalMember()}
+ catch(err){status(err.message,true)}
+}
+async function visitFestival(i){
+ const m=festivalResults[i];if(!m)return;
+ const last4=prompt("Confirm registered mobile last four digits");
+ if(!last4||!/^[0-9]{4}$/.test(last4))return;
+ const notes=prompt("Optional visit note (not payment or product orders):","")||"";
+ try{await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/visit",{method:"POST",body:JSON.stringify({phoneLast4:last4,notes})});status("Shop visit recorded; licensed-counter purchase handled separately.");await findFestivalMember()}
+ catch(err){status(err.message,true)}
+}
+if($("festivalLookup"))$("festivalLookup").onclick=findFestivalMember;
+window.WORK={update,assign,details,verifyFestival,visitFestival};
 })();
