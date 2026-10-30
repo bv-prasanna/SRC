@@ -45,7 +45,7 @@ export function festivalRouter(db:Pool){
   const search=String(req.query.search||"").trim().slice(0,80);
   try{
    const q=await db.query(
-    "SELECT m.id,m.membership_code,m.scheme_year,m.full_name,m.phone,m.email,m.duration_months,m.status,m.created_at,m.verified_at,(SELECT COUNT(*)::int FROM festival_store_visits v WHERE v.member_id=m.id) AS store_visits FROM festival_members m WHERE $1='' OR m.membership_code ILIKE '%'||$1||'%' OR m.phone LIKE '%'||$1||'%' ORDER BY m.id DESC LIMIT 200",[search]);
+    "SELECT m.id,m.membership_code,m.scheme_year,m.full_name,m.phone,m.email,m.duration_months,m.status,m.created_at,m.verified_at,(SELECT COUNT(*)::int FROM festival_store_visits v WHERE v.member_id=m.id) AS store_visits, sp.code AS plan_code, sp.name AS plan_name FROM festival_members m LEFT JOIN src_scheme_plans sp ON sp.id=m.scheme_plan_id WHERE $1='' OR m.membership_code ILIKE '%'||$1||'%' OR m.phone LIKE '%'||$1||'%' ORDER BY m.id DESC LIMIT 200",[search]);
    res.json(q.rows);
   }catch{res.status(503).json({error:"Member list unavailable"})}
  });
