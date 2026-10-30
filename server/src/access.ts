@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import type {Pool} from "pg";
 import type {RequestHandler} from "express";
-export type Role="CUSTOMER"|"AGENT"|"ADMIN";
+export type Role="CUSTOMER"|"AGENT"|"ADMIN"|"DELIVERY"|"PROCUREMENT"|"PACKING"|"OPERATIONS";
 export function digestToken(s:string){return createHash("sha256").update(s).digest("hex")}
 export function requireRole(db:Pick<Pool,"query">,roles:Role[]):RequestHandler{
  return async(req,res,next)=>{
