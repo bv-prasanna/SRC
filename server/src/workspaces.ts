@@ -38,6 +38,10 @@ export function workspacesRouter(db:Pool){
    res.json({products:products.rows,users:users.rows,enquiries:enquiries.rows,orders:orders.rows,tasks:tasks.rows,inventory:stock.rows[0]});
   }catch{res.status(503).json({error:"Dashboard temporarily unavailable"})}
  });
+ r.get("/api/workspace/staff",operator,async(_req,res)=>{
+  try{res.json((await db.query("SELECT id,email,role FROM app_users WHERE active=true AND role IN ('PROCUREMENT','PACKING','DELIVERY','OPERATIONS') ORDER BY role,email")).rows)}
+  catch{res.status(503).json({error:"Staff directory unavailable"})}
+ });
  r.get("/api/workspace/tasks",worker,async(_req,res)=>{
   const user=res.locals.user;
   try{
