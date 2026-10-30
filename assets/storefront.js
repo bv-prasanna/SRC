@@ -2,7 +2,7 @@
 const API=(window.SRC_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
 const photos={scheme:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=85&fit=crop",crackers:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=85&fit=crop",housekeeping:"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1200&q=85&fit=crop",stationery:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1200&q=85&fit=crop"};
 const defaults=[{slug:"scheme",name:"Scheme",description:"Deepavali membership registration with a unique SRC reference for in-store verification. No online contributions.",commerceMode:"CATALOGUE_ONLY"},{slug:"stationery",name:"Stationery",description:"School, office and workplace supplies.",commerceMode:"STANDARD"},{slug:"housekeeping",name:"Housekeeping Materials",description:"Hygiene, cleaning and building-maintenance essentials.",commerceMode:"STANDARD"},{slug:"crackers",name:"Crackers",description:"Fireworks catalogue and demonstrations for licensed in-person retail only.",commerceMode:"CATALOGUE_ONLY"}];
-const state={sections:defaults,products:[],media:[],promotions:[],active:"home",department:"housekeeping",slide:0,slides:[],sectionSlides:[],sectionSlide:0,token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
+const state={sections:defaults,products:[],media:[],promotions:[],schemePlans:[],active:"home",department:"housekeeping",slide:0,slides:[],sectionSlides:[],sectionSlide:0,token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeURL=x=>{try{const u=new URL(x);return u.protocol==="https:"?u.href:""}catch{return ""}};
@@ -172,8 +172,22 @@ function featured(section){
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
 function openScheme(){show("scheme");history.replaceState(null,"","#section/scheme")}
+function renderSchemePlans(){
+ const plans=state.schemePlans;
+ $("schemeLivePlans").innerHTML=plans.length?plans.map((p,i)=>{
+  const frequency=p.frequency==="QUARTERLY"?"quarter":"month",amount="₹"+(Number(p.amountPaise)/100).toLocaleString("en-IN");
+  return '<article class="scheme-option"><span class="tag">Registration open · '+esc(p.schemeYear)+'</span><h3>'+esc(p.name)+'</h3><strong>'+Number(p.durationMonths)+' months</strong><p class="muted">'+esc(p.description||"SRC Deepavali membership plan")+'</p><p><b>Proposed:</b> '+amount+' per '+frequency+' · '+Number(p.durationMonths)+'-month duration</p><p class="muted">'+esc(p.benefits||"Benefits subject to confirmed terms")+'</p><button type="button" class="btn light" onclick="SRC.selectSchemePlan('+i+')">Register free for this plan</button></article>'
+ }).join(""):'';
+ $("schemeExamplePlans").classList.toggle("hide",plans.length>0);
+}
+function selectSchemePlan(index){
+ const plan=state.schemePlans[index];if(!plan)return;
+ $("schemePlanId").value=String(plan.id);$("festivalDuration").value=String(plan.durationMonths);
+ $("schemeRegistration")?.scrollIntoView({behavior:"smooth",block:"center"});
+}
 let lastFestivalCode="";
 function selectFestivalDuration(months){
+ $("schemePlanId").value="";
  const input=$("festivalDuration");
  if(![6,10,12].includes(months)||!input)return;
  input.value=String(months);
@@ -186,7 +200,7 @@ async function registerFestival(e){
  if(!form.reportValidity())return;
  button.disabled=true;result.textContent="Registering your scheme ID…";
  try{
-  const body={fullName:data.fullName,phone:data.phone,email:data.email||"",durationMonths:Number(data.durationMonths),consent:data.consent==="on"};
+  const body={fullName:data.fullName,phone:data.phone,email:data.email||"",durationMonths:Number(data.durationMonths),...(data.schemePlanId?{schemePlanId:Number(data.schemePlanId)}:{}),consent:data.consent==="on"};
   const response=await request("/api/festival/enrol",{method:"POST",body:JSON.stringify(body)});
   lastFestivalCode=response.membershipCode;
   result.innerHTML='<div class="festival-receipt"><span class="tag">Registration received</span><h3>Your SRC membership ID</h3><div class="festival-code">'+esc(lastFestivalCode)+'</div><p>Selected duration: '+Number(response.durationMonths)+' months · '+Number(response.year)+'</p><p>Save this ID and bring it with your registered mobile to the SRC shop for verification. No money has been collected and this is not a fireworks order.</p><button type="button" class="btn light" onclick="SRC.copyFestivalCode()">Copy membership ID</button></div>';
@@ -276,16 +290,18 @@ async function load(){
    request("/api/catalog/products"),
    request("/api/catalog/media"),
    request("/api/payments/config"),
-   request("/api/catalog/promotions")
+   request("/api/catalog/promotions"),
+   request("/api/scheme/plans")
  ]);
- const [sections,products,media,payments,promotions]=calls;
+ const [sections,products,media,payments,promotions,schemePlans]=calls;
  if(sections.status==="fulfilled"&&Array.isArray(sections.value)&&sections.value.length)state.sections=sections.value.filter(x=>x.slug&&x.name);
  if(products.status==="fulfilled"&&Array.isArray(products.value))state.products=products.value;
  if(media.status==="fulfilled"&&Array.isArray(media.value))state.media=media.value;
  if(payments.status==="fulfilled"&&payments.value)state.payment=payments.value;
  if(promotions.status==="fulfilled"&&Array.isArray(promotions.value))state.promotions=promotions.value;
+ if(schemePlans.status==="fulfilled"&&Array.isArray(schemePlans.value))state.schemePlans=schemePlans.value;
  if(calls.some(x=>x.status==="rejected"))console.warn("Some SRC APIs are unavailable. Other departments remain browsable.");
- sectionsCards();hero();nav();saveCart();featured(selectedFeatured);renderOffers();
+ sectionsCards();hero();nav();saveCart();featured(selectedFeatured);renderOffers();renderSchemePlans();
  const route=location.hash.slice(1);
  if(route.startsWith("section/"))openDepartment(route.split("/")[1]);
  else go(["home","cart","account","orders","recover","offers"].includes(route)?route:"home");
@@ -296,6 +312,6 @@ $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEvent
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
 $("festivalEnrolForm").addEventListener("submit",registerFestival);
-window.SRC={go,openDepartment,openScheme,selectFestivalDuration,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,invoice};
+window.SRC={go,openDepartment,openScheme,selectFestivalDuration,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
