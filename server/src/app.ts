@@ -18,6 +18,7 @@ import { recoveryRouter } from "./recovery.js";
 import { paidOrdersRouter } from "./paidOrders.js";
 import { workspacesRouter } from "./workspaces.js";
 import { festivalRouter } from "./festival.js";
+import { schemeManagementRouter } from "./scheme-management.js";
 export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true),sectionSlug:z.string().default('crackers'),pricePaise:z.number().int().min(0).default(0)});
 export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;corsOrigin:string}){
  const app=express();app.disable("x-powered-by");app.set("trust proxy",process.env.TRUST_PROXY==="true"?1:false);app.use(helmet());app.use(cors({origin:config.corsOrigin.split(",").map(s=>s.trim())}));
@@ -38,7 +39,7 @@ export function createApp(pool:Pick<Pool,"query">,config:{adminToken:string;cors
   next()
  }catch{res.status(503).json({error:"Authorization unavailable"})}
 };
- app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));app.use(paidOrdersRouter(pool as Pool));app.use(workspacesRouter(pool as Pool));app.use(festivalRouter(pool as Pool));
+ app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));app.use(paidOrdersRouter(pool as Pool));app.use(workspacesRouter(pool as Pool));app.use(festivalRouter(pool as Pool));app.use(schemeManagementRouter(pool as Pool));
  app.get("/health",(_req,res)=>res.json({status:"ok"}));
  app.get("/api/catalog/products",async(_req,res)=>{try{const r=await pool.query("select id,name,category,description,image_url as \"imageUrl\",demo_video_url as \"demoVideoUrl\",published,fireworks,section_slug as \"sectionSlug\",price_paise as \"pricePaise\" from products where published=true order by name");res.json(r.rows)}catch{res.status(503).json({error:"Catalogue unavailable"})}});
  app.get("/api/admin/products",admin,async(_req,res)=>{try{const r=await pool.query("select * from products order by id desc");res.json(r.rows)}catch{res.status(503).json({error:"Database unavailable"})}});
