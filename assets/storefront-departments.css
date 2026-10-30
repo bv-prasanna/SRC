@@ -58,3 +58,15 @@
 .spotlight-art img{width:100%;height:100%;object-fit:cover;display:block}
 .dept-carousel .page-banner-content .btn{box-shadow:0 5px 17px #05162b35}
 @media(max-width:740px){.department-spotlight{grid-template-columns:1fr}.spotlight-copy{padding:29px 26px}.spotlight-copy h2{font-size:25px}.spotlight-art{max-height:190px;min-height:160px}}
+
+/* Free festival registration & in-store verification ID */
+.scheme-registration{margin:29px 0;background:linear-gradient(120deg,#f2f7fc,#fff);border:1px solid #d6e5f1;border-radius:15px;padding:29px}
+.scheme-registration h3{font-size:25px;margin:6px 0 9px}.scheme-registration .field{display:grid;gap:7px;margin:0;font-size:12px;color:#244767;font-weight:800}
+.scheme-registration .field input,.scheme-registration .field select{width:100%;border:1px solid #cbd9e8;background:#fff;color:#13324e;padding:13px;border-radius:8px;font:inherit;outline-color:#1c75b1}
+.scheme-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin:24px 0}
+.scheme-consent{display:flex;align-items:flex-start;gap:11px;font-size:12px;color:#51667b;margin-bottom:20px;max-width:900px}
+.scheme-consent input{margin-top:3px;width:17px;height:17px;flex-shrink:0}
+.festival-receipt{background:#f0f9f5;border:1px solid #aad5ba;border-radius:11px;padding:22px;margin-top:25px;color:#24533a}
+.festival-receipt .festival-code{background:#fff;border:1px dashed #55916c;border-radius:9px;display:inline-block;font:800 clamp(14px,2.2vw,22px) Manrope,system-ui;letter-spacing:.05em;padding:12px 16px;color:#0b4f37;word-break:break-all}
+.festival-receipt p{font-size:13px;margin:14px 0}.festival-receipt h3{font-size:20px}
+@media(max-width:620px){.scheme-registration{padding:18px}.scheme-form-grid{grid-template-columns:1fr}.festival-receipt{padding:14px}}
