@@ -229,7 +229,7 @@ async function invoice(id){try{const i=await request("/api/checkout/orders/"+id+
 function renderAuth(){
  $("authHeading").textContent=state.user?"Signed in: "+state.user.email:(state.authMode==="login"?"Sign in to your account":"Create a customer account");
  $("authForm").classList.toggle("hide",!!state.user);$("logoutButton").classList.toggle("hide",!state.user);$("userLinks").classList.toggle("hide",!state.user);
- if(state.user){const links=$("userLinks").querySelectorAll("a");links[0].classList.toggle("hide",state.user.role!=="ADMIN");links[1].classList.toggle("hide",state.user.role!=="AGENT"&&state.user.role!=="ADMIN")}
+ if(state.user){const links=$("userLinks").querySelectorAll("a");links[0].classList.toggle("hide",state.user.role!=="ADMIN");links[1].classList.toggle("hide",state.user.role!=="AGENT"&&state.user.role!=="ADMIN");links.forEach(a=>{if(a.dataset.allowed)a.classList.toggle("hide",!a.dataset.allowed.split(",").includes(state.user.role))})}
  $("authModeToggle").textContent=state.authMode==="login"?"Create a customer account":"Have an account? Sign in";
  $("authSubmit").textContent=state.authMode==="login"?"Sign in":"Create account";
  $("accountLabel").textContent=state.user?"My SRC":'My Account';
