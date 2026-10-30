@@ -4,7 +4,7 @@ import {z} from "zod";
 import {requireRole} from "./access.js";
 const assign=z.object({agentId:z.number().int().positive()});
 const note=z.object({note:z.string().trim().min(2).max(1000)});
-const roleChange=z.object({role:z.enum(["CUSTOMER","AGENT","ADMIN"]),active:z.boolean()});
+const roleChange=z.object({role:z.enum(["CUSTOMER","AGENT","ADMIN","DELIVERY","PROCUREMENT","PACKING","OPERATIONS"]),active:z.boolean()});
 export function agentsRouter(db:Pool){
  const r=Router(),admin=requireRole(db,["ADMIN"]),agent=requireRole(db,["AGENT","ADMIN"]);
  r.patch("/api/admin/users/:id/access",admin,async(req,res)=>{
