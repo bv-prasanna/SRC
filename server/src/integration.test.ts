@@ -14,9 +14,9 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
  const name=await db.query("SELECT current_database() AS name");
  assert.match(name.rows[0].name,/_test$/,"Refusing to test against a non-test database");
  const dir=resolve(dirname(fileURLToPath(import.meta.url)),"../sql");
- for(let i=1;i<=14;i++){
+ for(let i=1;i<=15;i++){
   const file=resolve(dir,String(i).padStart(3,"0")+"_"+({
-   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section"
+   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management"
   } as Record<number,string>)[i]+".sql");
   await db.query(readFileSync(file,"utf8"));
  }
@@ -79,6 +79,29 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal((await call("/api/workspace/tasks/"+taskId+"/status","PATCH",{status:"COMPLETED",notes:"Integration-only procurement signoff"},procSession)).code,200);
   const progressed=await db.query("SELECT status FROM customer_orders WHERE id=$1",[order.id]);
   assert.equal(progressed.rows[0].status,"PACKING");
+  // Scheme plan lifecycle, public registration listing, and no gateway transactions.
+  const code="DEEPAVALI_UAT_"+randomUUID().replaceAll("-","").slice(0,12).toUpperCase();
+  const year=new Date().getUTCFullYear();
+  const plan={code,name:"UAT Deepavali Plan",schemeYear:year,durationMonths:10,frequency:"MONTHLY",amountPaise:100000,description:"Free member registration",benefits:"Proposed benefit",termsSummary:"Subject to review",internalNotes:"UAT only",startDate:null,endDate:null,maxMembers:30};
+  const unauthorized=await call("/api/admin/scheme-plans","GET",undefined,procSession);
+  assert.equal(unauthorized.code,403);
+  const createdPlan=await call("/api/admin/scheme-plans","POST",plan,adminSession);
+  assert.equal(createdPlan.code,201);
+  const planId=Number(createdPlan.data.id);
+  const draftPublic=await call("/api/scheme/plans");
+  assert.equal(draftPublic.code,200);assert.equal(draftPublic.data.some((p:any)=>Number(p.id)===planId),false);
+  const reviewed=await call("/api/admin/scheme-plans/"+planId+"/status","PATCH",{status:"IN_REVIEW",version:1},adminSession);
+  assert.equal(reviewed.code,200);
+  const published=await call("/api/admin/scheme-plans/"+planId+"/status","PATCH",{status:"PUBLISHED",version:2},adminSession);
+  assert.equal(published.code,200);
+  const visible=await call("/api/scheme/plans");
+  assert.equal(visible.code,200);assert.equal(visible.data.some((p:any)=>Number(p.id)===planId&&p.collectionEnabled===false),true);
+  const planPhone="8"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
+  const linked=await call("/api/festival/enrol","POST",{fullName:"Plan test",phone:planPhone,email:"",durationMonths:10,schemePlanId:planId,consent:true});
+  assert.equal(linked.code,201);
+  const members=await db.query("SELECT scheme_plan_id FROM festival_members WHERE membership_code=$1",[linked.data.membershipCode]);
+  assert.equal(Number(members.rows[0].scheme_plan_id),planId);
+  assert.equal((await call("/api/admin/scheme-plans/summary","GET",undefined,adminSession)).data.gateway.subscriptionCollectionEnabled,false);
   // Free festival registration, private member lookup and in-store verification only.
   const mobile="9"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
   const freeRegistration=await call("/api/festival/enrol","POST",{fullName:"Festival UAT Customer",phone:mobile,email:"",durationMonths:10,consent:true});
