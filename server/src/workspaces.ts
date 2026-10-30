@@ -60,6 +60,17 @@ export function workspacesRouter(db:Pool){
    res.status(q.rowCount?201:409).json(q.rows[0]||{error:"Order is not paid/eligible, or workflow already created"});
   }catch{res.status(503).json({error:"Unable to start order workflow"})}
  });
+ r.get("/api/workspace/tasks/:id/details",worker,async(req,res)=>{
+  const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid task"});return}
+  try{
+   const q=await db.query("SELECT t.id,t.task_kind,t.assigned_to,o.id AS order_id,o.section_slug,o.address FROM operations_tasks t JOIN customer_orders o ON o.id=t.order_id WHERE t.id=$1 AND o.section_slug<>'crackers'",[id]);
+   const t=q.rows[0];if(!t){res.status(404).json({error:"Task unavailable"});return}
+   if(!mayAccessTask(res.locals.user.role,t.task_kind,t.assigned_to?Number(t.assigned_to):null,Number(res.locals.user.id))){res.status(403).json({error:"Not assigned"});return}
+   const lines=await db.query("SELECT product_id,name_snapshot AS name,qty AS quantity FROM customer_order_items WHERE order_id=$1 ORDER BY product_id",[t.order_id]);
+   const canSeeAddress=["DELIVERY","OPERATIONS","ADMIN"].includes(res.locals.user.role);
+   res.json({orderId:t.order_id,section:t.section_slug,items:lines.rows,...(canSeeAddress?{deliveryAddress:t.address}:{})});
+  }catch{res.status(503).json({error:"Task details unavailable"})}
+ });
  r.patch("/api/admin/workspace/tasks/:id/assign",operator,async(req,res)=>{
   const id=Number(req.params.id),v=assignSchema.safeParse(req.body);if(!Number.isSafeInteger(id)||id<1||!v.success){res.status(400).json({error:"Invalid assignment"});return}
   try{
