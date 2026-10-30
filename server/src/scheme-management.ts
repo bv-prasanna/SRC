@@ -17,7 +17,7 @@ export const planForm=z.object({
  startDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
  endDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
  maxMembers:z.number().int().min(1).max(1000000).nullable().default(null)
-}).strict().refine(p=>!p.startDate||!p.endDate||p.startDate<=p.endDate,{message:"End date cannot precede start date"});
+}).strict().refine(p=>!p.startDate||!p.endDate||p.startDate<=p.endDate,{message:"End date cannot precede start date"}).refine(p=>p.frequency!=="QUARTERLY"||p.durationMonths%3===0,{message:"Quarterly billing requires a duration divisible by three months"});
 const statusForm=z.object({status:z.enum(["DRAFT","IN_REVIEW","PUBLISHED","ARCHIVED"]),version:z.number().int().positive()}).strict();
 const idParam=(s:string)=>{const id=Number(s);return Number.isSafeInteger(id)&&id>0?id:null};
 export function billingCycles(duration:number,frequency:"MONTHLY"|"QUARTERLY"){
