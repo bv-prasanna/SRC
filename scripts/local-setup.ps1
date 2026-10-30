@@ -48,7 +48,7 @@ if ($UseDockerDb) {
     Start-Sleep -Seconds 1
   }
   if (-not $ready) { throw "PostgreSQL did not become ready" }
-  foreach ($sql in @("001_init.sql","002_business_sections.sql","003_scheme_drafts.sql","004_content.sql","005_standard_orders.sql","006_inventory.sql","007_identity.sql","008_fulfillment.sql","009_commerce.sql","010_paid_fulfillment.sql")) {
+  foreach ($sql in @("001_init.sql","002_business_sections.sql","003_scheme_drafts.sql","004_content.sql","005_standard_orders.sql","006_inventory.sql","007_identity.sql","008_fulfillment.sql","009_commerce.sql","010_paid_fulfillment.sql","011_operational_roles.sql")) {
     $hostSql = Join-Path $repo "server/sql/$sql"
     $containerSql = "/tmp/src_$sql"
     Write-Host "Applying database migration: $sql" -ForegroundColor Cyan
@@ -59,7 +59,7 @@ if ($UseDockerDb) {
   }
   if (-not $SkipDemoSeed) {
     Write-Host "Loading clearly marked sample products for LOCAL DEMO ONLY" -ForegroundColor Yellow
-    $seedFile = Join-Path $repo "server/sql/dev_seed_catalogue_v2.sql"
+    $seedFile = Join-Path $repo "server/sql/dev_seed_catalogue_v3.sql"
     docker cp $seedFile "src-postgres-local:/tmp/dev_seed_catalogue_v2.sql"
     if ($LASTEXITCODE -ne 0) { throw "Failed to copy local demo seed" }
     docker exec src-postgres-local psql -v ON_ERROR_STOP=1 -U src -d src -f "/tmp/dev_seed_catalogue_v2.sql"
@@ -81,6 +81,15 @@ try {
   }
   npm install --no-audit --no-fund
   if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
+  if (-not $UseDockerDb) {
+    Write-Host "Using DATABASE_URL from server/.env (no Docker needed)" -ForegroundColor Cyan
+    npm run migrate
+    if ($LASTEXITCODE -ne 0) { throw "PostgreSQL migration failed. Check server/.env DATABASE_URL" }
+    if (-not $SkipDemoSeed) {
+      npm run seed:demo
+      if ($LASTEXITCODE -ne 0) { throw "Demo seed failed" }
+    }
+  }
   npm run build
   if ($LASTEXITCODE -ne 0) { throw "TypeScript build failed" }
   npm test
@@ -90,7 +99,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Coverage run failed" }
   }
   if ($RunIntegrationTests) {
-    if (-not $UseDockerDb) { throw "Use -UseDockerDb with -RunIntegrationTests" }
+    if (-not $UseDockerDb) {
+      if (-not $env:SRC_TEST_DATABASE_URL) { throw "Set SRC_TEST_DATABASE_URL to an isolated database (name ending _test) before running -RunIntegrationTests without Docker" }
+      npm run test:integration
+      if ($LASTEXITCODE -ne 0) { throw "Integration tests failed" }
+    } else {
     $existingDb = docker exec src-postgres-local psql -U src -d src -tAc "SELECT 1 FROM pg_database WHERE datname='src_test'"
     if (-not (($existingDb | Out-String).Trim() -eq "1")) {
       docker exec src-postgres-local createdb -U src src_test
@@ -103,6 +116,7 @@ try {
       npm run test:integration
       if ($LASTEXITCODE -ne 0) { throw "Integration tests failed" }
     } finally { Remove-Item Env:SRC_TEST_DATABASE_URL -ErrorAction SilentlyContinue; $env:SRC_PAYMENTS_ENABLED=$prevPayments }
+    }
   }
   Write-Host "Node build and test commands passed." -ForegroundColor Green
   if ($StartApi) {
