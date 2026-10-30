@@ -28,7 +28,7 @@ export function orderRouter(pool:Pool,admin:RequestHandler){
      let total=0;
      for(const l of input.lines){
        const p=map.get(l.productId);
-       if(!p||!p.published||p.fireworks||p.section_slug!==input.sectionSlug||p.price_paise<0)throw new Error("PRODUCT_UNAVAILABLE");
+       if(!p||!p.published||p.fireworks||p.section_slug!==input.sectionSlug||p.price_paise<0||String(p.name).endsWith("(DEMO)")||String(p.name).endsWith(" - Demo"))throw new Error("PRODUCT_UNAVAILABLE");
        total+=p.price_paise*l.quantity;
        if(!Number.isSafeInteger(total)||total>100000000)throw new Error("INVALID_TOTAL");
      }
