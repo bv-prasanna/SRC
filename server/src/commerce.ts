@@ -66,6 +66,7 @@ export async function captureConfirmedPayment(db:Pool,rzOrder:string,rzPayment:s
    await c.query("INSERT INTO stock_movements(stock_level_id,delta,reason) VALUES($1,$2,$3)",[item.stock_level_id,-item.qty,"Paid SRC order "+order.id]);
   }
   await c.query("UPDATE customer_orders SET status='PAID',paid_at=now(),razorpay_payment_id=$1 WHERE id=$2",[rzPayment,order.id]);
+  await c.query("INSERT INTO operations_tasks(order_id,task_kind) VALUES($1,'PROCUREMENT') ON CONFLICT (order_id,task_kind) DO NOTHING",[order.id]);
   // DRAFT until seller GSTIN, HSN and tax split are configured and validated.
   await c.query("INSERT INTO customer_invoices(order_id,invoice_number,kind,snapshot) VALUES($1,$2,'DRAFT',$3::jsonb) ON CONFLICT(order_id) DO NOTHING",
    [order.id,"SRC-DRAFT-"+order.id,JSON.stringify({orderId:order.id,amountPaise:amount,currency,items:items.rows.map(x=>({productId:x.product_id,name:x.name_snapshot,quantity:x.qty,unitPricePaise:x.unit_price_paise}))})]);
