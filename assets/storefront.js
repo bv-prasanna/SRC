@@ -171,6 +171,34 @@ function featured(section){
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
 function openScheme(){openDepartment("crackers");setTimeout(()=>document.getElementById("crackersScheme")?.scrollIntoView({behavior:"smooth",block:"start"}),80)}
+let lastFestivalCode="";
+function selectFestivalDuration(months){
+ const input=$("festivalDuration");
+ if(![6,10,12].includes(months)||!input)return;
+ input.value=String(months);
+ $("schemeRegistration")?.scrollIntoView({behavior:"smooth",block:"center"});
+}
+async function registerFestival(e){
+ e.preventDefault();
+ const form=e.currentTarget,data=Object.fromEntries(new FormData(form));
+ const result=$("festivalEnrolResult"),button=$("festivalEnrolButton");
+ if(!form.reportValidity())return;
+ button.disabled=true;result.textContent="Registering your scheme ID…";
+ try{
+  const body={fullName:data.fullName,phone:data.phone,email:data.email||"",durationMonths:Number(data.durationMonths),consent:data.consent==="on"};
+  const response=await request("/api/festival/enrol",{method:"POST",body:JSON.stringify(body)});
+  lastFestivalCode=response.membershipCode;
+  result.innerHTML='<div class="festival-receipt"><span class="tag">Registration received</span><h3>Your SRC membership ID</h3><div class="festival-code">'+esc(lastFestivalCode)+'</div><p>Selected duration: '+Number(response.durationMonths)+' months · '+Number(response.year)+'</p><p>Save this ID and bring it with your registered mobile to the SRC shop for verification. No money has been collected and this is not a fireworks order.</p><button type="button" class="btn light" onclick="SRC.copyFestivalCode()">Copy membership ID</button></div>';
+  form.reset();
+ }catch(err){result.textContent=err.message}
+ finally{button.disabled=false}
+}
+async function copyFestivalCode(){
+ if(!lastFestivalCode)return;
+ try{await navigator.clipboard.writeText(lastFestivalCode);$("festivalEnrolResult").querySelector(".festival-receipt .tag").textContent="ID copied"}
+ catch{$("festivalEnrolResult").querySelector(".festival-receipt .tag").textContent="Select and copy the ID above"}
+}
+
 function renderOffers(){
  const root=$("offersGrid");if(!root)return;
  const promos=state.promotions.filter(p=>p.published!==false);
@@ -266,6 +294,7 @@ $("globalSearch").addEventListener("submit",e=>{e.preventDefault();const term=$(
 $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEventListener("click",()=>{state.authMode=state.authMode==="login"?"register":"login";renderAuth()});
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
-window.SRC={go,openDepartment,openScheme,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,invoice};
+$("festivalEnrolForm").addEventListener("submit",registerFestival);
+window.SRC={go,openDepartment,openScheme,selectFestivalDuration,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
