@@ -92,6 +92,9 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal(verify.code,200);
   const visit=await call("/api/admin/festival/members/"+freeRegistration.data.membershipCode+"/visit","POST",{phoneLast4:mobile.slice(-4),notes:"UAT-only shop verification"},adminSession);
   assert.equal(visit.code,201);
+  const receiptReference="SHOP-UAT-"+randomUUID().replaceAll("-","").slice(0,12);
+  const counter=await call("/api/admin/festival/members/"+freeRegistration.data.membershipCode+"/counter-receipt","POST",{phoneLast4:mobile.slice(-4),receiptReference,notes:"Test-only physical shop receipt"},adminSession);
+  assert.equal(counter.code,201);
   const out=await call("/api/auth/logout","POST",{},userToken);assert.equal(out.code,204);
   assert.equal((await call("/api/auth/me","GET",undefined,userToken)).code,401);
  }finally{await new Promise<void>(r=>server.close(()=>r()));await db.end()}
