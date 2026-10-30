@@ -50,7 +50,7 @@ async function updateUserAccess(i){const user=rows[i];const roles=["CUSTOMER","A
 function renderFestivalMembers(){
  const count=rows.length;
  document.getElementById("body").innerHTML='<div class="panel"><h2>Festival scheme registrations</h2><p class="help">Members register free on the Crackers page and receive a unique SRC reference. Verify their registered mobile at the shop. These records are not orders, instalments or proof of payment.</p><div class="action-group"><input style="max-width:320px" id="festivalSearch" placeholder="Search by membership ID or mobile" aria-label="Search festival members"><button onclick="searchFestivalMembers()">Search</button><button class="alt" onclick="openTab(\'festival-members\')">Refresh</button></div><p class="tiny">'+count+' members in this view</p></div>'+
- '<div class="panel table">'+(rows.length?'<table><thead><tr><th>Member ID</th><th>Name</th><th>Phone</th><th>Duration</th><th>Status</th><th>Shop visits</th><th>Actions</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><b>'+esc(r.membership_code)+'</b></td><td>'+esc(r.full_name)+'</td><td>'+esc(r.phone)+'</td><td>'+Number(r.duration_months)+' months</td><td><span class="status-pill">'+esc(r.status)+'</span></td><td>'+Number(r.store_visits||0)+'</td><td><div class="action-group">'+(r.status==="REGISTERED"?'<button class="alt" onclick="verifyFestivalMember('+i+')">Verify at shop</button>':'')+(r.status==="VERIFIED"?'<button onclick="recordFestivalVisit('+i+')">Log shop visit</button>':'')+'</div></td></tr>').join("")+'</tbody></table>':'<p class="help">No festival members registered yet.</p>')+'</div>';
+ '<div class="panel table">'+(rows.length?'<table><thead><tr><th>Member ID</th><th>Name</th><th>Phone</th><th>Duration</th><th>Status</th><th>Shop visits</th><th>Actions</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><b>'+esc(r.membership_code)+'</b></td><td>'+esc(r.full_name)+'</td><td>'+esc(r.phone)+'</td><td>'+Number(r.duration_months)+' months</td><td><span class="status-pill">'+esc(r.status)+'</span></td><td>'+Number(r.store_visits||0)+'</td><td><div class="action-group">'+(r.status==="REGISTERED"?'<button class="alt" onclick="verifyFestivalMember('+i+')">Verify at shop</button>':'')+(r.status==="VERIFIED"?'<button onclick="recordFestivalVisit('+i+')">Log shop visit</button><button class="alt" onclick="linkFestivalReceipt('+i+')">Link shop receipt</button>':'')+'</div></td></tr>').join("")+'</tbody></table>':'<p class="help">No festival members registered yet.</p>')+'</div>';
 }
 async function searchFestivalMembers(){
  const term=document.getElementById("festivalSearch")?.value.trim()||"";
@@ -66,6 +66,18 @@ async function recordFestivalVisit(i){
  if(!last4||!/^[0-9]{4}$/.test(last4))return;
  const notes=prompt("Optional in-store visit note (do not record payment or firework orders here):","")||"";
  try{await api("/api/admin/festival/members/"+encodeURIComponent(r.membership_code)+"/visit",{method:"POST",body:JSON.stringify({phoneLast4:last4,notes})});notify("In-store visit logged. Any lawful purchase is handled separately at the licensed counter.");await openTab("festival-members")}catch(e){notify(e.message)}
+}
+async function linkFestivalReceipt(i){
+ const m=rows[i];
+ if(!m||m.status!=="VERIFIED")return;
+ const phoneLast4=prompt("Verify last four digits of registered mobile:");
+ if(!phoneLast4||!/^[0-9]{4}$/.test(phoneLast4))return;
+ const receiptReference=prompt("Enter the separately issued physical SRC shop receipt number:");
+ if(!receiptReference||!/^[A-Za-z0-9][A-Za-z0-9_-]{2,59}$/.test(receiptReference))return;
+ try{
+  await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/counter-receipt",{method:"POST",body:JSON.stringify({phoneLast4,receiptReference,notes:"In-person counter receipt reference"})});
+  notify("Physical shop receipt linked. No online fireworks sale or payment was processed.");
+ }catch(e){notify(e.message)}
 }
 function renderDashboard(){
  const d=rows;
