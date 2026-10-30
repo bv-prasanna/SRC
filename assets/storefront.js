@@ -60,7 +60,7 @@ function go(view){show(view);history.replaceState(null,"","#"+view);if(view==="c
 const sectionCampaigns={
  crackers:[
   {title:"Make every celebration memorable.",description:"Discover festive collections, educational product demonstrations and in-store information.",photo:photos.crackers},
-  {title:"Crackers scheme & festival planning.",description:"Explore proposed plan durations and essential information. Applications and collections are not open online.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
+  {title:"Crackers scheme & festival planning.",description:"Register free for a unique SRC festival membership ID. Bring the ID to our shop during Diwali; payment and sales remain in-store subject to approved terms.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
   {title:"Celebrate with safety in mind.",description:"Learn about product effects and safety guidance before visiting a licensed retail outlet.",photo:"https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1600&q=85&fit=crop"}
  ],
  housekeeping:[
