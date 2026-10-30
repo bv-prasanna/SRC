@@ -18,7 +18,7 @@ export function newFestivalCode(year:number){
  return "SRC-"+year+"-"+randomBytes(12).toString("hex").toUpperCase();
 }
 export function festivalRouter(db:Pool){
- const r=Router(),admin=requireRole(db,["ADMIN"]);
+ const r=Router(),shop=requireRole(db,["ADMIN","OPERATIONS"]);
  const limiter=rateLimit({windowMs:60*60*1000,limit:5,standardHeaders:"draft-7",legacyHeaders:false,message:{error:"Too many registration attempts. Please visit SRC directly."}});
  r.post("/api/festival/enrol",limiter,async(req,res)=>{
   const data=festivalRegistrationSchema.safeParse(req.body);
@@ -34,7 +34,7 @@ export function festivalRouter(db:Pool){
    res.status(201).json({membershipCode:q.rows[0].membership_code,year:q.rows[0].scheme_year,durationMonths:q.rows[0].duration_months,status:q.rows[0].status,message:"Registration received. Present your membership ID and registered mobile at the SRC shop for verification. No payment or fireworks order has been made."});
   }catch{res.status(503).json({error:"Registration temporarily unavailable. Please try at the shop."})}
  });
- r.get("/api/admin/festival/members",admin,async(req,res)=>{
+ r.get("/api/admin/festival/members",shop,async(req,res)=>{
   const search=String(req.query.search||"").trim().slice(0,80);
   try{
    const q=await db.query(
@@ -42,7 +42,7 @@ export function festivalRouter(db:Pool){
    res.json(q.rows);
   }catch{res.status(503).json({error:"Member list unavailable"})}
  });
- r.patch("/api/admin/festival/members/:code/verify",admin,async(req,res)=>{
+ r.patch("/api/admin/festival/members/:code/verify",shop,async(req,res)=>{
   const data=verifySchema.safeParse(req.body),code=String(req.params.code||"");
   if(!data.success||!/^SRC-[0-9]{4}-[A-F0-9]{24}$/.test(code)){res.status(400).json({error:"Invalid membership ID or phone verification"});return}
   try{
@@ -52,7 +52,7 @@ export function festivalRouter(db:Pool){
    res.status(q.rowCount?200:409).json(q.rows[0]||{error:"Not found, phone mismatch, or already verified/cancelled"});
   }catch{res.status(503).json({error:"Verification unavailable"})}
  });
- r.post("/api/admin/festival/members/:code/visit",admin,async(req,res)=>{
+ r.post("/api/admin/festival/members/:code/visit",shop,async(req,res)=>{
   const data=visitSchema.safeParse(req.body),code=String(req.params.code||"");
   if(!data.success||!/^SRC-[0-9]{4}-[A-F0-9]{24}$/.test(code)){res.status(400).json({error:"Invalid visit details"});return}
   try{
