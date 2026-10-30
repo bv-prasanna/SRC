@@ -11,3 +11,4 @@ test("reject end date before start",()=>assert.equal(planForm.safeParse({...vali
 test("reject financial or payment activation injection",()=>assert.equal(planForm.safeParse({...valid,razorpayEnabled:true}).success,false));
 test("draft follows internal review before display",()=>{assert.equal(statusCanChange("DRAFT","IN_REVIEW"),true);assert.equal(statusCanChange("DRAFT","PUBLISHED"),false);assert.equal(statusCanChange("IN_REVIEW","PUBLISHED"),true)});
 test("published plans are immutable and can be archived",()=>{assert.equal(statusCanChange("PUBLISHED","DRAFT"),false);assert.equal(statusCanChange("PUBLISHED","ARCHIVED"),true);assert.equal(statusCanChange("ARCHIVED","PUBLISHED"),false)});
+test("reject quarterly contribution on 10 month scheme",()=>assert.equal(planForm.safeParse({...valid,frequency:"QUARTERLY"}).success,false));
