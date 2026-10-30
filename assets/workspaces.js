@@ -32,7 +32,7 @@ function staffOptions(kind,assigned){
 }
 function taskCard(t){
  const controls=(role==="OPERATIONS"||user?.role==="ADMIN")?'<div class="task-action"><select aria-label="Assign task" id="assign-'+Number(t.id)+'">'+staffOptions(t.task_kind,t.assigned_to)+'</select><button class="alt" onclick="WORK.assign('+Number(t.id)+')">Assign</button></div>':'';
- const actions=t.status==="COMPLETED"?'':('<div class="task-action">'+(t.status==="PENDING"?'<button class="alt" onclick="WORK.update('+Number(t.id)+',\'IN_PROGRESS\')">Start</button>':'')+'<button onclick="WORK.update('+Number(t.id)+',\'COMPLETED\')">Complete stage</button></div>');
+ const actions=t.status==="COMPLETED"?'':('<div class="task-action"><button class="alt" onclick="WORK.details('+Number(t.id)+')">View items</button>'+(t.status==="PENDING"?'<button class="alt" onclick="WORK.update('+Number(t.id)+',\'IN_PROGRESS\')">Start</button>':'')+'<button onclick="WORK.update('+Number(t.id)+',\'COMPLETED\')">Complete stage</button></div>');
  return '<article class="panel task-card"><div><div class="task-title"><h3>Order #'+esc(t.order_id)+' · '+esc(t.task_kind)+'</h3><span class="tag '+(t.status==="COMPLETED"?"done":"")+'">'+esc(t.status)+'</span></div><p>'+esc(t.section_slug)+' · Order status: '+esc(t.order_status)+' · Task ID: '+Number(t.id)+'</p>'+(t.instructions?'<p>'+esc(t.instructions)+'</p>':'')+'<small>Assigned: '+esc(t.assigned_email||t.assigned_to||"Unassigned")+'</small></div><div>'+controls+actions+'</div></article>'
 }
 async function refresh(){
@@ -48,6 +48,13 @@ async function refresh(){
   if(role==="OPERATIONS"||user?.role==="ADMIN")staff=await api("/api/workspace/staff");
   summary();$("queueTitle").textContent=role==="OPERATIONS"?"All active operational tasks":title+" · Assigned tasks";
   $("queue").innerHTML=items.length?items.map(taskCard).join(""):'<div class="empty">No tasks available for this role yet. Orders appear here after eligible standard-goods payment and task assignment.</div>'
+ }catch(err){status(err.message,true)}
+}
+async function details(id){
+ try{
+  const d=await api("/api/workspace/tasks/"+id+"/details");
+  const items=(d.items||[]).map(x=>esc(x.name)+" × "+Number(x.quantity)).join("\n");
+  alert("Order #"+d.orderId+" · "+d.section+"\n"+items+(d.deliveryAddress?"\n\nDelivery address:\n"+d.deliveryAddress:""));
  }catch(err){status(err.message,true)}
 }
 async function update(id,next){
@@ -71,5 +78,5 @@ async function startOrder(){
 }
 if(role==="OPERATIONS")$("operatorActions").classList.remove("hidden");
 $("startOrder").onclick=startOrder;
-window.WORK={update,assign};
+window.WORK={update,assign,details};
 })();
