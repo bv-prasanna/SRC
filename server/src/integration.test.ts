@@ -53,6 +53,31 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal((await call("/api/payments/config")).data.enabled,false);
   const checkout=await call("/api/checkout/orders","POST",{sectionSlug:"housekeeping",address:"Example Street Bengaluru Karnataka",idempotencyKey:randomUUID(),items:[{productId:id,quantity:1}]},userToken);
   assert.equal(checkout.code,503);
+  // Role-based operational flow is tested with database-scoped synthetic paid orders.
+  // No gateway payment is initiated and the test DB name is checked above.
+  await db.query("UPDATE app_users SET role='ADMIN' WHERE email=$1",[email]);
+  const elevated=await call("/api/auth/login","POST",{email,password:pass});
+  assert.equal(elevated.code,200);
+  const adminSession=elevated.data.token as string;
+  assert.equal((await call("/api/admin/dashboard","GET",undefined,adminSession)).code,200);
+  const procurementEmail="proc-"+randomUUID()+"@example.org";
+  assert.equal((await call("/api/auth/register","POST",{email:procurementEmail,password:pass})).code,201);
+  const procUser=await db.query("UPDATE app_users SET role='PROCUREMENT' WHERE email=$1 RETURNING id",[procurementEmail]);
+  const procLogin=await call("/api/auth/login","POST",{email:procurementEmail,password:pass});
+  assert.equal(procLogin.code,200);
+  const procSession=procLogin.data.token as string;
+  const customerId=(await db.query("SELECT id FROM app_users WHERE email=$1",[email])).rows[0].id;
+  const order=(await db.query("INSERT INTO customer_orders(user_id,section_slug,status,amount_paise,address,idem_key) VALUES($1,'housekeeping','PAID',12500,'Integration test delivery address',$2) RETURNING id",[customerId,randomUUID()])).rows[0];
+  const started=await call("/api/admin/workspace/orders/"+order.id+"/start","POST",{},adminSession);
+  assert.equal(started.code,201);
+  const taskId=started.data.id;
+  assert.equal((await call("/api/workspace/tasks","GET",undefined,procSession)).data.length,0);
+  assert.equal((await call("/api/admin/workspace/tasks/"+taskId+"/assign","PATCH",{userId:Number(procUser.rows[0].id)},adminSession)).code,200);
+  const queue=await call("/api/workspace/tasks","GET",undefined,procSession);
+  assert.equal(queue.code,200);assert.equal(queue.data.some((t:any)=>String(t.id)===String(taskId)),true);
+  assert.equal((await call("/api/workspace/tasks/"+taskId+"/status","PATCH",{status:"COMPLETED",notes:"Integration-only procurement signoff"},procSession)).code,200);
+  const progressed=await db.query("SELECT status FROM customer_orders WHERE id=$1",[order.id]);
+  assert.equal(progressed.rows[0].status,"PACKING");
   const out=await call("/api/auth/logout","POST",{},userToken);assert.equal(out.code,204);
   assert.equal((await call("/api/auth/me","GET",undefined,userToken)).code,401);
  }finally{await new Promise<void>(r=>server.close(()=>r()));await db.end()}
