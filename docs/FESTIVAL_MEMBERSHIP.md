@@ -4,7 +4,7 @@ This is **free registration only**, not a purchase, financial contribution, depo
 
 ## Intended business workflow
 
-1. Customer browses SRC > Crackers > Festival scheme.
+1. Customer browses SRC > Scheme.
 2. Customer selects a tentative 6-, 10- or 12-month duration, enters name, Indian mobile and optional email, and agrees to contact-data use.
 3. The API creates a unique non-sequential **SRC-YYYY-XXXXXXXX…** registration ID, returned on the confirmation page. The code has a 96-bit random component. The customer saves/copies the code.
 4. At the shop, an authorized **OPERATIONS** or **ADMIN** staff member searches the exact ID or registered mobile number, confirms the mobile's last four digits and changes registration to VERIFIED.
@@ -13,7 +13,7 @@ This is **free registration only**, not a purchase, financial contribution, depo
 
 ## User interfaces
 
-- `/#section/crackers` — customer enrolment and unique membership ID.
+- `/#section/scheme` — customer enrolment and unique membership ID.
 - `/admin.html` > Festival members — member list, exact-code/mobile search, verify, log visit, link physical receipt.
 - `/operations.html` > Festival desk — staff verification and physical-counter receipt linking with **OPERATIONS** credentials (no shared admin login).
 
@@ -48,3 +48,6 @@ However, **periodic money collection toward future fireworks or promised bonus g
 Before activating any contributions, have Karnataka counsel/accountant confirm: legal entity and licence scope; written member terms, benefit formula and termination/refund provisions; how advances are treated, tax/GST and bookkeeping; cash/UPI/payment processor policy; physical-store sale at Diwali; privacy notice, consent, access control and retention. Do not activate Razorpay for fireworks.
 
 The free ID system has no public code lookup that reveals member PII and requires staff login for verification. SMS/OTP verification, production privacy notices, rate-limiter persistence and browser/UAT testing are still required before broad public launch.
+
+## Four-section storefront (October 2026)
+Scheme is a standalone page; Stationery, Housekeeping and Crackers have independent catalogues. Free membership ID registration remains available. Razorpay subscription collection is not activated for any plan redeemable toward fireworks or until the commercial and legal terms receive approval.
