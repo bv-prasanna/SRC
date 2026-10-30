@@ -23,7 +23,7 @@ export function orderRouter(pool:Pool,admin:RequestHandler){
    if(!client){res.status(503).json({error:"Database unavailable"});return}
    try{
      await client.query("BEGIN");
-     const rows=await client.query('SELECT id,section_slug,price_paise,published,fireworks FROM products WHERE id=ANY($1::bigint[]) FOR SHARE',[...ids]);
+     const rows=await client.query('SELECT id,name,section_slug,price_paise,published,fireworks FROM products WHERE id=ANY($1::bigint[]) FOR SHARE',[...ids]);
      const map=new Map<number,any>(rows.rows.map(x=>[Number(x.id),x]));
      let total=0;
      for(const l of input.lines){
