@@ -14,6 +14,7 @@ export const festivalRegistrationSchema=z.object({
 }).strict();
 const verifySchema=z.object({phoneLast4:z.string().regex(/^[0-9]{4}$/)}).strict();
 const visitSchema=verifySchema.extend({notes:z.string().max(500).default("")});
+const counterReceiptSchema=visitSchema.extend({receiptReference:z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9_-]{2,59}$/)});
 export function newFestivalCode(year:number){
  return "SRC-"+year+"-"+randomBytes(12).toString("hex").toUpperCase();
 }
@@ -61,6 +62,17 @@ export function festivalRouter(db:Pool){
     [res.locals.user.id,data.data.notes,code,data.data.phoneLast4]);
    res.status(q.rowCount?201:403).json(q.rows[0]||{error:"Verify member code and phone before logging an in-store visit"});
   }catch{res.status(503).json({error:"Store visit could not be recorded"})}
+ });
+ r.post("/api/admin/festival/members/:code/counter-receipt",shop,async(req,res)=>{
+  const data=counterReceiptSchema.safeParse(req.body),code=String(req.params.code||"");
+  if(!data.success||!/^SRC-[0-9]{4}-[A-F0-9]{24}$/.test(code)){res.status(400).json({error:"Valid member code, phone and physical receipt number are required"});return}
+  try{
+   // A licensed shop completes the purchase and issues its own receipt BEFORE this reference is logged.
+   const q=await db.query(
+    "INSERT INTO festival_counter_receipts(member_id,receipt_reference,recorded_by,notes) SELECT id,$1,$2,$3 FROM festival_members WHERE membership_code=$4 AND RIGHT(phone,4)=$5 AND status='VERIFIED' RETURNING id,receipt_reference,recorded_at",
+    [data.data.receiptReference,res.locals.user.id,data.data.notes,code,data.data.phoneLast4]);
+   res.status(q.rowCount?201:403).json(q.rows[0]||{error:"Membership must first be verified at the shop"});
+  }catch(e:any){res.status(e?.code==="23505"?409:503).json({error:e?.code==="23505"?"Physical receipt reference is already linked":"Unable to record receipt reference"})}
  });
  return r;
 }
