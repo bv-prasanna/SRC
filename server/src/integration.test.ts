@@ -53,6 +53,13 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal(stock.code,201);
   const movement=await call("/api/admin/inventory/movements","POST",{productId:id,warehouseCode:"MAIN",delta:10,reason:"UAT receiving"},token);
   assert.equal(movement.code,200);
+  // Stock adjustments cannot consume quantities reserved for pending customer payments.
+  await db.query("UPDATE stock_levels SET reserved=8 WHERE product_id=$1 AND warehouse_code='MAIN'",[id]);
+  const reservedMovement=await call("/api/admin/inventory/movements","POST",{productId:id,warehouseCode:"MAIN",delta:-3,reason:"Must not consume reserved units"},token);
+  assert.equal(reservedMovement.code,409);
+  const availability=await db.query("SELECT on_hand,reserved FROM stock_levels WHERE product_id=$1",[id]);
+  assert.equal(availability.rows[0].on_hand,10);assert.equal(availability.rows[0].reserved,8);
+  await db.query("UPDATE stock_levels SET reserved=0 WHERE product_id=$1",[id]);
   const enquiry=await call("/api/enquiries","POST",{customerName:"Example Buyer",email,phone:"9876543210",sectionSlug:"housekeeping",lines:[{productId:id,quantity:1}]});
   assert.equal(enquiry.code,201);
   const bad=await call("/api/enquiries","POST",{customerName:"Example Buyer",email,phone:"9876543210",sectionSlug:"crackers",lines:[{productId:id,quantity:1}]});
@@ -106,6 +113,17 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   const planPhone="8"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
   const linked=await call("/api/festival/enrol","POST",{fullName:"Plan test",phone:planPhone,email:"",durationMonths:10,schemePlanId:planId,consent:true});
   assert.equal(linked.code,201);
+  // Next year's published plan must allow current-year sign-up and issue the correct year-coded ID.
+  const futurePlan=await call("/api/admin/scheme-plans","POST",{...plan,code:code+"_NEXT",schemeYear:year+1},adminSession);
+  assert.equal(futurePlan.code,201);
+  const futurePlanId=Number(futurePlan.data.id);
+  assert.equal((await call("/api/admin/scheme-plans/"+futurePlanId+"/status","PATCH",{status:"IN_REVIEW",version:1},adminSession)).code,200);
+  assert.equal((await call("/api/admin/scheme-plans/"+futurePlanId+"/status","PATCH",{status:"PUBLISHED",version:2},adminSession)).code,200);
+  const futurePhone="7"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
+  const nextYearReg=await call("/api/festival/enrol","POST",{fullName:"Next year test",phone:futurePhone,email:"",durationMonths:10,schemePlanId:futurePlanId,consent:true});
+  assert.equal(nextYearReg.code,201);
+  assert.equal(nextYearReg.data.year,year+1);
+  assert.match(nextYearReg.data.membershipCode,new RegExp("^SRC-"+(year+1)+"-"));
   const members=await db.query("SELECT scheme_plan_id FROM festival_members WHERE membership_code=$1",[linked.data.membershipCode]);
   assert.equal(Number(members.rows[0].scheme_plan_id),planId);
   assert.equal((await call("/api/admin/scheme-plans/summary","GET",undefined,adminSession)).data.gateway.subscriptionCollectionEnabled,false);
