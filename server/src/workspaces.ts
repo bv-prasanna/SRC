@@ -9,7 +9,7 @@ const updateSchema=z.object({status:z.enum(["IN_PROGRESS","COMPLETED"]),notes:z.
 const assignSchema=z.object({userId:z.number().int().positive()});
 const taskRole:Record<string,Role>={PROCUREMENT:"PROCUREMENT",PACKING:"PACKING",DELIVERY:"DELIVERY"};
 export function mayAccessTask(role:Role,kind:string,assignee:number|null,userId:number){
- if(role==="ADMIN"||role==="OPERATIONS")return true;
+ if(role==="ADMIN"||role==="SUPER_ADMIN"||role==="OPERATIONS")return true;
  return taskRole[kind]===role&&assignee!==null&&assignee===userId;
 }
 export function nextTask(kind:string):"PACKING"|"DELIVERY"|null{
@@ -47,7 +47,7 @@ export function workspacesRouter(db:Pool){
  r.get("/api/workspace/tasks",worker,async(_req,res)=>{
   const user=res.locals.user;
   try{
-   const query=user.role==="ADMIN"||user.role==="OPERATIONS"?
+   const query=user.role==="ADMIN"||user.role==="SUPER_ADMIN"||user.role==="OPERATIONS"?
     "SELECT t.id,t.order_id,t.task_kind,t.status,t.assigned_to,t.instructions,t.created_at,o.section_slug,o.status AS order_status,u.email AS assigned_email FROM operations_tasks t JOIN customer_orders o ON o.id=t.order_id LEFT JOIN app_users u ON u.id=t.assigned_to WHERE o.section_slug<>'crackers' ORDER BY t.created_at DESC LIMIT 300":
     "SELECT t.id,t.order_id,t.task_kind,t.status,t.assigned_to,t.instructions,t.created_at,o.section_slug,o.status AS order_status FROM operations_tasks t JOIN customer_orders o ON o.id=t.order_id WHERE t.assigned_to=$1 AND t.task_kind=$2 AND o.section_slug<>'crackers' ORDER BY t.created_at DESC LIMIT 150";
    const params=user.role==="ADMIN"||user.role==="OPERATIONS"?[]:[user.id,user.role];
@@ -69,7 +69,7 @@ export function workspacesRouter(db:Pool){
    const t=q.rows[0];if(!t){res.status(404).json({error:"Task unavailable"});return}
    if(!mayAccessTask(res.locals.user.role,t.task_kind,t.assigned_to?Number(t.assigned_to):null,Number(res.locals.user.id))){res.status(403).json({error:"Not assigned"});return}
    const lines=await db.query("SELECT product_id,name_snapshot AS name,qty AS quantity FROM customer_order_items WHERE order_id=$1 ORDER BY product_id",[t.order_id]);
-   const canSeeAddress=["DELIVERY","OPERATIONS","ADMIN"].includes(res.locals.user.role);
+   const canSeeAddress=["DELIVERY","OPERATIONS","ADMIN","SUPER_ADMIN"].includes(res.locals.user.role);
    res.json({orderId:t.order_id,section:t.section_slug,items:lines.rows,...(canSeeAddress?{deliveryAddress:t.address}:{})});
   }catch{res.status(503).json({error:"Task details unavailable"})}
  });
