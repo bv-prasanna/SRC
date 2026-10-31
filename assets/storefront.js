@@ -272,7 +272,7 @@ async function invoice(id){try{const i=await request("/api/checkout/orders/"+id+
 function renderAuth(){
  $("authHeading").textContent=state.user?"Signed in: "+state.user.email:(state.authMode==="login"?"Sign in to your account":"Create a customer account");
  $("authForm").classList.toggle("hide",!!state.user);$("logoutButton").classList.toggle("hide",!state.user);$("userLinks").classList.toggle("hide",!state.user);
- if(state.user){const links=$("userLinks").querySelectorAll("a");links[0].classList.toggle("hide",!["ADMIN","SUPER_ADMIN"].includes(state.user.role));links[1].classList.toggle("hide",!["AGENT","ADMIN","SUPER_ADMIN"].includes(state.user.role));links.forEach(a=>{if(a.dataset.allowed)a.classList.toggle("hide",!a.dataset.allowed.split(",").includes(state.user.role))})}
+ if(state.user){const links=$("userLinks").querySelectorAll("a");links[0].classList.toggle("hide",!["ADMIN","SUPER_ADMIN"].includes(state.user.role));links[1].classList.toggle("hide",!["AGENT","ADMIN","SUPER_ADMIN"].includes(state.user.role));links.forEach(a=>{if(a.dataset.allowed)a.classList.toggle("hide",!(a.dataset.allowed.split(",").includes(state.user.role)||(state.user.role==="SUPER_ADMIN"&&a.dataset.allowed.split(",").includes("ADMIN"))))})}
  $("authModeToggle").textContent=state.authMode==="login"?"Create a customer account":"Have an account? Sign in";
  $("authSubmit").textContent=state.authMode==="login"?"Sign in":"Create account";
  $("accountLabel").textContent=state.user?"My SRC":'My Account';
