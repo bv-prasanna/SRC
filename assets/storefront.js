@@ -136,7 +136,7 @@ function renderProducts(){
  $("deptCategoryChips").innerHTML=['',...cats].map(c=>'<button type="button" class="'+(category===c?"active":"")+'" onclick="SRC.setDepartmentCategory(\''+esc(c).replace(/'/g,"&#39;")+'\')">'+esc(c||"All products")+'</button>').join("");
  const shown=all.filter(p=>(!category||p.category===category)&&(!q||(p.name+" "+p.category+" "+(p.description||"")).toLowerCase().includes(q)));
  $("resultCount").textContent=shown.length+" items";
- const preview=all.some(p=>p.previewOnly);
+ const preview=all.some(p=>p.previewOnly||String(p.name||"").endsWith("(DEMO)")||String(p.name||"").endsWith(" - Demo"));
  $("deptDemoNote").innerHTML=preview?'<div class="notice">DEMO CATALOGUE · These are illustrative products and images for design review, not confirmed prices or inventory. Add and publish products through SRC Admin for the live catalogue.</div>':'';
  $("deptProducts").innerHTML=shown.length?shown.map(p=>{
   const img=productImage(p);
@@ -144,7 +144,7 @@ function renderProducts(){
   const authorized=!isPreview&&["housekeeping","stationery"].includes(section)&&state.sections.find(s=>s.slug===section)?.commerceMode==="STANDARD";
   return '<article class="product product-card"><div class="product-photo">'+(img?'<img loading="lazy" src="'+esc(img)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+(isPreview?'<span class="preview-ribbon">DEMO</span>':'')+'</div><div class="product-info"><span class="tag '+(section==="crackers"?"warn":"")+'">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"Explore product details with SRC.")+'</p>'+
    (section==="crackers"?'<span class="tag warn">In-store information only</span>':
-   '<strong>'+price(p.pricePaise)+'</strong>'+(authorized?'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry →</button>':'<button class="btn light" disabled>'+(p.previewOnly?"Illustrative preview":"Contact for details")+'</button>'))+'</div></article>'
+   '<strong>'+(isPreview||Number(p.pricePaise)===0?'Price on request':price(p.pricePaise))+'</strong>'+(authorized?'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry →</button>':'<button class="btn light" disabled>'+(isPreview?"Sample product":"Contact for details")+'</button>'))+'</div></article>'
  }).join(""):'<div class="empty"><h3>No matching products</h3><p class="muted">Try another category or search term.</p></div>';
 }
 const demoPhotos={
@@ -172,7 +172,7 @@ function featured(section){
  $("featuredViewAll").onclick=()=>openDepartment(section);
  $("featuredProducts").innerHTML=products.length?products.map(p=>{
  const src=productImage(p),demo=!!p.previewOnly||String(p.name||"").endsWith(" - Demo")||String(p.name||"").endsWith("(DEMO)");
- return '<article class="product"><div class="product-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3>'+(demo?'<span class="demo-label">Demo item · illustrative image</span>':'')+'<strong>'+price(p.pricePaise)+'</strong>'+(demo?'<button class="btn light" onclick="SRC.openDepartment(\''+section+'\')">View demo collection</button>':'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry</button>')+'</div></article>'
+ return '<article class="product"><div class="product-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag">'+esc(p.category||section)+'</span><h3>'+esc(p.name)+'</h3>'+(demo?'<span class="demo-label">Demo item · illustrative image</span>':'')+'<strong>'+(demo||Number(p.pricePaise)===0?'Price on request':price(p.pricePaise))+'</strong>'+(demo?'<button class="btn light" onclick="SRC.openDepartment(\''+section+'\')">View demo collection</button>':'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry</button>')+'</div></article>'
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
 function openScheme(){show("scheme");history.replaceState(null,"","#section/scheme")}
