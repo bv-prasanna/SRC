@@ -75,8 +75,12 @@ const sectionCampaigns={
  ]
 };
 function catalogueFor(section){
- const live=state.products.filter(p=>p.sectionSlug===section);
- return live.length?live:(window.SRC_PREVIEW_PRODUCTS||[]).filter(p=>p.sectionSlug===section);
+ const published=state.products.filter(p=>p.sectionSlug===section);
+ const real=published.filter(p=>!p.previewOnly&&!String(p.name||"").endsWith("(DEMO)")&&!String(p.name||"").endsWith(" - Demo"));
+ // As soon as SRC publishes real products, show that genuine catalogue instead of
+ // mixing illustrative SKUs with goods customers can actually enquire about.
+ if(real.length)return real;
+ return published.length?published:(window.SRC_PREVIEW_PRODUCTS||[]).filter(p=>p.sectionSlug===section);
 }
 function renderDepartmentHero(slug){
  const configured=state.media.filter(x=>x.type==="HERO"&&x.category===slug&&safeURL(x.url)).map(x=>({
