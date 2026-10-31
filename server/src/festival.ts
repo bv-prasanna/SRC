@@ -25,21 +25,33 @@ export function festivalRouter(db:Pool){
  r.post("/api/festival/enrol",limiter,async(req,res)=>{
   const data=festivalRegistrationSchema.safeParse(req.body);
   if(!data.success){res.status(400).json({error:"Check the name, phone number, selected plan and consent"});return}
-  const year=new Date().getUTCFullYear(),v=data.data;
+  const v=data.data;
+  let client;
   try{
+   client=await db.connect();await client.query("BEGIN");
+   let year=new Date().getUTCFullYear();
    if(v.schemePlanId){
-    const available=await db.query("SELECT id,max_members FROM src_scheme_plans WHERE id=$1 AND scheme_year=$2 AND duration_months=$3 AND status='PUBLISHED' AND (start_date IS NULL OR start_date<=current_date) AND (end_date IS NULL OR end_date>=current_date)",[v.schemePlanId,year,v.durationMonths]);
-    if(!available.rowCount){res.status(409).json({error:"Selected scheme plan is not open for registration"});return}
-    if(available.rows[0].max_members!==null){const registered=await db.query("SELECT COUNT(*)::int AS count FROM festival_members WHERE scheme_plan_id=$1",[v.schemePlanId]);if(Number(registered.rows[0].count)>=Number(available.rows[0].max_members)){res.status(409).json({error:"Scheme registration limit reached"});return}}
+    // Lock the selected plan to serialize capacity checks across concurrent registrations.
+    const q=await client.query("SELECT id,scheme_year,max_members FROM src_scheme_plans WHERE id=$1 AND duration_months=$2 AND status='PUBLISHED' AND (start_date IS NULL OR start_date<=current_date) AND (end_date IS NULL OR end_date>=current_date) FOR UPDATE",[v.schemePlanId,v.durationMonths]);
+    if(!q.rowCount){await client.query("ROLLBACK");res.status(409).json({error:"Selected plan is not open for registration"});return}
+    year=Number(q.rows[0].scheme_year);
+    if(q.rows[0].max_members!==null){
+     const count=await client.query("SELECT COUNT(*)::int AS count FROM festival_members WHERE scheme_plan_id=$1",[v.schemePlanId]);
+     if(Number(count.rows[0].count)>=Number(q.rows[0].max_members)){
+      await client.query("ROLLBACK");res.status(409).json({error:"Registration capacity reached"});return
+     }
+    }
    }
-   // The membership code identifies a registration; it is NOT a cracker order, scheme payment or financial entitlement.
    const code=newFestivalCode(year);
-   const q=await db.query(
-    "INSERT INTO festival_members(membership_code,scheme_year,full_name,phone,email,duration_months,consented_at,scheme_plan_id) VALUES($1,$2,$3,$4,$5,$6,now(),$7) ON CONFLICT (scheme_year,phone,duration_months) DO NOTHING RETURNING membership_code,scheme_year,duration_months,status,created_at",
+   const q=await client.query(
+    "INSERT INTO festival_members(membership_code,scheme_year,full_name,phone,email,duration_months,consented_at,scheme_plan_id) VALUES($1,$2,$3,$4,$5,$6,now(),$7) ON CONFLICT (scheme_year,phone,duration_months) DO NOTHING RETURNING membership_code,scheme_year,duration_months,status,scheme_plan_id",
     [code,year,v.fullName,v.phone,v.email||null,v.durationMonths,v.schemePlanId||null]);
-   if(!q.rowCount){res.status(409).json({error:"This mobile number already has a registration for the selected duration. Contact SRC for help."});return}
-   res.status(201).json({membershipCode:q.rows[0].membership_code,year:q.rows[0].scheme_year,durationMonths:q.rows[0].duration_months,status:q.rows[0].status,message:"Registration received. Present your membership ID and registered mobile at the SRC shop for verification. No payment or fireworks order has been made."});
-  }catch{res.status(503).json({error:"Registration temporarily unavailable. Please try at the shop."})}
+   if(!q.rowCount){await client.query("ROLLBACK");res.status(409).json({error:"This mobile is already enrolled for the selected duration and year. Contact SRC for your existing ID."});return}
+   await client.query("COMMIT");
+   res.status(201).json({membershipCode:q.rows[0].membership_code,schemePlanId:q.rows[0].scheme_plan_id,year:q.rows[0].scheme_year,durationMonths:q.rows[0].duration_months,status:q.rows[0].status,message:"Free registration received. Keep your ID for verification at the SRC shop. No payment or fireworks order has been made."});
+  }catch{if(client)await client.query("ROLLBACK").catch(()=>{});res.status(503).json({error:"Registration temporarily unavailable"})}
+  finally{client?.release()}
+
  });
  r.get("/api/admin/festival/members",shop,async(req,res)=>{
   const search=String(req.query.search||"").trim().slice(0,80);
