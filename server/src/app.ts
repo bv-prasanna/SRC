@@ -19,7 +19,12 @@ import { workspacesRouter } from "./workspaces.js";
 import { festivalRouter } from "./festival.js";
 import { schemeManagementRouter } from "./scheme-management.js";
 import {requireRole} from "./access.js";
-export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true),sectionSlug:z.string().default('crackers'),pricePaise:z.number().int().min(0).default(0)});
+export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true),sectionSlug:z.string().regex(/^[a-z][a-z0-9-]{1,63}$/).default('crackers'),pricePaise:z.number().int().min(0).default(0)}).superRefine((p,ctx)=>{
+ if(p.sectionSlug==="scheme")ctx.addIssue({code:"custom",message:"Scheme is not a merchandise catalogue",path:["sectionSlug"]});
+ if(p.sectionSlug==="crackers"&&!p.fireworks)ctx.addIssue({code:"custom",message:"Crackers entries must be fireworks catalogue items",path:["fireworks"]});
+ if(p.sectionSlug!=="crackers"&&p.fireworks)ctx.addIssue({code:"custom",message:"Standard goods must not be flagged as fireworks",path:["fireworks"]});
+ if((p.name.endsWith("(DEMO)")||p.name.endsWith(" - Demo"))&&p.pricePaise>0)ctx.addIssue({code:"custom",message:"Demo placeholders cannot be priced as real goods",path:["pricePaise"]});
+});
 export function createApp(pool:Pick<Pool,"query">,config:{adminToken?:string;corsOrigin:string}){
  const app=express();app.disable("x-powered-by");app.set("trust proxy",process.env.TRUST_PROXY==="true"?1:false);app.use(helmet());app.use(cors({origin:config.corsOrigin.split(",").map(s=>s.trim())}));
  app.post("/api/payments/webhook",express.raw({type:"application/json",limit:"128kb"}),paymentWebhook(pool as Pool));
