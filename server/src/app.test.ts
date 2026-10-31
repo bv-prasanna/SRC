@@ -4,3 +4,7 @@ import { catalogueSchema } from "./app.js";
 test("catalogue accepts valid product",()=>{assert.equal(catalogueSchema.safeParse({name:"Sparklers",category:"Festive"}).success,true)});
 test("catalogue rejects blank product names",()=>{assert.equal(catalogueSchema.safeParse({name:"",category:"Festive"}).success,false)});
 test("catalogue rejects insecure media URLs",()=>{assert.equal(catalogueSchema.safeParse({name:"Sparklers",category:"Festive",imageUrl:"http://example.org/a.png"}).success,false)});
+test("scheme cannot be used as a merchandise catalogue",()=>assert.equal(catalogueSchema.safeParse({name:"Scheme Item",category:"Scheme",sectionSlug:"scheme",fireworks:false}).success,false));
+test("fireworks cannot be misclassified under stationery",()=>assert.equal(catalogueSchema.safeParse({name:"Sparkler",category:"Festive",sectionSlug:"stationery",fireworks:true}).success,false));
+test("demo placeholders cannot be given genuine sale prices",()=>assert.equal(catalogueSchema.safeParse({name:"Demo Notebook (DEMO)",category:"School",sectionSlug:"stationery",fireworks:false,pricePaise:2500}).success,false));
+test("normal stationery products can have selling prices",()=>assert.equal(catalogueSchema.safeParse({name:"A4 Notebook",category:"School",sectionSlug:"stationery",fireworks:false,pricePaise:2500,published:true}).success,true));
