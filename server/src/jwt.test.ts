@@ -10,7 +10,9 @@ test("valid signed JWT is accepted before expiry",()=>{
 });
 test("JWT rejects tampered signature, wrong structure and expiration",()=>{
  const now=1770000000,jwt=issueJwt(1,newJti(),now);
- assert.equal(verifyJwt(jwt.slice(0,-1)+(jwt.at(-1)==="A"?"B":"A"),now),null);
+ const [h,p,sig]=jwt.split(".");
+ const altered=h+"."+p+"."+(sig[0]==="A"?"B":"A")+sig.slice(1);
+ assert.equal(verifyJwt(altered,now),null);
  assert.equal(verifyJwt(jwt,now+JWT_MAX_AGE_SECONDS),null);
  assert.equal(verifyJwt("a.b.c",now),null);
 });
