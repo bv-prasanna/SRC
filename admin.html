@@ -4,10 +4,10 @@
 <header><div class="header-brand"><img src="assets/src-corporate-logo.webp" alt="SRC Enterprises"><b>SRC <span style="font-size:14px;font-weight:500">Operations & Admin</span></b></div><div class="row"><a style="color:white" href="./index.html">← Storefront</a><a style="color:white" href="./scheme-admin.html">Scheme Manager</a><button id="signout" class="alt hide">Sign out</button></div></header><main>
 <section class="panel" id="signin"><h1>Administrator sign in</h1><p class="help">Use an account provisioned with ADMIN or SUPER_ADMIN role. No demo role switching or browser-stored administrator password.</p><form id="login"><div class="grid"><label>Email<input id="email" type="email" required autocomplete="username"></label><label>Password<input id="password" type="password" required autocomplete="current-password"></label></div><button type="submit">Sign in</button></form></section>
 <section id="workspace" class="hide"><h1>SRC Control Centre</h1><p class="help">Products, departments, customers, agents, procurement, packing, dispatch, stock and campaigns in one PostgreSQL-backed operations console. Payment collection is disabled unless separately verified and configured. Crackers remain catalogue-only for online purchases; free festival registration and in-store ID verification are available.</p>
-<div class="tabs" id="tabs"></div><section id="body"></section></section><div id="message" role="status"></div></main>
+<div class="tabs" id="tabs"></div><section id="body"></section></section><div id="message" role="status"></div><dialog id="adminDialog" class="admin-dialog"><form id="adminDialogForm"><h2 id="adminDialogTitle">Update</h2><div id="adminDialogFields"></div><div class="dialog-actions"><button type="button" class="alt" id="adminDialogCancel">Cancel</button><button type="submit">Save changes</button></div></form></dialog></main>
 <script src="./config.js"></script><script>
 const base=(window.SRC_API_BASE||((location.hostname==='localhost'||location.hostname==='127.0.0.1')&&location.port==='8000'?'http://localhost:8080':'')).replace(/\/$/,'');
-let token='',tab='dashboard',rows=[],availableSections=['crackers','housekeeping','stationery'];
+let token='',currentRole='',tab='dashboard',rows=[],availableSections=['crackers','housekeeping','stationery'];
 const modules={
  dashboard:{fields:[]},
  "festival-members":{fields:[]},
@@ -26,7 +26,7 @@ const modules={
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function notify(msg){document.getElementById('message').textContent=msg}
 async function api(path,options={}){const r=await fetch(base+path,{...options,headers:{'Content-Type':'application/json',Authorization:'Bearer '+token,...(options.headers||{})}});if(r.status===204)return {};const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||'HTTP '+r.status);return data}
-document.getElementById('login').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email:document.getElementById('email').value,password:document.getElementById('password').value})});if(!['ADMIN','SUPER_ADMIN'].includes(d.user?.role))throw Error('Your account does not have the ADMIN role');token=d.token;document.getElementById('password').value='';document.getElementById('signin').classList.add('hide');document.getElementById('workspace').classList.remove('hide');document.getElementById('signout').classList.remove('hide');availableSections=(await api('/api/catalog/sections')).map(x=>x.slug);await openTab('dashboard')}catch(err){notify(err.message)}};
+document.getElementById('login').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email:document.getElementById('email').value,password:document.getElementById('password').value})});if(!['ADMIN','SUPER_ADMIN'].includes(d.user?.role))throw Error('Your account does not have the ADMIN role');token=d.token;currentRole=d.user.role;document.getElementById('password').value='';document.getElementById('signin').classList.add('hide');document.getElementById('workspace').classList.remove('hide');document.getElementById('signout').classList.remove('hide');availableSections=(await api('/api/catalog/sections')).map(x=>x.slug);await openTab('dashboard')}catch(err){notify(err.message)}};
 document.getElementById('signout').onclick=async()=>{if(token)await api('/api/auth/logout',{method:'POST'}).catch(()=>{});token='';location.reload()};
 const keys=Object.keys(modules);document.getElementById('tabs').innerHTML=keys.map(k=>'<button id="tab-'+k+'" onclick="openTab(\''+k+'\')">'+esc(k.replace(/-/g,' '))+'</button>').join('');
 function inputFor(key,label,type){const options=type==='section'?availableSections:type==='media'?['HERO','IMAGE','VIDEO']:type==='mode'?['CATALOGUE_ONLY','STANDARD']:type==='frequency'?['MONTHLY','QUARTERLY']:null;
@@ -35,6 +35,19 @@ async function openTab(k){tab=k;editingId=null;notify('');document.querySelector
 function render(){if(tab==="dashboard"){renderDashboard();return}if(tab==="workflows"){renderWorkflows();return}if(tab==="festival-members"){renderFestivalMembers();return}const cfg=modules[tab];const form=cfg.fields.length?'<div class="panel"><h2>'+esc(tab)+' · Add record</h2><form id="recordForm"><div class="grid">'+cfg.fields.map(f=>inputFor(...f)).join('')+'</div><button type="submit">Save to database</button></form></div>':'';
 const filters='<div class="admin-filters"><label>Search records<input id="recordSearch" type="search" placeholder="Search '+esc(tab)+'…" oninput="filterAdminRows()"></label>'+(tab==='products'?'<label>Type<select id="recordKind" onchange="filterAdminRows()"><option value="">All</option><option value="real">Real products</option><option value="demo">Demo products</option></select></label>':'')+'<span class="help" id="filteredCount"></span></div>';const columns=rows.length?Object.keys(rows[0]).slice(0,9):[];const table='<div class="panel table"><h2>'+esc(tab)+' records</h2>'+filters+(rows.length?'<table><thead><tr>'+columns.map(k=>'<th>'+esc(k)+'</th>').join('')+'<th>Actions</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr data-kind="'+(String(r.name||'').endsWith('(DEMO)')||String(r.name||'').endsWith(' - Demo')?'demo':'real')+'" data-query="'+esc(Object.values(r).map(v=>String(v??'')).join(' ').toLowerCase())+'">'+columns.map(k=>'<td>'+esc(String(r[k]??'').slice(0,160))+'</td>').join('')+'<td>'+(['products','categories','media','promotions'].includes(tab)?'<button class="alt" onclick="editItem('+i+')">Edit</button> <button class="danger" onclick="deleteItem('+i+')">Delete</button>':tab==='sections'?'<button class="alt" onclick="editItem('+i+')">Edit section</button>':tab==='enquiries'?'<button class="alt" onclick="updateOrder('+i+')">Update status</button> <button class="alt" onclick="assignAgent('+i+')">Assign agent</button>':tab==='users'?'<button class="alt" onclick="updateUserAccess('+i+')">Change role</button>':tab==='inventory'?'<button class="alt" onclick="adjustStock('+i+')">Adjust stock</button>':tab==='checkout'?'<button class="alt" onclick="showCheckout('+i+')">View order</button>':'')+'</td></tr>').join('')+'</tbody></table>':'<p class="help">No records yet.</p>')+'</div>';
 document.getElementById('body').innerHTML=form+table;if(cfg.fields.length)document.getElementById('recordForm').onsubmit=saveRecord;filterAdminRows()}
+function adminForm(title,fields){
+ return new Promise(resolve=>{
+  const modal=document.getElementById('adminDialog'),form=document.getElementById('adminDialogForm');
+  document.getElementById('adminDialogTitle').textContent=title;
+  document.getElementById('adminDialogFields').innerHTML=fields.map(f=>'<label>'+esc(f.label)+(f.options?'<select name="'+esc(f.key)+'">'+f.options.map(v=>'<option value="'+esc(v.value)+'" '+(String(v.value)===String(f.value)?'selected':'')+'>'+esc(v.label)+'</option>').join('')+'</select>':'<input name="'+esc(f.key)+'" type="'+esc(f.type||'text')+'" value="'+esc(f.value??'')+'" '+(f.required?'required':'')+'>')+'</label>').join('');
+  let complete=false;
+  const finish=value=>{if(complete)return;complete=true;form.onsubmit=null;modal.onclose=null;resolve(value);if(modal.open)modal.close()};
+  form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;finish(Object.fromEntries(new FormData(form)))};
+  modal.onclose=()=>finish(null);
+  document.getElementById('adminDialogCancel').onclick=()=>finish(null);
+  modal.showModal();
+ });
+}
 function filterAdminRows(){const q=(document.getElementById('recordSearch')?.value||'').trim().toLowerCase(),kind=document.getElementById('recordKind')?.value||'';let visible=0;document.querySelectorAll('#body tr[data-query]').forEach(tr=>{const show=(!q||tr.dataset.query.includes(q))&&(!kind||tr.dataset.kind===kind);tr.hidden=!show;if(show)visible++});const count=document.getElementById('filteredCount');if(count)count.textContent=visible+' / '+rows.length+' records'}
 let editingId=null;
 async function saveRecord(e){e.preventDefault();const body={};new FormData(e.target).forEach((v,k)=>body[k]=v);for(const f of modules[tab].fields){if(f[2]==='number')body[f[0]]=Number(body[f[0]]||0);if(f[2]==='boolean')body[f[0]]=body[f[0]]==='true';if(!body[f[0]]&&f[2]==='text')delete body[f[0]]}
@@ -48,7 +61,20 @@ function editItem(i){const r=rows[i];editingId=tab==="sections"?r.slug:r.id;cons
 async function deleteItem(i){if(!confirm('Delete this database record?'))return;try{await api('/api/admin/'+tab+'/'+rows[i].id,{method:'DELETE'});await openTab(tab)}catch(err){notify(err.message)}}
 async function updateOrder(i){const r=rows[i];const status=prompt('New status: CONFIRMED, PACKING, READY, DISPATCHED, DELIVERED, CANCELLED, CLOSED',r.status);if(!status)return;try{await api('/api/admin/orders/'+r.id+'/status',{method:'PATCH',body:JSON.stringify({status,note:'Updated by SRC admin'})});await openTab(tab)}catch(err){notify(err.message)}}
 async function assignAgent(i){const id=Number(prompt("Assign to agent user ID:"));if(!Number.isSafeInteger(id)||id<1)return;try{await api("/api/admin/enquiries/"+rows[i].id+"/assign",{method:"PATCH",body:JSON.stringify({agentId:id})});notify("Assigned");await openTab(tab)}catch(e){notify(e.message)}}
-async function updateUserAccess(i){const user=rows[i];const roles=["CUSTOMER","AGENT","ADMIN","DELIVERY","PROCUREMENT","PACKING","OPERATIONS"];const role=prompt("Role: "+roles.join(" / "),user.role);if(!roles.includes(role))return;const active=confirm("Keep this account active? OK = Active, Cancel = Disable");try{await api("/api/admin/users/"+user.id+"/access",{method:"PATCH",body:JSON.stringify({role,active})});notify("Permissions updated. Sessions invalidated.");await openTab(tab)}catch(e){notify(e.message)}}
+async function updateUserAccess(i){
+ const user=rows[i];
+ if(user.role==='SUPER_ADMIN'){notify('The Super Admin account cannot be changed from this screen.');return}
+ const roles=['CUSTOMER','AGENT','DELIVERY','PROCUREMENT','PACKING','OPERATIONS',...(currentRole==='SUPER_ADMIN'?['ADMIN']:[])];
+ if(user.role==='ADMIN'&&currentRole!=='SUPER_ADMIN'){notify('Only Super Admin can change administrator access.');return}
+ const result=await adminForm('Manage account · '+user.email,[
+  {key:'role',label:'Application role',options:roles.map(role=>({value:role,label:role})),value:user.role},
+  {key:'active',label:'Account status',options:[{value:'true',label:'Active'},{value:'false',label:'Suspended'}],value:String(user.active)}
+ ]);
+ if(!result)return;
+ if(!confirm('Apply these permissions? Existing sessions will be revoked.'))return;
+ try{await api('/api/admin/users/'+user.id+'/access',{method:'PATCH',body:JSON.stringify({role:result.role,active:result.active==='true'})});await openTab('users');notify('Permissions updated and previous sessions revoked')}
+ catch(e){notify(e.message)}
+}
 function renderFestivalMembers(){
  const count=rows.length;
  document.getElementById("body").innerHTML='<div class="panel"><h2>Festival scheme registrations</h2><p class="help">Members register free in the separate Scheme section and receive a unique SRC reference. Verify their registered mobile at the shop. These records are not orders, instalments or proof of payment.</p><div class="action-group"><input style="max-width:320px" id="festivalSearch" placeholder="Search by membership ID or mobile" aria-label="Search festival members"><button onclick="searchFestivalMembers()">Search</button><button class="alt" onclick="openTab(\'festival-members\')">Refresh</button></div><p class="tiny">'+count+' members in this view</p></div>'+
@@ -95,6 +121,17 @@ function renderWorkflows(){
 async function startWorkflow(){const id=Number(prompt("Paid housekeeping or stationery order ID:"));if(!Number.isSafeInteger(id)||id<1)return;try{await api("/api/admin/workspace/orders/"+id+"/start",{method:"POST"});notify("Procurement task created");await openTab("workflows")}catch(e){notify(e.message)}}
 async function assignWorkflow(i){const id=Number(prompt("Assign "+rows[i].task_kind+" task to user ID (with matching role):"));if(!Number.isSafeInteger(id)||id<1)return;try{await api("/api/admin/workspace/tasks/"+rows[i].id+"/assign",{method:"PATCH",body:JSON.stringify({userId:id})});notify("Task assigned");await openTab("workflows")}catch(e){notify(e.message)}}
 async function advanceWorkflow(i){const r=rows[i];const stage=prompt("New status: IN_PROGRESS / COMPLETED",r.status==="PENDING"?"IN_PROGRESS":"COMPLETED");if(!["IN_PROGRESS","COMPLETED"].includes(stage))return;const notes=prompt("Handover notes (optional):","")||"";try{await api("/api/workspace/tasks/"+r.id+"/status",{method:"PATCH",body:JSON.stringify({status:stage,notes})});notify("Task updated");await openTab("workflows")}catch(e){notify(e.message)}}
-async function adjustStock(i){const r=rows[i];const delta=Number(prompt("Quantity change (+received, -used):"));if(!Number.isSafeInteger(delta)||delta===0)return;const reason=prompt("Reason for stock movement (required):","Inventory adjustment");if(!reason||reason.trim().length<3)return;try{await api("/api/admin/inventory/movements",{method:"POST",body:JSON.stringify({productId:Number(r.product_id),warehouseCode:r.warehouse_code,delta,reason})});notify("Inventory updated");await openTab("inventory")}catch(e){notify(e.message)}}
+async function adjustStock(i){
+ const r=rows[i];
+ const v=await adminForm('Adjust stock · '+(r.product_name||r.product_id),[
+  {key:'delta',label:'Quantity change (negative to remove)',type:'number',value:'1',required:true},
+  {key:'reason',label:'Reason for inventory movement',value:'Stock receipt',required:true}
+ ]);
+ if(!v)return;
+ const delta=Number(v.delta);
+ if(!Number.isSafeInteger(delta)||delta===0||v.reason.trim().length<3){notify('Enter a nonzero integer quantity and a clear reason');return}
+ try{await api('/api/admin/inventory/movements',{method:'POST',body:JSON.stringify({productId:Number(r.product_id),warehouseCode:r.warehouse_code,delta,reason:v.reason.trim()})});await openTab('inventory');notify('Inventory movement recorded successfully')}
+ catch(e){notify(e.message)}
+}
 function showCheckout(i){const r=rows[i];notify("Order #"+r.id+" · "+r.status+" · "+r.section_slug+". Changes to paid orders must follow the operational workflow.");}
 </script></body></html>
