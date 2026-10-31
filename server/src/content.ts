@@ -5,7 +5,7 @@ import { z } from "zod";
 const inputs = {
  categories: z.object({name:z.string().trim().min(1).max(100),icon:z.string().max(20).default("✨"),sectionSlug:z.string().min(2),published:z.boolean().default(false)}),
  media: z.object({title:z.string().min(1),type:z.enum(["HERO","VIDEO","IMAGE"]),url:z.string().url().refine(x=>x.startsWith("https://")),category:z.string().optional(),subtitle:z.string().optional(),published:z.boolean().default(false)}),
- promotions: z.object({title:z.string().min(1),description:z.string().default(""),category:z.string().optional(),published:z.boolean().default(false)})
+ promotions: z.object({title:z.string().trim().min(1).max(130),description:z.string().max(3000).default(""),category:z.string().max(100).optional(),imageUrl:z.string().url().refine(v=>v.startsWith("https://")).optional().nullable(),published:z.boolean().default(false)})
 };
 const tables = {categories:"categories",media:"media_content",promotions:"promotions"} as const;
 export function contentRouter(db:Pick<Pool,"query">,admin:RequestHandler){
@@ -23,8 +23,8 @@ export function contentRouter(db:Pick<Pool,"query">,admin:RequestHandler){
   router.post("/api/admin/"+k,admin,async(req,res)=>{
    const p=inputs[k].safeParse(req.body);if(!p.success){res.status(400).json({error:"Invalid input"});return}
    const d=p.data as Record<string,unknown>;
-   const columns=k==="categories"?["name","icon","section_slug","published"]:k==="media"?["title","type","url","category","subtitle","published"]:["title","description","category","published","information_only"];
-   const values=k==="categories"?[d.name,d.icon,d.sectionSlug,d.published]:k==="media"?[d.title,d.type,d.url,d.category||null,d.subtitle||null,d.published]:[d.title,d.description,d.category||null,d.published,true];
+   const columns=k==="categories"?["name","icon","section_slug","published"]:k==="media"?["title","type","url","category","subtitle","published"]:["title","description","category","image_url","published","information_only"];
+   const values=k==="categories"?[d.name,d.icon,d.sectionSlug,d.published]:k==="media"?[d.title,d.type,d.url,d.category||null,d.subtitle||null,d.published]:[d.title,d.description,d.category||null,d.imageUrl||null,d.published,true];
    try{const r=await db.query("INSERT INTO "+table+"("+columns.join(",")+") VALUES ("+values.map((_,i)=>"$"+(i+1)).join(",")+") RETURNING *",values);res.status(201).json(r.rows[0])}
    catch{res.status(409).json({error:"Conflict or invalid reference"})}
   });
@@ -33,8 +33,8 @@ export function contentRouter(db:Pick<Pool,"query">,admin:RequestHandler){
    const id=Number(req.params.id),p=inputs[k].safeParse(req.body);
    if(!Number.isSafeInteger(id)||id<1||!p.success){res.status(400).json({error:"Invalid content"});return}
    const d=p.data as Record<string,unknown>;
-   const columns=k==="categories"?["name","icon","section_slug","published"]:k==="media"?["title","type","url","category","subtitle","published"]:["title","description","category","published","information_only"];
-   const values=k==="categories"?[d.name,d.icon,d.sectionSlug,d.published]:k==="media"?[d.title,d.type,d.url,d.category||null,d.subtitle||null,d.published]:[d.title,d.description,d.category||null,d.published,true];
+   const columns=k==="categories"?["name","icon","section_slug","published"]:k==="media"?["title","type","url","category","subtitle","published"]:["title","description","category","image_url","published","information_only"];
+   const values=k==="categories"?[d.name,d.icon,d.sectionSlug,d.published]:k==="media"?[d.title,d.type,d.url,d.category||null,d.subtitle||null,d.published]:[d.title,d.description,d.category||null,d.imageUrl||null,d.published,true];
    try{const result=await db.query("UPDATE "+table+" SET "+columns.map((c,i)=>c+"=$"+(i+1)).join(",")+" WHERE id=$"+(values.length+1)+" RETURNING *",[...values,id]);res.status(result.rowCount?200:404).json(result.rows[0]||{error:"Not found"})}
    catch{res.status(409).json({error:"Conflict or invalid reference"})}
   });
