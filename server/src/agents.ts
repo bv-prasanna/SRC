@@ -8,14 +8,22 @@ const roleChange=z.object({role:z.enum(["CUSTOMER","AGENT","ADMIN","DELIVERY","P
 export function agentsRouter(db:Pool){
  const r=Router(),admin=requireRole(db,["ADMIN"]),agent=requireRole(db,["AGENT","ADMIN"]);
  r.patch("/api/admin/users/:id/access",admin,async(req,res)=>{
-  const id=Number(req.params.id),value=roleChange.safeParse(req.body);
-  if(!Number.isSafeInteger(id)||id<1||!value.success){res.status(400).json({error:"Invalid account update"});return}
-  if(id===Number(res.locals.user.id)&&(!value.data.active||value.data.role!=="ADMIN")){res.status(409).json({error:"Cannot revoke your own admin access"});return}
-  try{const q=await db.query("UPDATE app_users SET role=$1,active=$2 WHERE id=$3 RETURNING id,email,role,active",[value.data.role,value.data.active,id]);
-   if(!q.rowCount){res.status(404).json({error:"User not found"});return}
-   await db.query("DELETE FROM user_sessions WHERE user_id=$1",[id]);
-   res.json(q.rows[0]);
-  }catch{res.status(503).json({error:"Access update unavailable"})}
+  const id=Number(req.params.id),v=roleChange.safeParse(req.body);
+  if(!Number.isSafeInteger(id)||id<1||!v.success){res.status(400).json({error:"Invalid account update"});return}
+  if(id===Number(res.locals.user.id)){res.status(409).json({error:"Cannot modify your own role or status"});return}
+  let client;
+  try{
+   client=await db.connect();await client.query("BEGIN");
+   const target=await client.query("SELECT id,email,role FROM app_users WHERE id=$1 FOR UPDATE",[id]);
+   if(!target.rowCount){await client.query("ROLLBACK");res.status(404).json({error:"User not found"});return}
+   const old=target.rows[0];
+   if(old.role==="SUPER_ADMIN"||((old.role==="ADMIN"||v.data.role==="ADMIN")&&res.locals.user.role!=="SUPER_ADMIN")){
+    await client.query("ROLLBACK");res.status(403).json({error:"Only Super Admin can grant or modify admin access; Super Admin cannot be modified here"});return
+   }
+   const result=await client.query("UPDATE app_users SET role=$1,active=$2 WHERE id=$3 RETURNING id,email,role,active",[v.data.role,v.data.active,id]);
+   await client.query("DELETE FROM user_sessions WHERE user_id=$1",[id]);
+   await client.query("COMMIT");res.json(result.rows[0]);
+  }catch{if(client)await client.query("ROLLBACK").catch(()=>{});res.status(503).json({error:"Access update unavailable"})}finally{client?.release()}
  });
  r.patch("/api/admin/enquiries/:id/assign",admin,async(req,res)=>{
   const id=Number(req.params.id),data=assign.safeParse(req.body);
