@@ -127,6 +127,7 @@ function renderDepartmentSpotlight(slug){
  $("deptSpotlight").innerHTML='<div class="spotlight-copy"><span class="eyebrow">'+esc(item.eyebrow)+'</span><h2>'+esc(item.title)+'</h2><p>'+esc(item.text)+'</p><button class="btn orange" onclick="'+"document.getElementById(&quot;deptProducts&quot;).scrollIntoView({behavior:&quot;smooth&quot;})"+'">'+esc(item.button)+' →</button></div><div class="spotlight-art"><img loading="lazy" src="'+esc(item.photo)+'" alt=""></div>';
 }
 function setDepartmentCategory(category){$("deptCategory").value=category;renderProducts()}
+function displayProductName(name){return String(name||"").replace(/\s*(?:\(DEMO\)| - Demo)$/i,"")}
 function renderProducts(){
  const section=state.department,q=$("deptSearch").value.trim().toLowerCase(),category=$("deptCategory").value;
  const all=catalogueFor(section);
