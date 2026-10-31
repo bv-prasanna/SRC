@@ -15,6 +15,8 @@ export function paidOrdersRouter(db:Pool){
    const q=await c.query("SELECT status FROM customer_orders WHERE id=$1 AND section_slug<>'crackers' FOR UPDATE",[id]);
    if(!q.rowCount){await c.query("ROLLBACK");res.status(404).json({error:"Order not found"});return}
    if(!canAdvanceOrder(q.rows[0].status,v.data.status)){await c.query("ROLLBACK");res.status(409).json({error:"Invalid fulfilment sequence"});return}
+   const workflow=await c.query("SELECT 1 FROM operations_tasks WHERE order_id=$1 LIMIT 1",[id]);
+   if(workflow.rowCount){await c.query("ROLLBACK");res.status(409).json({error:"This order is managed through Procurement, Packing and Delivery tasks. Complete those tasks instead of changing the order status directly."});return}
    await c.query("UPDATE customer_orders SET status=$1 WHERE id=$2",[v.data.status,id]);
    await c.query("INSERT INTO checkout_status_events(order_id,previous_status,new_status,changed_by) VALUES($1,$2,$3,$4)",[id,q.rows[0].status,v.data.status,res.locals.user.id]);
    await c.query("COMMIT");res.json({id,status:v.data.status});
