@@ -5,8 +5,11 @@ import pg from "pg";
 const email=process.argv[2]?.trim().toLowerCase();
 if(!email||!/^\S+@\S+\.\S+$/.test(email)){console.error("Usage: npm run promote-admin -- admin@example.com");process.exit(2)}
 if(!process.env.DATABASE_URL){console.error("DATABASE_URL is required");process.exit(2)}
+if(process.env.NODE_ENV==="production"){console.error("promote-admin is disabled in production. Use the Super Admin account and authorized role-management UI.");process.exit(2)}
 const pool=new pg.Pool({connectionString:process.env.DATABASE_URL});
 try{
+ const existing=await pool.query("SELECT 1 FROM app_users WHERE role='SUPER_ADMIN' LIMIT 1");
+ if(existing.rowCount){throw Error("Super Admin exists. Change roles using the authenticated Admin console.")}
  const result=await pool.query("UPDATE app_users SET role='ADMIN' WHERE email=$1 AND active=true RETURNING id,email,role",[email]);
  if(!result.rowCount){console.error("No active registered account found. Register it first.");process.exitCode=1}
  else console.log("Admin provisioned:",result.rows[0].email);
