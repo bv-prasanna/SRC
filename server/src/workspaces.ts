@@ -27,16 +27,17 @@ export function workspacesRouter(db:Pool){
  const worker=requireRole(db,["ADMIN","OPERATIONS","PROCUREMENT","PACKING","DELIVERY"]);
  r.get("/api/admin/dashboard",requireRole(db,["ADMIN"]),async(_req,res)=>{
   try{
-   const [products,users,enquiries,orders,tasks,stock,festival]=await Promise.all([
+   const [products,users,enquiries,orders,tasks,stock,festival,catalogueQuality]=await Promise.all([
     db.query("SELECT section_slug,COUNT(*)::int AS count FROM products WHERE published=true GROUP BY section_slug ORDER BY section_slug"),
     db.query("SELECT role,COUNT(*)::int AS count FROM app_users WHERE active=true GROUP BY role ORDER BY role"),
     db.query("SELECT section_slug,status,COUNT(*)::int AS count FROM standard_orders GROUP BY section_slug,status ORDER BY section_slug,status"),
     db.query("SELECT section_slug,status,COUNT(*)::int AS count FROM customer_orders GROUP BY section_slug,status ORDER BY section_slug,status"),
     db.query("SELECT task_kind,status,COUNT(*)::int AS count FROM operations_tasks GROUP BY task_kind,status ORDER BY task_kind,status"),
     db.query("SELECT COUNT(*)::int AS sku_count,COALESCE(SUM(on_hand),0)::int AS units,COALESCE(SUM(reserved),0)::int AS reserved,COUNT(*) FILTER (WHERE on_hand-reserved<=reorder_level)::int AS low_stock FROM stock_levels"),
-    db.query("SELECT status,COUNT(*)::int AS count FROM festival_members GROUP BY status")
+    db.query("SELECT status,COUNT(*)::int AS count FROM festival_members GROUP BY status"),
+    db.query("SELECT COUNT(*) FILTER (WHERE published AND (name ILIKE '%(DEMO)' OR name ILIKE '% - Demo'))::int AS demo_published, COUNT(*) FILTER (WHERE published AND name NOT ILIKE '%(DEMO)' AND name NOT ILIKE '% - Demo')::int AS real_published, COUNT(*) FILTER (WHERE published AND price_paise>0 AND name NOT ILIKE '%(DEMO)')::int AS priced_real FROM products")
    ]);
-   res.json({products:products.rows,users:users.rows,enquiries:enquiries.rows,orders:orders.rows,tasks:tasks.rows,inventory:stock.rows[0],festivalMembers:festival.rows});
+   res.json({products:products.rows,users:users.rows,enquiries:enquiries.rows,orders:orders.rows,tasks:tasks.rows,inventory:stock.rows[0],festivalMembers:festival.rows,catalogueQuality:catalogueQuality.rows[0]});
   }catch{res.status(503).json({error:"Dashboard temporarily unavailable"})}
  });
  r.get("/api/workspace/staff",operator,async(_req,res)=>{
