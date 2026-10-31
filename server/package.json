@@ -13,7 +13,8 @@
     "test:integration": "node --import tsx --test src/integration.test.ts",
     "migrate": "tsx src/migrate.ts",
     "seed:demo": "tsx src/seed-demo.ts",
-    "bootstrap:superadmin": "tsx src/bootstrap-superadmin.ts"
+    "bootstrap:superadmin": "tsx src/bootstrap-superadmin.ts",
+    "recover:superadmin": "tsx src/recover-superadmin.ts"
   },
   "dependencies": {
     "express": "^4.21.2",
