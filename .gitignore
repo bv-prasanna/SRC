@@ -7,3 +7,6 @@
 *.log
 dist/
 .DS_Store
+
+# Generated Cloudflare Pages allowlisted site output
+.pages-dist/
