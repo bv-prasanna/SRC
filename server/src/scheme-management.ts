@@ -77,9 +77,13 @@ export function schemeManagementRouter(db:Pool){
   }catch(err:any){res.status(err?.code==="23505"?409:503).json({error:err?.code==="23505"?"Scheme code already exists":"Cannot create scheme plan"})}
  });
  r.put("/api/admin/scheme-plans/:id",admin,async(req,res)=>{
-  const id=idParam(req.params.id),parsed=planForm.and(z.object({version:z.number().int().positive()}).strict()).safeParse(req.body);
-  if(!id||!parsed.success){res.status(400).json({error:"Invalid plan update"});return}
-  const {version,...p}=parsed.data;
+  const id=idParam(req.params.id);
+  const raw=req.body&&typeof req.body==="object"&&!Array.isArray(req.body)?req.body:{};
+  const {version:rawVersion,...rest}=raw;
+  const checkedVersion=z.number().int().positive().safeParse(rawVersion);
+  const parsed=planForm.safeParse(rest);
+  if(!id||!checkedVersion.success||!parsed.success){res.status(400).json({error:"Invalid plan update"});return}
+  const version=checkedVersion.data,p=parsed.data;
   let client;
   try{
    client=await db.connect();await client.query("BEGIN");
