@@ -7,6 +7,7 @@ import {randomUUID} from "node:crypto";
 import type {AddressInfo} from "node:net";
 import pg from "pg";
 import {createApp} from "./app.js";
+process.env.SRC_JWT_SECRET="integration-only-"+ "f".repeat(64);
 const url=process.env.SRC_TEST_DATABASE_URL;
 if(!url)throw Error("SRC_TEST_DATABASE_URL is required. Use a disposable database named *_test.");
 const db=new pg.Pool({connectionString:url});
@@ -14,14 +15,13 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
  const name=await db.query("SELECT current_database() AS name");
  assert.match(name.rows[0].name,/_test$/,"Refusing to test against a non-test database");
  const dir=resolve(dirname(fileURLToPath(import.meta.url)),"../sql");
- for(let i=1;i<=15;i++){
+ for(let i=1;i<=16;i++){
   const file=resolve(dir,String(i).padStart(3,"0")+"_"+({
-   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management"
+   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management",16:"jwt_superadmin"
   } as Record<number,string>)[i]+".sql");
   await db.query(readFileSync(file,"utf8"));
  }
- const token="local-admin-test-"+randomUUID().replaceAll("-","")+"-long";
- const app=createApp(db,{adminToken:token,corsOrigin:"http://localhost:8000"});
+ const app=createApp(db,{corsOrigin:"http://localhost:8000"});
  const server=app.listen(0);
  try{
   const port=(server.address() as AddressInfo).port;
@@ -39,6 +39,13 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal(login.code,200);const userToken=login.data.token as string;
   assert.equal((await call("/api/auth/me","GET",undefined,userToken)).code,200);
   assert.equal((await call("/api/admin/products","GET",undefined,userToken)).code,403);
+  // Simulate trusted Super Admin bootstrap in isolated test DB only.
+  await db.query("UPDATE app_users SET role='SUPER_ADMIN' WHERE email=$1",[email]);
+  const superLogin=await call("/api/auth/login","POST",{email,password:pass});
+  assert.equal(superLogin.code,200);
+  assert.equal(superLogin.data.user.role,"SUPER_ADMIN");
+  const token=superLogin.data.token as string;
+  assert.equal((await call("/api/admin/products","GET",undefined,token)).code,200);
   const product=await call("/api/admin/products","POST",{name:"UAT "+randomUUID(),category:"Cleaning",description:"Integration test",published:true,fireworks:false,sectionSlug:"housekeeping",pricePaise:12500},token);
   assert.equal(product.code,201);
   const id=Number(product.data.id);
