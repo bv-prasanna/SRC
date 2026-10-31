@@ -16,7 +16,7 @@ $("signin").onsubmit=async e=>{
  const data=Object.fromEntries(new FormData(e.target));
  try{
   const result=await api("/api/auth/login",{method:"POST",body:JSON.stringify(data)});
-  if(result.user?.role!==role&&result.user?.role!=="ADMIN")throw Error("This account does not have "+role+" access");
+  if(result.user?.role!==role&&!["ADMIN","SUPER_ADMIN"].includes(result.user?.role))throw Error("This account does not have "+role+" access");
   token=result.token;user=result.user;e.target.reset();$("loginPanel").classList.add("hidden");$("workspace").classList.remove("hidden");$("identity").textContent=result.user.email+" · "+result.user.role;
   status("Signed in.");await refresh();
  }catch(err){status(err.message,true)}
@@ -31,7 +31,7 @@ function staffOptions(kind,assigned){
  return '<option value="">Select '+esc(kind.toLowerCase())+' team member</option>'+staff.filter(x=>x.role===kind).map(x=>'<option value="'+Number(x.id)+'" '+(Number(x.id)===Number(assigned)?"selected":"")+'>'+esc(x.email)+'</option>').join("")
 }
 function taskCard(t){
- const controls=(role==="OPERATIONS"||user?.role==="ADMIN")?'<div class="task-action"><select aria-label="Assign task" id="assign-'+Number(t.id)+'">'+staffOptions(t.task_kind,t.assigned_to)+'</select><button class="alt" onclick="WORK.assign('+Number(t.id)+')">Assign</button></div>':'';
+ const controls=(role==="OPERATIONS"||["ADMIN","SUPER_ADMIN"].includes(user?.role))?'<div class="task-action"><select aria-label="Assign task" id="assign-'+Number(t.id)+'">'+staffOptions(t.task_kind,t.assigned_to)+'</select><button class="alt" onclick="WORK.assign('+Number(t.id)+')">Assign</button></div>':'';
  const actions=t.status==="COMPLETED"?'':('<div class="task-action"><button class="alt" onclick="WORK.details('+Number(t.id)+')">View items</button>'+(t.status==="PENDING"?'<button class="alt" onclick="WORK.update('+Number(t.id)+',\'IN_PROGRESS\')">Start</button>':'')+'<button onclick="WORK.update('+Number(t.id)+',\'COMPLETED\')">Complete stage</button></div>');
  return '<article class="panel task-card"><div><div class="task-title"><h3>Order #'+esc(t.order_id)+' · '+esc(t.task_kind)+'</h3><span class="tag '+(t.status==="COMPLETED"?"done":"")+'">'+esc(t.status)+'</span></div><p>'+esc(t.section_slug)+' · Order status: '+esc(t.order_status)+' · Task ID: '+Number(t.id)+'</p>'+(t.instructions?'<p>'+esc(t.instructions)+'</p>':'')+'<small>Assigned: '+esc(t.assigned_email||t.assigned_to||"Unassigned")+'</small></div><div>'+controls+actions+'</div></article>'
 }
@@ -45,7 +45,7 @@ async function refresh(){
    return
   }
   items=await api("/api/workspace/tasks");
-  if(role==="OPERATIONS"||user?.role==="ADMIN")staff=await api("/api/workspace/staff");
+  if(role==="OPERATIONS"||["ADMIN","SUPER_ADMIN"].includes(user?.role))staff=await api("/api/workspace/staff");
   summary();$("queueTitle").textContent=role==="OPERATIONS"?"All active operational tasks":title+" · Assigned tasks";
   $("queue").innerHTML=items.length?items.map(taskCard).join(""):'<div class="empty">No tasks available for this role yet. Orders appear here after eligible standard-goods payment and task assignment.</div>'
  }catch(err){status(err.message,true)}
