@@ -9,5 +9,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Validate HTML and compliance guardrails
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate storefront and compliance guards
         run: node scripts/check.mjs
+      - name: Verify role interfaces and demo catalogue
+        run: node scripts/check-roles.mjs
+      - name: Verify safe Cloudflare Pages build and API mapping
+        run: node scripts/check-deployment.mjs
