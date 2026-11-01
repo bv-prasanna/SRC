@@ -1,4 +1,5 @@
 import {Router} from "express";
+import {rateLimit} from "express-rate-limit";
 import {z} from "zod";
 import type {Pool} from "pg";
 import {requireRole} from "./access.js";
@@ -62,13 +63,14 @@ const tables={
 const idValue=(v:string)=>Number.isSafeInteger(Number(v))&&Number(v)>0?Number(v):null;
 export function billingRouter(db:Pool){
  const r=Router(),admin=requireRole(db,["ADMIN"]);
+ const quoteLimiter=rateLimit({windowMs:15*60*1000,limit:60,standardHeaders:"draft-7",legacyHeaders:false});
  r.get("/api/billing/offers",async(_req,res)=>{
   try{
    const q=await db.query("SELECT name,section_slug AS \"sectionSlug\",scope,kind,value,description,min_subtotal_paise AS \"minSubtotalPaise\",max_discount_paise AS \"maxDiscountPaise\" FROM src_sales_offers WHERE active=true AND code IS NULL AND valid_from<=now() AND (valid_until IS NULL OR valid_until>now()) ORDER BY id DESC LIMIT 60");
    res.json(q.rows);
   }catch{res.status(503).json({error:"Offers temporarily unavailable"})}
  });
- r.post("/api/billing/quote",async(req,res)=>{
+ r.post("/api/billing/quote",quoteLimiter,async(req,res)=>{
   try{const quote=await quoteFromDb(db,req.body);res.json(quote)}
   catch(e){const msg=e instanceof Error?e.message:"INVALID_QUOTE";res.status(["INVALID_COUPON","INVALID_QUOTE","INVALID_PRODUCT","INVALID_AMOUNT","DUPLICATE_PRODUCT","MIXED_TAX_MODES","CONFLICTING_TAX_COMPONENTS","INVALID_SECTION"].includes(msg)?400:503).json({error:msg})}
  });
