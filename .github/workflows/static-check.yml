@@ -16,5 +16,7 @@ jobs:
         run: node scripts/check.mjs
       - name: Verify role interfaces and demo catalogue
         run: node scripts/check-roles.mjs
+      - name: Verify finance rule and billing UI wiring
+        run: node scripts/check-billing.mjs
       - name: Verify safe Cloudflare Pages build and API mapping
         run: node scripts/check-deployment.mjs
