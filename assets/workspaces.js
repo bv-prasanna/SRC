@@ -53,13 +53,20 @@ async function refresh(){
 async function details(id){
  try{
   const d=await api("/api/workspace/tasks/"+id+"/details");
-  const items=(d.items||[]).map(x=>esc(x.name)+" × "+Number(x.quantity)).join("\n");
-  alert("Order #"+d.orderId+" · "+d.section+"\n"+items+(d.deliveryAddress?"\n\nDelivery address:\n"+d.deliveryAddress:""));
+  const root=$("taskDetailBody"),dlg=$("taskDetailDialog");
+  $("taskDetailTitle").textContent="Order #"+d.orderId+" · "+d.section;
+  root.innerHTML='<div class="task-items">'+(d.items||[]).map(x=>'<div class="task-item-row"><strong>'+esc(x.name)+'</strong><span>Qty '+Number(x.quantity)+'</span></div>').join("")+'</div>'+
+    (d.deliveryAddress?'<div class="task-delivery"><strong>Delivery address</strong><p>'+esc(d.deliveryAddress)+'</p></div>':"");
+  dlg.showModal();
  }catch(err){status(err.message,true)}
 }
 async function update(id,next){
  try{
-  const notes=prompt("Optional completion / handover note:","")||"";
+  const note=prompt("Optional completion / handover note (Cancel = no change):","");
+  if(note===null)return;
+  const notes=note.trim();
+  if(notes.length>1000){status("Notes cannot exceed 1000 characters.",true);return}
+  if(next==="COMPLETED"&&!confirm("Confirm this operational stage is complete? This action advances the order workflow."))return;
   await api("/api/workspace/tasks/"+id+"/status",{method:"PATCH",body:JSON.stringify({status:next,notes})});
   status("Stage updated and logged.");await refresh()
  }catch(err){status(err.message,true)}
@@ -120,6 +127,7 @@ async function counterReceipt(i){
  }catch(err){status(err.message,true)}
 }
 if($("festivalLookup"))$("festivalLookup").onclick=findFestivalMember;
+$("closeTaskDetails").onclick=()=>$("taskDetailDialog").close();
 async function downloadInvoice(id){try{const invoice=await api("/api/checkout/orders/"+id+"/invoice");window.SRCReceipt.download(invoice);status("Draft bill downloaded. Open it to print or save as PDF.")}catch(e){status(e.message,true)}}
 window.WORK={update,assign,details,verifyFestival,visitFestival,counterReceipt,downloadInvoice};
 })();
