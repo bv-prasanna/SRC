@@ -4,13 +4,15 @@ import {z} from "zod";
 import type {Pool,PoolClient} from "pg";
 import type {RequestHandler} from "express";
 import {requireRole} from "./access.js";
+import {quoteFromDb} from "./billing.js";
 
 export const checkoutSchema=z.object({
  sectionSlug:z.enum(["housekeeping","stationery"]),
  address:z.string().trim().min(15).max(1200),
  warehouseCode:z.string().min(2).max(60).default("MAIN"),
  items:z.array(z.object({productId:z.number().int().positive(),quantity:z.number().int().min(1).max(100)})).min(1).max(40),
- idempotencyKey:z.string().uuid()
+ idempotencyKey:z.string().uuid(),
+ couponCode:z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,36}$/).optional()
 });
 export const paymentSchema=z.object({
  orderId:z.number().int().positive(),
@@ -39,7 +41,7 @@ async function razorpay(path:string,options?:{method:"POST";data:object}):Promis
  return response.json()
 }
 function fail(code:string):never{throw Error(code)}
-function badRequest(error:unknown){return error instanceof Error&&["INVALID_PRODUCT","INVALID_STOCK","INVALID_SECTION","INVALID_AMOUNT","NOT_FOUND","PAYMENT_MISMATCH"].includes(error.message)}
+function badRequest(error:unknown){return error instanceof Error&&["INVALID_PRODUCT","INVALID_STOCK","INVALID_SECTION","INVALID_AMOUNT","NOT_FOUND","PAYMENT_MISMATCH","INVALID_COUPON","MIXED_TAX_MODES"].includes(error.message)}
 export async function releaseUninitialized(db:Pool,orderId:string){
  const c=await db.connect();try{await c.query("BEGIN");
   const q=await c.query("SELECT id FROM customer_orders WHERE id=$1 AND status='PENDING_PAYMENT' AND razorpay_order_id IS NULL FOR UPDATE",[orderId]);
@@ -53,7 +55,7 @@ export async function captureConfirmedPayment(db:Pool,rzOrder:string,rzPayment:s
  const c=await db.connect();
  try{
   await c.query("BEGIN");
-  const q=await c.query("SELECT id,status,amount_paise,currency,razorpay_payment_id FROM customer_orders WHERE razorpay_order_id=$1 FOR UPDATE",[rzOrder]);
+  const q=await c.query("SELECT id,status,amount_paise,currency,razorpay_payment_id,quote_snapshot,coupon_code FROM customer_orders WHERE razorpay_order_id=$1 FOR UPDATE",[rzOrder]);
   const order=q.rows[0];
   if(!order)fail("NOT_FOUND");
   if(Number(order.amount_paise)!==amount||order.currency!==currency)fail("PAYMENT_MISMATCH");
@@ -68,8 +70,13 @@ export async function captureConfirmedPayment(db:Pool,rzOrder:string,rzPayment:s
   await c.query("UPDATE customer_orders SET status='PAID',paid_at=now(),razorpay_payment_id=$1 WHERE id=$2",[rzPayment,order.id]);
   await c.query("INSERT INTO operations_tasks(order_id,task_kind) VALUES($1,'PROCUREMENT') ON CONFLICT (order_id,task_kind) DO NOTHING",[order.id]);
   // DRAFT until seller GSTIN, HSN and tax split are configured and validated.
+  const seller=(await c.query("SELECT seller_name,seller_gstin,seller_state_code,invoice_prefix,email_invoices FROM src_billing_settings WHERE id=1")).rows[0];
+  // Invoice remains DRAFT; a tax invoice must be explicitly issued after GST/HSN validation.
+  const invoiceSnapshot={orderId:order.id,amountPaise:amount,currency,quote:order.quote_snapshot,seller,
+    items:items.rows.map(x=>({productId:x.product_id,name:x.name_snapshot,quantity:x.qty,unitPricePaise:x.unit_price_paise})),
+    paymentReference:rzPayment};
   await c.query("INSERT INTO customer_invoices(order_id,invoice_number,kind,snapshot) VALUES($1,$2,'DRAFT',$3::jsonb) ON CONFLICT(order_id) DO NOTHING",
-   [order.id,"SRC-DRAFT-"+order.id,JSON.stringify({orderId:order.id,amountPaise:amount,currency,items:items.rows.map(x=>({productId:x.product_id,name:x.name_snapshot,quantity:x.qty,unitPricePaise:x.unit_price_paise}))})]);
+   [order.id,"SRC-DRAFT-"+order.id,JSON.stringify(invoiceSnapshot)]);
   await c.query("COMMIT");return {orderId:order.id,status:"PAID",duplicate:false};
  }catch(e){await c.query("ROLLBACK").catch(()=>{});throw e}finally{c.release()}
 }
@@ -96,11 +103,15 @@ export function commerceRouter(db:Pool){
     if(!Number.isSafeInteger(total)||total>100000000||total<=0)fail("INVALID_AMOUNT");
     lines.push({productId:i.productId,stockId:p.stock_id,qty:i.quantity,price:Number(p.price_paise),name:p.name});
    }
-   const inserted=await c.query("INSERT INTO customer_orders(user_id,section_slug,amount_paise,address,idem_key) VALUES($1,$2,$3,$4,$5) RETURNING id",
-    [res.locals.user.id,v.sectionSlug,total,v.address,v.idempotencyKey]);orderId=inserted.rows[0].id;
+   // The signed gateway amount must be derived from one server-side pricing engine.
+   const quote=await quoteFromDb(c,{sectionSlug:v.sectionSlug,items:v.items,couponCode:v.couponCode});
+   total=quote.totalPaise;
+   if(!Number.isSafeInteger(total)||total<=0)fail("INVALID_AMOUNT");
+   const inserted=await c.query("INSERT INTO customer_orders(user_id,section_slug,amount_paise,address,idem_key,coupon_code,quote_snapshot) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb) RETURNING id",
+    [res.locals.user.id,v.sectionSlug,total,v.address,v.idempotencyKey,v.couponCode||null,JSON.stringify(quote)]);orderId=inserted.rows[0].id;
    for(const l of lines){
     await c.query("UPDATE stock_levels SET reserved=reserved+$1 WHERE id=$2",[l.qty,l.stockId]);
-    await c.query("INSERT INTO customer_order_items(order_id,product_id,stock_level_id,name_snapshot,qty,unit_price_paise) VALUES($1,$2,$3,$4,$5,$6)",[orderId,l.productId,l.stockId,l.name,l.qty,l.price]);
+    await c.query("INSERT INTO customer_order_items(order_id,product_id,stock_level_id,name_snapshot,qty,unit_price_paise) VALUES($1,$2,$3,$4,$5,$6)",[orderId,l.productId,l.stockId,l.name,l.qty,quote.lines.find(x=>x.productId===l.productId)!.unitPricePaise]);
    }
    await c.query("COMMIT");c.release();c=undefined;
    const gateway=await razorpay("orders",{method:"POST",data:{amount:total,currency:"INR",receipt:"SRC_"+orderId,notes:{src_order_id:String(orderId)}}});
@@ -127,7 +138,7 @@ export function commerceRouter(db:Pool){
  });
  r.get("/api/checkout/orders",authenticated,async(_req,res)=>{try{const q=await db.query("SELECT id,section_slug,status,amount_paise,currency,created_at,paid_at FROM customer_orders WHERE user_id=$1 ORDER BY id DESC LIMIT 100",[res.locals.user.id]);res.json(q.rows)}catch{res.status(503).json({error:"Orders unavailable"})}});
  r.get("/api/checkout/orders/:id/invoice",authenticated,async(req,res)=>{
-  try{const q=await db.query("SELECT i.invoice_number,i.kind,i.snapshot,i.generated_at FROM customer_invoices i JOIN customer_orders o ON o.id=i.order_id WHERE o.id=$1 AND (o.user_id=$2 OR $3=true)",[req.params.id,res.locals.user.id,res.locals.user.role==="ADMIN"]);
+  try{const q=await db.query("SELECT i.invoice_number,i.kind,i.snapshot,i.generated_at FROM customer_invoices i JOIN customer_orders o ON o.id=i.order_id WHERE o.id=$1 AND (o.user_id=$2 OR $3=true)",[req.params.id,res.locals.user.id,["ADMIN","SUPER_ADMIN"].includes(res.locals.user.role)]);
    res.status(q.rowCount?200:404).json(q.rows[0]||{error:"Draft invoice unavailable"});
   }catch{res.status(503).json({error:"Invoice unavailable"})}
  });
