@@ -17,7 +17,7 @@ export function matchesRule(r:BillRule,p:ProductLine,qty:number):boolean{
  if(r.section_slug!==p.section_slug)return false;
  if(r.scope==="SECTION")return true;
  if(r.scope==="CATEGORY")return r.category===p.category;
- if((r.scope==="PRODUCT"||r.scope==="ITEM")&&Number(r.product_id)===p.id)return r.scope!=="ITEM"||qty>=Number(r.min_quantity||1);
+ if((r.scope==="PRODUCT"||r.scope==="ITEM")&&Number(r.product_id)===Number(p.id))return r.scope!=="ITEM"||qty>=Number(r.min_quantity||1);
  return false;
 }
 export const specificity=(scope:string)=>{const ranks:Record<string,number>={ITEM:4,PRODUCT:3,CATEGORY:2,SECTION:1};return ranks[scope]||0};
