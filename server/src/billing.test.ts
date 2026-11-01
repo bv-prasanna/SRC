@@ -59,3 +59,15 @@ test("admin rule validation disallows wrong product scope and excessive discount
  assert.throws(()=>validateBillingRule("taxes",{...base,productId:null}));
  assert.throws(()=>validateBillingRule("offers",{...base,component:undefined,rateBps:undefined,kind:"PERCENT",value:10001,code:null,minSubtotalPaise:0,maxDiscountPaise:null,description:""}));
 });
+
+test("database string IDs still match product and line-item rules",()=>{
+ const dbProducts=[{...product,id:"10"}] as unknown as typeof goods;
+ const itemTax=rule(41,{scope:"ITEM",product_id:"10",component:"CGST",rate_bps:900});
+ const itemPrice=rule(42,{scope:"PRODUCT",product_id:"10",adjustment_bps:-1000,reason:"Promo for product"});
+ const itemOffer=rule(43,{scope:"ITEM",product_id:"10",kind:"FIXED",value:1000,code:"ITEM10"});
+ const result=calculateQuote({...input,couponCode:"ITEM10"},dbProducts,[itemTax],[itemPrice],[itemOffer]);
+ assert.equal(result.dynamicAdjustmentPaise,-2000);
+ assert.equal(result.discountPaise,1000);
+ assert.equal(result.taxPaise,1530);
+ assert.equal(result.totalPaise,18530);
+});
