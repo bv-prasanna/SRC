@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS src_billing_audit(
 );
 ALTER TABLE customer_orders ADD COLUMN IF NOT EXISTS coupon_code varchar(36);
 ALTER TABLE customer_orders ADD COLUMN IF NOT EXISTS quote_snapshot jsonb;
+ALTER TABLE standard_orders ADD COLUMN IF NOT EXISTS quote_snapshot jsonb;
+ALTER TABLE standard_orders ADD COLUMN IF NOT EXISTS coupon_code varchar(36);
 -- Protect against checkout on new regulated sections even if a future controller is added.
 ALTER TABLE customer_orders DROP CONSTRAINT IF EXISTS forbid_nonstandard_checkout;
 ALTER TABLE customer_orders ADD CONSTRAINT forbid_nonstandard_checkout CHECK(section_slug IN ('stationery','housekeeping'));
