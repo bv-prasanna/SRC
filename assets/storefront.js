@@ -134,7 +134,7 @@ function renderProducts(){
  const cats=[...new Set(all.map(p=>p.category).filter(Boolean))].sort();
  $("deptCategory").innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
  $("deptCategory").value=cats.includes(category)?category:"";
- $("deptCategoryChips").innerHTML=['',...cats].map(c=>'<button type="button" class="'+(category===c?"active":"")+'" onclick="SRC.setDepartmentCategory(\''+esc(c).replace(/'/g,"&#39;")+'\')">'+esc(c||"All products")+'</button>').join("");
+ $("deptCategoryChips").innerHTML=['',...cats].map(c=>'<button type="button" class="'+(category===c?"active":"")+'" onclick="SRC.setDepartmentCategory(decodeURIComponent(\''+encodeURIComponent(c).replace(/'/g,"%27")+'\'))">'+esc(c||"All products")+'</button>').join("");
  const shown=all.filter(p=>(!category||p.category===category)&&(!q||(p.name+" "+p.category+" "+(p.description||"")).toLowerCase().includes(q)));
  $("resultCount").textContent=shown.length+" items";
  const preview=all.some(p=>p.previewOnly||String(p.name||"").endsWith("(DEMO)")||String(p.name||"").endsWith(" - Demo"));
@@ -242,11 +242,18 @@ function addToCart(id){
  sessionStorage.removeItem('src_checkout_idem_'+p.sectionSlug);saveCart();go("cart");
 }
 function removeCart(index){const old=state.cart[index];if(old)sessionStorage.removeItem("src_checkout_idem_"+old.section);state.cart.splice(index,1);saveCart();renderCart()}
+function changeCartQuantity(index,delta){
+ const line=state.cart[index];if(!line||!Number.isInteger(delta)||Math.abs(delta)!==1)return;
+ const next=line.quantity+delta;
+ if(next<1||next>100)return;
+ line.quantity=next;sessionStorage.removeItem("src_checkout_idem_"+line.section);
+ saveCart();renderCart();
+}
 function renderCart(){
  if(!state.cart.length){$("cartContent").innerHTML='<div class="empty"><h3>Your cart is empty</h3><p>Choose housekeeping or stationery to add products.</p><button class="btn" onclick="SRC.openDepartment(\'housekeeping\')">Browse housekeeping</button></div>';return}
  $("cartContent").innerHTML=['housekeeping','stationery'].filter(s=>state.cart.some(x=>x.section===s)).map(section=>{
  const items=state.cart.filter(x=>x.section===section);
- return '<div class="panel" style="margin:20px 0"><h2>'+esc(state.sections.find(s=>s.slug===section)?.name||section)+'</h2>'+items.map(x=>{const p=state.products.find(p=>Number(p.id)===x.productId);const i=state.cart.indexOf(x);return '<div class="cart-item"><div><b>'+esc(p?.name||"Product")+'</b><br><span class="muted">Quantity: '+x.quantity+' &nbsp; · &nbsp; '+price(p?.pricePaise)+'</span></div><button onclick="SRC.removeCart('+i+')">Remove</button></div>'}).join("")+
+ return '<div class="panel" style="margin:20px 0"><h2>'+esc(state.sections.find(s=>s.slug===section)?.name||section)+'</h2>'+items.map(x=>{const p=state.products.find(p=>Number(p.id)===x.productId);const i=state.cart.indexOf(x);return '<div class="cart-item"><div><b>'+esc(p?.name||"Product")+'</b><br><span class="muted">'+price(p?.pricePaise)+' per unit</span></div><div class="cart-controls"><div class="cart-stepper" role="group" aria-label="Quantity of '+esc(p?.name||"Product")+'"><button type="button" aria-label="Decrease quantity" onclick="SRC.changeCartQuantity('+i+',-1)" '+(x.quantity<=1?'disabled':'')+'>−</button><output aria-label="Quantity">'+x.quantity+'</output><button type="button" aria-label="Increase quantity" onclick="SRC.changeCartQuantity('+i+',1)" '+(x.quantity>=100?'disabled':'')+'>+</button></div><button type="button" class="cart-remove" onclick="SRC.removeCart('+i+')">Remove</button></div></div>'}).join("")+
  '<h3 style="margin:25px 0 14px">Contact & delivery details</h3><form onsubmit="SRC.submitCart(event,\''+section+'\')"><div class="field"><label>Full name<input name="customerName" required minlength="2" maxlength="120"></label></div><div class="field"><label>Email<input name="email" type="email" required></label></div><div class="field"><label>Mobile<input name="phone" required minlength="8"></label></div><div class="field"><label>Delivery address (for checkout)<textarea name="address" rows="3" minlength="15" maxlength="1200"></textarea></label></div><div class="field"><label>Coupon code (optional)<input name="couponCode" maxlength="36" placeholder="Enter an active coupon"></label></div><button type="button" class="btn light" onclick="SRC.previewCart(event,'+String.fromCharCode(39)+section+String.fromCharCode(39)+')">Preview tax &amp; offers</button><div class="quote-preview" role="status"></div><button class="btn orange" type="submit">'+(state.payment.enabled?"Continue to payment / enquiry":"Submit product enquiry")+'</button><p class="muted" style="margin-top:12px">Checkout applies only to published, priced, stocked non-fireworks items. Payment availability depends on merchant configuration.</p></form></div>'
  }).join("")
 }
@@ -337,6 +344,6 @@ $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEvent
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
 $("festivalEnrolForm").addEventListener("submit",registerFestival);
-window.SRC={go,openDepartment,openScheme,selectFestivalDuration,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,previewCart,invoice};
+window.SRC={go,openDepartment,openScheme,selectFestivalDuration,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,changeCartQuantity,submitCart,previewCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
