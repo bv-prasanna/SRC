@@ -41,7 +41,7 @@ async function razorpay(path:string,options?:{method:"POST";data:object}):Promis
  return response.json()
 }
 function fail(code:string):never{throw Error(code)}
-function badRequest(error:unknown){return error instanceof Error&&["INVALID_PRODUCT","INVALID_STOCK","INVALID_SECTION","INVALID_AMOUNT","NOT_FOUND","PAYMENT_MISMATCH","INVALID_COUPON","MIXED_TAX_MODES"].includes(error.message)}
+function badRequest(error:unknown){return error instanceof Error&&["INVALID_PRODUCT","INVALID_STOCK","INVALID_SECTION","INVALID_AMOUNT","NOT_FOUND","PAYMENT_MISMATCH","INVALID_COUPON","MIXED_TAX_MODES","CONFLICTING_TAX_COMPONENTS"].includes(error.message)}
 export async function releaseUninitialized(db:Pool,orderId:string){
  const c=await db.connect();try{await c.query("BEGIN");
   const q=await c.query("SELECT id FROM customer_orders WHERE id=$1 AND status='PENDING_PAYMENT' AND razorpay_order_id IS NULL FOR UPDATE",[orderId]);
