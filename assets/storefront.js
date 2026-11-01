@@ -2,7 +2,7 @@
 const API=(window.SRC_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
 const photos={scheme:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=85&fit=crop",crackers:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=85&fit=crop",housekeeping:"https://images.unsplash.com/photo-1585421514738-01798e348b17?w=1200&q=85&fit=crop",stationery:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1200&q=85&fit=crop"};
 const defaults=[{slug:"scheme",name:"Scheme",description:"Deepavali membership registration with a unique SRC reference for in-store verification. No online contributions.",commerceMode:"CATALOGUE_ONLY"},{slug:"stationery",name:"Stationery",description:"School, office and workplace supplies.",commerceMode:"STANDARD"},{slug:"housekeeping",name:"Housekeeping Materials",description:"Hygiene, cleaning and building-maintenance essentials.",commerceMode:"STANDARD"},{slug:"crackers",name:"Crackers",description:"Fireworks catalogue and demonstrations for licensed in-person retail only.",commerceMode:"CATALOGUE_ONLY"}];
-const state={sections:defaults,products:[],media:[],promotions:[],schemePlans:[],active:"home",department:"housekeeping",slide:0,slides:[],sectionSlides:[],sectionSlide:0,token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
+const state={sections:defaults,products:[],media:[],promotions:[],billingOffers:[],schemePlans:[],active:"home",department:"housekeeping",slide:0,slides:[],sectionSlides:[],sectionSlide:0,token:"",user:null,authMode:"login",payment:{enabled:false},cart:[]};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeURL=x=>{try{const u=new URL(x);return u.protocol==="https:"?u.href:""}catch{return ""}};
@@ -222,7 +222,10 @@ async function copyFestivalCode(){
 function renderOffers(){
  const root=$("offersGrid");if(!root)return;
  const promos=state.promotions.filter(p=>p.published!==false);
- root.innerHTML=promos.length?promos.map(p=>{
+ const automatic=state.billingOffers.map(o=>({title:o.name,description:(o.kind==="PERCENT"?(Number(o.value)/100).toFixed(2)+"% off":price(o.value)+" off")+
+  " · Applies to "+o.sectionSlug+" ("+o.scope.toLowerCase()+"). "+(o.description||"Terms and availability apply."),category:o.sectionSlug,published:true}));
+ const allOffers=[...automatic,...promos];
+ root.innerHTML=allOffers.length?allOffers.map(p=>{
  const img=safeURL(p.image_url||p.imageUrl);
  return '<article class="department offer-card">'+(img?'<div class="department-photo"><img src="'+esc(img)+'" alt="'+esc(p.title)+'" loading="lazy"></div>':'')+'<div class="department-body"><span class="tag">SRC promotion</span><h3>'+esc(p.title)+'</h3><p>'+esc(p.description||"Promotion details available from SRC.")+'</p><span class="muted" style="font-size:11px">'+esc(p.category||"Department offer")+'</span></div></article>'
  }).join(""):'<div class="empty"><h3>No active offers published yet</h3><p class="muted">SRC administrators can publish promotions under the relevant department.</p><button class="btn" onclick="SRC.openDepartment(\'housekeeping\')">Explore housekeeping</button></div>';
@@ -310,15 +313,17 @@ async function load(){
    request("/api/catalog/media"),
    request("/api/payments/config"),
    request("/api/catalog/promotions"),
-   request("/api/scheme/plans")
+   request("/api/scheme/plans"),
+   request("/api/billing/offers")
  ]);
- const [sections,products,media,payments,promotions,schemePlans]=calls;
+ const [sections,products,media,payments,promotions,schemePlans,billingOffers]=calls;
  if(sections.status==="fulfilled"&&Array.isArray(sections.value)&&sections.value.length)state.sections=sections.value.filter(x=>x.slug&&x.name);
  if(products.status==="fulfilled"&&Array.isArray(products.value))state.products=products.value;
  if(media.status==="fulfilled"&&Array.isArray(media.value))state.media=media.value;
  if(payments.status==="fulfilled"&&payments.value)state.payment=payments.value;
  if(promotions.status==="fulfilled"&&Array.isArray(promotions.value))state.promotions=promotions.value;
  if(schemePlans.status==="fulfilled"&&Array.isArray(schemePlans.value))state.schemePlans=schemePlans.value;
+ if(billingOffers.status==="fulfilled"&&Array.isArray(billingOffers.value))state.billingOffers=billingOffers.value;
  if(calls.some(x=>x.status==="rejected"))console.warn("Some SRC APIs are unavailable. Other departments remain browsable.");
  sectionsCards();hero();nav();saveCart();featured(selectedFeatured);renderOffers();renderSchemePlans();
  const route=location.hash.slice(1);
