@@ -244,8 +244,22 @@ function renderCart(){
  $("cartContent").innerHTML=['housekeeping','stationery'].filter(s=>state.cart.some(x=>x.section===s)).map(section=>{
  const items=state.cart.filter(x=>x.section===section);
  return '<div class="panel" style="margin:20px 0"><h2>'+esc(state.sections.find(s=>s.slug===section)?.name||section)+'</h2>'+items.map(x=>{const p=state.products.find(p=>Number(p.id)===x.productId);const i=state.cart.indexOf(x);return '<div class="cart-item"><div><b>'+esc(p?.name||"Product")+'</b><br><span class="muted">Quantity: '+x.quantity+' &nbsp; · &nbsp; '+price(p?.pricePaise)+'</span></div><button onclick="SRC.removeCart('+i+')">Remove</button></div>'}).join("")+
- '<h3 style="margin:25px 0 14px">Contact & delivery details</h3><form onsubmit="SRC.submitCart(event,\''+section+'\')"><div class="field"><label>Full name<input name="customerName" required minlength="2" maxlength="120"></label></div><div class="field"><label>Email<input name="email" type="email" required></label></div><div class="field"><label>Mobile<input name="phone" required minlength="8"></label></div><div class="field"><label>Delivery address (for checkout)<textarea name="address" rows="3" minlength="15" maxlength="1200"></textarea></label></div><button class="btn orange" type="submit">'+(state.payment.enabled?"Continue to payment / enquiry":"Submit product enquiry")+'</button><p class="muted" style="margin-top:12px">Checkout applies only to published, priced, stocked non-fireworks items. Payment availability depends on merchant configuration.</p></form></div>'
+ '<h3 style="margin:25px 0 14px">Contact & delivery details</h3><form onsubmit="SRC.submitCart(event,\''+section+'\')"><div class="field"><label>Full name<input name="customerName" required minlength="2" maxlength="120"></label></div><div class="field"><label>Email<input name="email" type="email" required></label></div><div class="field"><label>Mobile<input name="phone" required minlength="8"></label></div><div class="field"><label>Delivery address (for checkout)<textarea name="address" rows="3" minlength="15" maxlength="1200"></textarea></label></div><div class="field"><label>Coupon code (optional)<input name="couponCode" maxlength="36" placeholder="Enter an active coupon"></label></div><button type="button" class="btn light" onclick="SRC.previewCart(event,'+String.fromCharCode(39)+section+String.fromCharCode(39)+')">Preview tax &amp; offers</button><div class="quote-preview" role="status"></div><button class="btn orange" type="submit">'+(state.payment.enabled?"Continue to payment / enquiry":"Submit product enquiry")+'</button><p class="muted" style="margin-top:12px">Checkout applies only to published, priced, stocked non-fireworks items. Payment availability depends on merchant configuration.</p></form></div>'
  }).join("")
+}
+async function previewCart(event,section){
+ const form=event.target.closest("form");
+ const coupon=String(new FormData(form).get("couponCode")||"").trim().toUpperCase();
+ const lines=state.cart.filter(x=>x.section===section);
+ const output=form.querySelector(".quote-preview");
+ output.textContent="Calculating quote…";
+ try{
+  const data={sectionSlug:section,items:lines.map(l=>({productId:l.productId,quantity:l.quantity}))};
+  if(coupon)data.couponCode=coupon;
+  const quote=await request("/api/billing/quote",{method:"POST",body:JSON.stringify(data)});
+  output.innerHTML='<div class="panel"><strong>Itemized estimate</strong>'+quote.lines.map(l=>'<p>'+esc(l.name)+' × '+Number(l.quantity)+' · '+price(l.totalPaise)+'</p>').join("")+
+   '<p>Dynamic adjustment: '+(quote.dynamicAdjustmentPaise<0?'-':'+')+price(Math.abs(quote.dynamicAdjustmentPaise))+'</p><p>Offer discount: -'+price(quote.discountPaise)+'</p><p>Tax: '+price(quote.taxPaise)+'</p><h3>Total: '+price(quote.totalPaise)+'</h3><p class="muted">Estimate only. Final pricing is recalculated on submission; no payment is collected by this preview.</p></div>';
+ }catch(e){output.textContent="Quote unavailable: "+e.message}
 }
 async function ensureRazorpay(){if(window.Razorpay)return;await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src="https://checkout.razorpay.com/v1/checkout.js";s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
 async function submitCart(event,section){
@@ -256,7 +270,7 @@ async function submitCart(event,section){
  const btn=form.querySelector("button[type=submit]");btn.disabled=true;
  try{
   if(canPay){
-   const checkout=await request("/api/checkout/orders",{method:"POST",body:JSON.stringify({sectionSlug:section,address:info.address,warehouseCode:"MAIN",items:lines.map(x=>({productId:x.productId,quantity:x.quantity})),idempotencyKey:(sessionStorage.getItem("src_checkout_idem_"+section)||(()=>{const v=crypto.randomUUID();sessionStorage.setItem("src_checkout_idem_"+section,v);return v})())})});
+   const checkout=await request("/api/checkout/orders",{method:"POST",body:JSON.stringify({sectionSlug:section,address:info.address,warehouseCode:"MAIN",items:lines.map(x=>({productId:x.productId,quantity:x.quantity})),...(info.couponCode?{couponCode:String(info.couponCode).trim().toUpperCase()}:{}),idempotencyKey:(sessionStorage.getItem("src_checkout_idem_"+section)||(()=>{const v=crypto.randomUUID();sessionStorage.setItem("src_checkout_idem_"+section,v);return v})())})});
    await ensureRazorpay();
    const instance=new window.Razorpay({key:checkout.keyId,order_id:checkout.razorpayOrderId,amount:checkout.amountPaise,currency:"INR",name:"SRC Enterprises",description:"Standard goods only",handler:async p=>{
     try{await request("/api/payments/verify",{method:"POST",body:JSON.stringify({orderId:Number(checkout.orderId),...p})});state.cart=state.cart.filter(x=>x.section!==section);sessionStorage.removeItem("src_checkout_idem_"+section);saveCart();go("orders");alert("Payment captured and order confirmed.")}
@@ -264,7 +278,7 @@ async function submitCart(event,section){
    },prefill:{name:info.customerName,email:info.email,contact:info.phone}});
    instance.open();
   }else{
-   const enquiry=await request("/api/enquiries",{method:"POST",body:JSON.stringify({customerName:info.customerName,email:info.email,phone:info.phone,sectionSlug:section,lines:lines.map(x=>({productId:x.productId,quantity:x.quantity}))})});
+   const enquiry=await request("/api/enquiries",{method:"POST",body:JSON.stringify({customerName:info.customerName,email:info.email,phone:info.phone,sectionSlug:section,...(info.couponCode?{couponCode:String(info.couponCode).trim().toUpperCase()}:{}),lines:lines.map(x=>({productId:x.productId,quantity:x.quantity}))})});
    state.cart=state.cart.filter(x=>x.section!==section);sessionStorage.removeItem("src_checkout_idem_"+section);saveCart();go("cart");alert("Enquiry #"+enquiry.id+" submitted. No payment collected.");
   }
  }catch(err){alert("Unable to submit: "+err.message)}finally{btn.disabled=false}
@@ -317,6 +331,6 @@ $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEvent
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
 $("festivalEnrolForm").addEventListener("submit",registerFestival);
-window.SRC={go,openDepartment,openScheme,selectFestivalDuration,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,invoice};
+window.SRC={go,openDepartment,openScheme,selectFestivalDuration,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,submitCart,previewCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
