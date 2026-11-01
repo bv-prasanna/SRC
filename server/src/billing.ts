@@ -20,7 +20,7 @@ export function matchesRule(r:BillRule,p:ProductLine,qty:number):boolean{
  if((r.scope==="PRODUCT"||r.scope==="ITEM")&&Number(r.product_id)===p.id)return r.scope!=="ITEM"||qty>=Number(r.min_quantity||1);
  return false;
 }
-export const specificity=(scope:string)=>({ITEM:4,PRODUCT:3,CATEGORY:2,SECTION:1}[scope]||0);
+export const specificity=(scope:string)=>{const ranks:Record<string,number>={ITEM:4,PRODUCT:3,CATEGORY:2,SECTION:1};return ranks[scope]||0};
 export function chooseRule<T extends BillRule>(rules:T[],p:ProductLine,qty:number):T|undefined{
  return rules.filter(r=>matchesRule(r,p,qty)&&(!r.min_quantity||qty>=Number(r.min_quantity))&&(!r.max_quantity||qty<=Number(r.max_quantity)))
    .sort((a,b)=>specificity(b.scope)-specificity(a.scope)||new Date(String(b.valid_from||0)).getTime()-new Date(String(a.valid_from||0)).getTime()||b.id-a.id)[0];
