@@ -50,7 +50,7 @@ export function workspacesRouter(db:Pool){
    const query=user.role==="ADMIN"||user.role==="SUPER_ADMIN"||user.role==="OPERATIONS"?
     "SELECT t.id,t.order_id,t.task_kind,t.status,t.assigned_to,t.instructions,t.created_at,o.section_slug,o.status AS order_status,u.email AS assigned_email FROM operations_tasks t JOIN customer_orders o ON o.id=t.order_id LEFT JOIN app_users u ON u.id=t.assigned_to WHERE o.section_slug<>'crackers' ORDER BY t.created_at DESC LIMIT 300":
     "SELECT t.id,t.order_id,t.task_kind,t.status,t.assigned_to,t.instructions,t.created_at,o.section_slug,o.status AS order_status FROM operations_tasks t JOIN customer_orders o ON o.id=t.order_id WHERE t.assigned_to=$1 AND t.task_kind=$2 AND o.section_slug<>'crackers' ORDER BY t.created_at DESC LIMIT 150";
-   const params=user.role==="ADMIN"||user.role==="OPERATIONS"?[]:[user.id,user.role];
+   const params=["ADMIN","SUPER_ADMIN","OPERATIONS"].includes(user.role)?[]:[user.id,user.role];
    res.json((await db.query(query,params)).rows);
   }catch{res.status(503).json({error:"Task queue unavailable"})}
  });
