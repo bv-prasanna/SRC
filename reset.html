@@ -1,2 +1,33 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset your SRC password</title><link rel="stylesheet" href="assets/storefront.css"></head><body><div class="wrap"><div class="panel auth-card"><img src="assets/src-enterprises-mark.svg" alt="SRC Enterprises" style="width:240px"><h2>Set a new password</h2><p class="muted">The reset link expires after 30 minutes and can be used once.</p><form id="reset"><div class="field"><label>New password<input type="password" name="password" minlength="12" autocomplete="new-password" required></label></div><button class="btn orange" type="submit">Update password</button></form><div id="result" class="feedback" role="status"></div><p style="margin-top:24px"><a href="index.html#account">Return to sign in</a></p></div></div><script src="config.js"></script><script>
-const base=(window.SRC_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");document.getElementById("reset").onsubmit=async e=>{e.preventDefault();const token=new URLSearchParams(location.search).get("token")||"";const password=new FormData(e.target).get("password");try{const r=await fetch(base+"/api/auth/password/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token,password})});const d=await r.json();document.getElementById("result").textContent=r.ok?d.message:(d.error||"Reset failed")}catch{document.getElementById("result").textContent="Reset service unavailable"}};</script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset password | SRC Enterprises</title><meta name="description" content="Secure SRC Enterprises account password reset"><link rel="icon" type="image/webp" href="assets/src-corporate-logo.webp"><link rel="stylesheet" href="assets/storefront.css"><link rel="stylesheet" href="assets/auth-pages.css"></head><body class="auth-page">
+<header class="auth-header"><a href="index.html" class="auth-brand"><img src="assets/src-corporate-logo.webp" alt="SRC Enterprises"><span><strong>SRC Enterprises</strong><small>Account Security</small></span></a><a href="index.html#account">Return to sign in</a></header>
+<main class="auth-shell"><div class="auth-copy"><span class="eyebrow">Secure account recovery</span><h1>Create a new password</h1><p>Use the one-time reset link sent to your registered email address. Links expire after 30 minutes.</p></div>
+<section class="panel auth-panel" aria-labelledby="resetTitle"><h2 id="resetTitle">Password reset</h2><form id="reset">
+<label>New password<div class="password-row"><input id="newPassword" type="password" name="password" minlength="12" maxlength="128" autocomplete="new-password" required><button type="button" id="togglePassword" aria-label="Show password">Show</button></div></label>
+<label>Confirm new password<input id="confirmPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+<p class="help">Use at least 12 characters and avoid reusing a password from another service.</p>
+<button id="resetSubmit" type="submit">Update password</button></form>
+<div id="result" class="feedback" role="status" aria-live="polite"></div><p><a href="index.html#account">Return to SRC sign in</a></p></section></main>
+<footer class="auth-footer">SRC Enterprises · Your password and reset link are never displayed to SRC staff</footer>
+<script src="config.js"></script><script>
+const base=(window.SRC_API_BASE||(["localhost","127.0.0.1"].includes(location.hostname)?"http://localhost:8080":"")).replace(/\/$/,"");
+const token=new URLSearchParams(location.search).get("token")||"";
+const result=document.getElementById("result");
+const validToken=/^[a-f0-9]{64}$/.test(token);
+if(!validToken){result.textContent="This password reset link is missing or invalid. Request a new reset email from the SRC sign-in page.";document.getElementById("resetSubmit").disabled=true}
+document.getElementById("togglePassword").onclick=()=>{
+ const inp=document.getElementById("newPassword"),visible=inp.type==="text";
+ inp.type=visible?"password":"text";document.getElementById("togglePassword").textContent=visible?"Show":"Hide";document.getElementById("togglePassword").setAttribute("aria-label",visible?"Show password":"Hide password");
+};
+document.getElementById("reset").onsubmit=async e=>{
+ e.preventDefault();if(!validToken)return;
+ const password=document.getElementById("newPassword").value,confirm=document.getElementById("confirmPassword").value;
+ if(password!==confirm){result.textContent="Passwords do not match. Please re-enter them.";return}
+ const button=document.getElementById("resetSubmit");button.disabled=true;result.textContent="Updating your password…";
+ try{
+  const r=await fetch(base+"/api/auth/password/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token,password})});
+  const d=await r.json().catch(()=>({}));
+  result.textContent=r.ok?(d.message||"Password updated. Return to sign in."):(d.error||"Reset failed. Request a new link.");
+  if(r.ok){document.getElementById("reset").reset();button.textContent="Password updated"}else button.disabled=false;
+ }catch{result.textContent="Reset service unavailable. Try again after checking the API connection.";button.disabled=false}
+};
+</script></body></html>
