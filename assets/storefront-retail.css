@@ -25,3 +25,13 @@ body{background:#fff;color:#102e52}
 .home-departments .department[data-section="scheme"] .tag{background:#fff0e0;color:#ae4f0e}
 @media(max-width:1100px){.home-departments .department-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.home-departments .department-grid{grid-template-columns:1fr}.home-departments .department{height:164px;min-height:164px}}
+
+/* Touch-friendly cart quantities and clearly separated remove action */
+.cart-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.cart-stepper{display:inline-flex;align-items:center;border:1px solid #d1dfeb;border-radius:10px;overflow:hidden;background:#f6faff}
+.cart-stepper button{border:0;border-radius:0;min-width:39px;min-height:39px;background:transparent;color:#164f7a;font-size:20px;font-weight:800;padding:6px 10px;cursor:pointer}
+.cart-stepper button:disabled{opacity:.35;cursor:not-allowed}
+.cart-stepper output{font-size:14px;font-weight:800;text-align:center;min-width:33px;color:#173a59}
+.cart-remove{border:1px solid #f1d2d4!important;background:#fff9fa!important;color:#ad4550!important;padding:9px 12px!important;font-size:12px!important}
+.quote-preview:not(:empty){margin:16px 0}.quote-preview .panel{margin:0;padding:16px}
+@media(max-width:620px){.cart-item{align-items:start;flex-wrap:wrap;gap:13px}.cart-controls{justify-content:flex-start;width:100%}}
