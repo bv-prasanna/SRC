@@ -64,8 +64,29 @@ async function deleteItem(i){
  try{await api("/api/admin/"+tab+"/"+rows[i].id,{method:"DELETE"});await openTab(tab);notify(isProduct?"Product unpublished. Historical records preserved.":"Record deleted.")}
  catch(err){notify(err.message)}
 }
-async function updateOrder(i){const r=rows[i];const status=prompt('New status: CONFIRMED, PACKING, READY, DISPATCHED, DELIVERED, CANCELLED, CLOSED',r.status);if(!status)return;try{await api('/api/admin/orders/'+r.id+'/status',{method:'PATCH',body:JSON.stringify({status,note:'Updated by SRC admin'})});await openTab(tab)}catch(err){notify(err.message)}}
-async function assignAgent(i){const id=Number(prompt("Assign to agent user ID:"));if(!Number.isSafeInteger(id)||id<1)return;try{await api("/api/admin/enquiries/"+rows[i].id+"/assign",{method:"PATCH",body:JSON.stringify({agentId:id})});notify("Assigned");await openTab(tab)}catch(e){notify(e.message)}}
+async function updateOrder(i){
+ const r=rows[i];
+ const choice=await adminForm("Update enquiry #"+r.id,[
+  {key:"status",label:"New enquiry status",options:["CONFIRMED","PACKING","READY","DISPATCHED","DELIVERED","CANCELLED","CLOSED"].map(v=>({value:v,label:v})),value:r.status},
+  {key:"note",label:"Internal status note",value:"Customer follow-up completed",required:true}
+ ]);
+ if(!choice)return;
+ if(choice.note.trim().length<3){notify("Provide a clear internal note");return}
+ try{await api("/api/admin/orders/"+r.id+"/status",{method:"PATCH",body:JSON.stringify({status:choice.status,note:choice.note.trim()})});await openTab(tab);notify("Enquiry status updated")}
+ catch(err){notify(err.message)}
+}
+async function assignAgent(i){
+ const enquiry=rows[i];
+ try{
+  const users=await api("/api/admin/users");
+  const agents=users.filter(u=>u.active&&["AGENT","ADMIN","SUPER_ADMIN"].includes(u.role));
+  if(!agents.length){notify("No active agents exist. Create or assign an Agent role in Staff permissions.");return}
+  const selected=await adminForm("Assign enquiry #"+enquiry.id,[{key:"agentId",label:"Select an active agent",options:agents.map(u=>({value:u.id,label:u.email+" · "+u.role}))}]);
+  if(!selected)return;
+  await api("/api/admin/enquiries/"+enquiry.id+"/assign",{method:"PATCH",body:JSON.stringify({agentId:Number(selected.agentId)})});
+  await openTab(tab);notify("Enquiry assigned to "+agents.find(u=>String(u.id)===selected.agentId)?.email);
+ }catch(err){notify(err.message)}
+}
 async function updateUserAccess(i){
  const user=rows[i];
  if(user.role==='SUPER_ADMIN'){notify('The Super Admin account cannot be changed from this screen.');return}
