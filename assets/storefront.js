@@ -271,9 +271,9 @@ async function submitCart(event,section){
 }
 async function renderOrders(){
  const root=$("orderResults");if(!state.token){root.innerHTML='<div class="empty">Sign in to view orders. <button class="btn" onclick="SRC.go(\'account\')">Sign in</button></div>';return}
- try{const orders=await request("/api/checkout/orders");root.innerHTML=orders.length?orders.map(o=>'<div class="panel" style="margin:12px 0"><b>Order #'+esc(o.id)+'</b> &nbsp; <span class="tag">'+esc(o.status)+'</span><p>'+esc(o.section_slug)+' · '+price(o.amount_paise)+'</p>'+(o.status==="PAID"?'<button class="btn light" onclick="SRC.invoice(\''+esc(o.id)+'\')">View draft invoice</button>':'')+'</div>').join(''):'<div class="empty">No purchases yet.</div>'}catch(e){root.textContent=e.message}
+ try{const orders=await request("/api/checkout/orders");root.innerHTML=orders.length?orders.map(o=>'<div class="panel" style="margin:12px 0"><b>Order #'+esc(o.id)+'</b> &nbsp; <span class="tag">'+esc(o.status)+'</span><p>'+esc(o.section_slug)+' · '+price(o.amount_paise)+'</p>'+(o.status==="PAID"?'<button class="btn light" onclick="SRC.invoice(\''+esc(o.id)+'\')">Download draft bill</button>':'')+'</div>').join(''):'<div class="empty">No purchases yet.</div>'}catch(e){root.textContent=e.message}
 }
-async function invoice(id){try{const i=await request("/api/checkout/orders/"+id+"/invoice");alert(i.invoice_number+" — "+i.kind+"\nAmounts are provisional until GST/HSN configuration is approved.")}catch(e){alert(e.message)}}
+async function invoice(id){try{const i=await request("/api/checkout/orders/"+id+"/invoice");window.SRCReceipt.download(i)}catch(e){alert(e.message)}}
 function renderAuth(){
  $("authHeading").textContent=state.user?"Signed in: "+state.user.email:(state.authMode==="login"?"Sign in to your account":"Create a customer account");
  $("authForm").classList.toggle("hide",!!state.user);$("logoutButton").classList.toggle("hide",!state.user);$("userLinks").classList.toggle("hide",!state.user);
