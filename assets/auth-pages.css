@@ -1,0 +1,16 @@
+/* Shared compact account/agent page system to match SRC's navy/orange retail identity. */
+:root{--src-navy:#083b66;--src-blue:#1269a6;--src-orange:#ed732c;--src-ink:#163956}
+body.auth-page{min-height:100vh;margin:0;background:linear-gradient(145deg,#edf4fb 0%,#f8fafc 62%,#fff3e7 100%);font-family:Inter,system-ui,sans-serif;color:var(--src-ink)}
+.auth-header{min-height:88px;background:var(--src-navy);color:white;padding:13px max(24px,calc((100vw - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px}
+.auth-header a{color:white;text-decoration:none;font-size:13px;font-weight:600}.auth-header a:hover{text-decoration:underline}
+.auth-brand{display:flex;align-items:center;gap:15px}.auth-brand img{width:95px;height:60px;object-fit:contain;background:#fff;border-radius:9px;padding:5px}.auth-brand strong{font-size:18px;display:block;line-height:1.2}.auth-brand small{font-size:11px;color:#bdcee4;display:block;margin-top:5px}
+.auth-shell{width:min(100%,1120px);padding:42px 22px;margin:auto}
+.auth-copy{margin-bottom:26px}.auth-copy h1{font-size:clamp(29px,4vw,43px);letter-spacing:-.035em;line-height:1.15;color:#10375c;margin:8px 0}.auth-copy p{font-size:14px;color:#627e95;max-width:700px;line-height:1.6}
+.auth-page .panel{background:#fff;border-radius:17px;padding:27px;border:1px solid #dce6ef;box-shadow:0 18px 45px #16395413}
+.auth-page .auth-panel{max-width:515px}.auth-page label{display:grid;gap:8px;color:#34516f;font-weight:700;font-size:13px;margin-bottom:15px}.auth-page input,.auth-page textarea{border:1px solid #ceddeb;outline-color:var(--src-blue);padding:12px 14px;border-radius:9px;background:#fff;color:#173c59;width:100%;font:inherit;box-sizing:border-box}
+.auth-page button,.auth-page .btn{background:var(--src-blue);border:0;color:white;border-radius:9px;padding:12px 17px;font-weight:700;cursor:pointer}.auth-page button:disabled{opacity:.55;cursor:not-allowed}.auth-page button.btn.light{background:#eaf2fa;color:#164e79}
+.auth-page .auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 20px}.auth-page .feedback{color:#205783;min-height:20px;font-size:13px;margin-top:15px}.auth-page .muted{color:#6b8298}
+.auth-page .password-row{display:flex;align-items:center;gap:8px}.auth-page .password-row input{flex:1;min-width:0}.auth-page .password-row button{white-space:nowrap;background:#e8f2f9;color:#155481;padding:12px}
+.auth-page .help{font-size:12px;color:#73869a;margin-bottom:12px}
+.auth-footer{border-top:1px solid #dae4ec;text-align:center;color:#73869a;font-size:11px;margin-top:45px;padding:22px}
+@media(max-width:620px){.auth-header{padding:10px 15px;min-height:75px}.auth-brand img{width:78px;height:50px}.auth-brand strong{font-size:15px}.auth-shell{padding:28px 15px}.auth-page .panel{padding:20px}.auth-page .auth-actions{flex-direction:column}.auth-page .auth-actions button{width:100%}}
