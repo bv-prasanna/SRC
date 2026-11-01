@@ -2,11 +2,13 @@ import { Router } from "express";
 import type { Pool } from "pg";
 import type { RequestHandler } from "express";
 import { z } from "zod";
+import {quoteFromDb} from "./billing.js";
 export const enquirySchema=z.object({
  customerName:z.string().trim().min(2).max(120),
  email:z.string().email().max(254),
  phone:z.string().regex(/^[+0-9 -]{8,20}$/),
  sectionSlug:z.enum(["housekeeping","stationery"]),
+ couponCode:z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,36}$/).optional(),
  lines:z.array(z.object({productId:z.number().int().positive(),quantity:z.number().int().min(1).max(100)})).min(1).max(40)
 });
 export function orderRouter(pool:Pool,admin:RequestHandler){
@@ -32,10 +34,11 @@ export function orderRouter(pool:Pool,admin:RequestHandler){
        total+=p.price_paise*l.quantity;
        if(!Number.isSafeInteger(total)||total>100000000)throw new Error("INVALID_TOTAL");
      }
-     const order=await client.query("INSERT INTO standard_orders(customer_name,email,phone,section_slug,total_paise) VALUES($1,$2,$3,$4,$5) RETURNING id,status,total_paise",[input.customerName,input.email,input.phone,input.sectionSlug,total]);
-     for(const l of input.lines){await client.query("INSERT INTO standard_order_lines(order_id,product_id,quantity,unit_price_paise) VALUES($1,$2,$3,$4)",[order.rows[0].id,l.productId,l.quantity,map.get(l.productId).price_paise])}
-     await client.query("COMMIT");res.status(201).json({id:order.rows[0].id,status:"ENQUIRY",totalPaise:total,message:"Enquiry received. This is not a confirmed order and no payment has been collected."});
-   }catch(e){await client.query("ROLLBACK").catch(()=>{});res.status(e instanceof Error&&["PRODUCT_UNAVAILABLE","INVALID_TOTAL"].includes(e.message)?400:503).json({error:e instanceof Error&&e.message==="PRODUCT_UNAVAILABLE"?"Product unavailable for this section":"Unable to create enquiry"})}
+     const quote=await quoteFromDb(client,{sectionSlug:input.sectionSlug,items:input.lines,couponCode:input.couponCode});
+     const order=await client.query("INSERT INTO standard_orders(customer_name,email,phone,section_slug,total_paise,coupon_code,quote_snapshot) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb) RETURNING id,status,total_paise",[input.customerName,input.email,input.phone,input.sectionSlug,quote.totalPaise,input.couponCode||null,JSON.stringify(quote)]);
+     for(const l of input.lines){await client.query("INSERT INTO standard_order_lines(order_id,product_id,quantity,unit_price_paise) VALUES($1,$2,$3,$4)",[order.rows[0].id,l.productId,l.quantity,quote.lines.find(x=>x.productId===l.productId)!.unitPricePaise])}
+     await client.query("COMMIT");res.status(201).json({id:order.rows[0].id,status:"ENQUIRY",totalPaise:quote.totalPaise,quote,message:"Enquiry received with itemized estimated price/tax. No order or payment is confirmed."});
+   }catch(e){await client.query("ROLLBACK").catch(()=>{});res.status(e instanceof Error&&["PRODUCT_UNAVAILABLE","INVALID_TOTAL","INVALID_COUPON","CONFLICTING_TAX_COMPONENTS","MIXED_TAX_MODES"].includes(e.message)?400:503).json({error:e instanceof Error&&e.message==="PRODUCT_UNAVAILABLE"?"Product unavailable for this section":"Unable to create enquiry"})}
    finally{client.release()}
  });
  router.get("/api/admin/enquiries",admin,async(_req,res)=>{try{const r=await pool.query("SELECT id,customer_name,email,phone,section_slug,total_paise,status,created_at FROM standard_orders ORDER BY created_at DESC LIMIT 500");res.json(r.rows)}catch{res.status(503).json({error:"Database unavailable"})}});
