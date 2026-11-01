@@ -5,7 +5,7 @@ import {join,resolve} from "node:path";
 const root=resolve(import.meta.dirname,"..");
 execFileSync(process.execPath,[join(root,"scripts/build-pages.mjs")],{cwd:root,stdio:"inherit"});
 const site=join(root,".pages-dist");
-for(const item of ["index.html","admin.html","scheme-admin.html","agent.html","customer.html","assets","config.js","_headers"]){
+for(const item of ["index.html","admin.html","scheme-admin.html","billing-admin.html","agent.html","customer.html","assets","config.js","_headers"]){
  assert(existsSync(join(site,item)),"Public deployment missing "+item)
 }
 for(const item of ["server","backend","docs","scripts",".github","render.yaml",".env",".gitignore"]){
