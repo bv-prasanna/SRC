@@ -76,7 +76,7 @@ export async function captureConfirmedPayment(db:Pool,rzOrder:string,rzPayment:s
     items:items.rows.map(x=>({productId:x.product_id,name:x.name_snapshot,quantity:x.qty,unitPricePaise:x.unit_price_paise})),
     paymentReference:rzPayment};
   await c.query("INSERT INTO customer_invoices(order_id,invoice_number,kind,snapshot) VALUES($1,$2,'DRAFT',$3::jsonb) ON CONFLICT(order_id) DO NOTHING",
-   [order.id,"SRC-DRAFT-"+order.id,JSON.stringify(invoiceSnapshot)]);
+   [order.id,String(seller?.invoice_prefix||"SRC")+"-DRAFT-"+order.id,JSON.stringify(invoiceSnapshot)]);
   await c.query("COMMIT");return {orderId:order.id,status:"PAID",duplicate:false};
  }catch(e){await c.query("ROLLBACK").catch(()=>{});throw e}finally{c.release()}
 }
