@@ -142,6 +142,19 @@ export function commerceRouter(db:Pool){
    res.status(q.rowCount?200:404).json(q.rows[0]||{error:"Draft invoice unavailable"});
   }catch{res.status(503).json({error:"Invoice unavailable"})}
  });
+ r.get("/api/admin/checkout/orders/:id",admin,async(req,res)=>{
+  const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid order ID"});return}
+  try{
+   const order=await db.query("SELECT o.id,o.user_id,o.section_slug,o.status,o.amount_paise,o.currency,o.address,o.coupon_code,o.quote_snapshot,o.created_at,o.paid_at,u.email AS customer_email FROM customer_orders o JOIN app_users u ON u.id=o.user_id WHERE o.id=$1",[id]);
+   if(!order.rowCount){res.status(404).json({error:"Order not found"});return}
+   const [items,invoice]=await Promise.all([
+    db.query("SELECT product_id,name_snapshot AS name,qty,unit_price_paise FROM customer_order_items WHERE order_id=$1 ORDER BY product_id",[id]),
+    db.query("SELECT invoice_number,kind,generated_at FROM customer_invoices WHERE order_id=$1",[id])
+   ]);
+   res.setHeader("Cache-Control","no-store");
+   res.json({order:order.rows[0],items:items.rows,invoice:invoice.rows[0]||null});
+  }catch{res.status(503).json({error:"Order details unavailable"})}
+ });
  r.get("/api/admin/checkout/orders",admin,async(_req,res)=>{try{res.json((await db.query("SELECT id,section_slug,status,amount_paise,razorpay_order_id,created_at FROM customer_orders ORDER BY id DESC LIMIT 500")).rows)}catch{res.status(503).json({error:"Orders unavailable"})}});
  return r
 }
