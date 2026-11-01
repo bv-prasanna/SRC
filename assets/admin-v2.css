@@ -15,3 +15,12 @@ tr[hidden]{display:none!important}
 .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 .dialog-actions button{white-space:nowrap}
 @media(max-width:650px){.admin-filters label{min-width:100%;max-width:none}.admin-dialog{padding:19px}}
+
+/* Real order detail dialog: readable totals and scroll-safe on mobile */
+.order-detail-dialog{width:min(780px,calc(100vw - 28px));max-height:min(85vh,880px);overflow:auto}
+.order-detail-dialog h2{margin:0}
+.order-detail-dialog .table{max-height:300px;overflow:auto;margin:16px 0}
+.order-breakdown{border-top:1px solid #d7e5f0;padding:16px 0;display:grid;gap:8px}
+.order-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:13px}
+.order-breakdown .total{border-top:1px solid #d7e5f0;padding-top:12px;font-size:17px;color:#0b528d}
+@media(max-width:650px){.order-detail-dialog{padding:16px}.order-detail-dialog .table{max-width:100%}}
