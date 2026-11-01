@@ -15,9 +15,9 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
  const name=await db.query("SELECT current_database() AS name");
  assert.match(name.rows[0].name,/_test$/,"Refusing to test against a non-test database");
  const dir=resolve(dirname(fileURLToPath(import.meta.url)),"../sql");
- for(let i=1;i<=16;i++){
+ for(let i=1;i<=17;i++){
   const file=resolve(dir,String(i).padStart(3,"0")+"_"+({
-   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management",16:"jwt_superadmin"
+   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management",16:"jwt_superadmin",17:"billing_pricing"
   } as Record<number,string>)[i]+".sql");
   await db.query(readFileSync(file,"utf8"));
  }
@@ -60,6 +60,34 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   const availability=await db.query("SELECT on_hand,reserved FROM stock_levels WHERE product_id=$1",[id]);
   assert.equal(availability.rows[0].on_hand,10);assert.equal(availability.rows[0].reserved,8);
   await db.query("UPDATE stock_levels SET reserved=0 WHERE product_id=$1",[id]);
+  // Finance Studio: admin-only rules, applicable item-level precedence and immutable quote data.
+  const itemScope={name:"UAT stationery tax",sectionSlug:"housekeeping",scope:"ITEM",category:null,productId:id,
+   active:true,component:"CGST",rateBps:900,taxInclusive:false,hsnSac:"3402",validUntil:null};
+  assert.equal((await call("/api/admin/billing/taxes","POST",itemScope,userToken)).code,403);
+  const cgst=await call("/api/admin/billing/taxes","POST",itemScope,token);
+  assert.equal(cgst.code,201);
+  const sgst=await call("/api/admin/billing/taxes","POST",{...itemScope,name:"UAT SGST",component:"SGST"},token);
+  assert.equal(sgst.code,201);
+  const dynamic=await call("/api/admin/billing/pricing","POST",{name:"UAT quantity discount",scope:"ITEM",sectionSlug:"housekeeping",category:null,productId:id,active:true,
+   adjustmentBps:-1000,minQuantity:2,maxQuantity:null,reason:"Two-piece bulk purchase",validUntil:null},token);
+  assert.equal(dynamic.code,201);
+  const coupon="UAT"+randomUUID().replaceAll("-","").slice(0,15).toUpperCase();
+  const offer=await call("/api/admin/billing/offers","POST",{name:"UAT checkout coupon",scope:"ITEM",sectionSlug:"housekeeping",category:null,productId:id,active:true,
+   code:coupon,kind:"FIXED",value:1000,minSubtotalPaise:0,maxDiscountPaise:null,description:"Integration only",validUntil:null},token);
+  assert.equal(offer.code,201);
+  const bill=await call("/api/billing/quote","POST",{sectionSlug:"housekeeping",items:[{productId:id,quantity:2}],couponCode:coupon});
+  assert.equal(bill.code,200);
+  assert.equal(bill.data.subtotalPaise,22500);
+  assert.equal(bill.data.discountPaise,1000);
+  assert.equal(bill.data.taxPaise,3870);
+  assert.equal(bill.data.totalPaise,25370);
+  assert.equal(bill.data.lines[0].taxes.length,2);
+  assert.equal((await call("/api/admin/billing/taxes/"+cgst.data.id,"DELETE",undefined,token)).code,200);
+  const updatedQuote=await call("/api/billing/quote","POST",{sectionSlug:"housekeeping",items:[{productId:id,quantity:2}],couponCode:coupon});
+  assert.equal(updatedQuote.code,200);
+  assert.equal(updatedQuote.data.taxPaise,1935);
+  assert.equal((await call("/api/admin/billing/audit","GET",undefined,token)).code,200);
+
   const enquiry=await call("/api/enquiries","POST",{customerName:"Example Buyer",email,phone:"9876543210",sectionSlug:"housekeeping",lines:[{productId:id,quantity:1}]});
   assert.equal(enquiry.code,201);
   const bad=await call("/api/enquiries","POST",{customerName:"Example Buyer",email,phone:"9876543210",sectionSlug:"crackers",lines:[{productId:id,quantity:1}]});
