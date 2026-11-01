@@ -41,7 +41,7 @@ async function refresh(){
    const orders=await api("/api/checkout/orders");items=orders;
    $("stats").innerHTML=[["My orders",orders.length],["Paid",orders.filter(x=>x.status==="PAID").length],["In delivery",orders.filter(x=>x.status==="DISPATCHED").length],["Delivered",orders.filter(x=>x.status==="DELIVERED").length]].map(([k,v])=>'<div class="stat"><small>'+k+'</small><strong>'+v+'</strong></div>').join("");
    $("queueTitle").textContent="Your purchases";
-   $("queue").innerHTML=orders.length?orders.map(x=>'<article class="panel"><h3>Order #'+esc(x.id)+' <span class="tag">'+esc(x.status)+'</span></h3><p>'+esc(x.section_slug)+' · ₹'+(Number(x.amount_paise)/100).toFixed(2)+'</p></article>').join(""):'<div class="empty">No purchases yet. Visit the SRC storefront to explore housekeeping and stationery.</div>';
+   $("queue").innerHTML=orders.length?orders.map(x=>'<article class="panel"><h3>Order #'+esc(x.id)+' <span class="tag">'+esc(x.status)+'</span></h3><p>'+esc(x.section_slug)+' · ₹'+(Number(x.amount_paise)/100).toFixed(2)+'</p>'+(['PAID','PACKING','DISPATCHED','DELIVERED','REFUND_PENDING','REFUNDED'].includes(x.status)?'<button class="alt" onclick="WORK.downloadInvoice('+Number(x.id)+')">Download draft bill</button>':'')+'</article>').join(""):'<div class="empty">No purchases yet. Visit the SRC storefront to explore housekeeping and stationery.</div>';
    return
   }
   items=await api("/api/workspace/tasks");
@@ -120,5 +120,6 @@ async function counterReceipt(i){
  }catch(err){status(err.message,true)}
 }
 if($("festivalLookup"))$("festivalLookup").onclick=findFestivalMember;
-window.WORK={update,assign,details,verifyFestival,visitFestival,counterReceipt};
+async function downloadInvoice(id){try{const invoice=await api("/api/checkout/orders/"+id+"/invoice");window.SRCReceipt.download(invoice);status("Draft bill downloaded. Open it to print or save as PDF.")}catch(e){status(e.message,true)}}
+window.WORK={update,assign,details,verifyFestival,visitFestival,counterReceipt,downloadInvoice};
 })();
