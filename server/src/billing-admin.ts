@@ -5,20 +5,6 @@ import {requireRole} from "./access.js";
 import {quoteFromDb} from "./billing.js";
 
 const scope=z.enum(["SECTION","CATEGORY","PRODUCT","ITEM"]);
-const shared=z.object({
- name:z.string().trim().min(3).max(120),
- scope,
- sectionSlug:z.enum(["stationery","housekeeping"]),
- category:z.string().trim().min(1).max(100).nullable().default(null),
- productId:z.number().int().positive().nullable().default(null),
- active:z.boolean().default(false),
- validFrom:z.string().datetime({offset:true}).optional(),
- validUntil:z.string().datetime({offset:true}).nullable().default(null)
-}).refine(v=>(v.scope==="SECTION"&&!v.category&&!v.productId)||
-(v.scope==="CATEGORY"&&!!v.category&&!v.productId)||
-(["PRODUCT","ITEM"].includes(v.scope)&&!!v.productId&&!v.category),{message:"Scope needs the matching category or product reference"})
-.refine(v=>!v.validFrom||!v.validUntil||new Date(v.validUntil)>new Date(v.validFrom),{message:"End must follow start"});
-const ruleCore=shared.safeExtend?null:null; // keep strict object variants below for compatibility
 const baseFields={
  name:z.string().trim().min(3).max(120),
  scope,
