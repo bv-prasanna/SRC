@@ -70,7 +70,7 @@ export function billingRouter(db:Pool){
  });
  r.post("/api/billing/quote",async(req,res)=>{
   try{const quote=await quoteFromDb(db,req.body);res.json(quote)}
-  catch(e){const msg=e instanceof Error?e.message:"INVALID_QUOTE";res.status(["INVALID_COUPON","INVALID_QUOTE","INVALID_PRODUCT","INVALID_AMOUNT","DUPLICATE_PRODUCT","MIXED_TAX_MODES","INVALID_SECTION"].includes(msg)?400:503).json({error:msg})}
+  catch(e){const msg=e instanceof Error?e.message:"INVALID_QUOTE";res.status(["INVALID_COUPON","INVALID_QUOTE","INVALID_PRODUCT","INVALID_AMOUNT","DUPLICATE_PRODUCT","MIXED_TAX_MODES","CONFLICTING_TAX_COMPONENTS","INVALID_SECTION"].includes(msg)?400:503).json({error:msg})}
  });
  for(const kind of ["taxes","pricing","offers"] as const){
   const config=tables[kind],path="/api/admin/billing/"+kind;
