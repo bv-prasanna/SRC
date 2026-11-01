@@ -82,6 +82,11 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal(bill.data.taxPaise,3870);
   assert.equal(bill.data.totalPaise,25370);
   assert.equal(bill.data.lines[0].taxes.length,2);
+  const pricedEnquiry=await call("/api/enquiries","POST",{customerName:"Billing UAT Customer",email,phone:"9876543210",sectionSlug:"housekeeping",couponCode:coupon,lines:[{productId:id,quantity:2}]});
+  assert.equal(pricedEnquiry.code,201);
+  assert.equal(pricedEnquiry.data.totalPaise,25370);
+  const preserved=await db.query("SELECT quote_snapshot->>'totalPaise' AS total FROM standard_orders WHERE id=$1",[pricedEnquiry.data.id]);
+  assert.equal(Number(preserved.rows[0].total),25370);
   assert.equal((await call("/api/admin/billing/taxes/"+cgst.data.id,"DELETE",undefined,token)).code,200);
   const updatedQuote=await call("/api/billing/quote","POST",{sectionSlug:"housekeeping",items:[{productId:id,quantity:2}],couponCode:coupon});
   assert.equal(updatedQuote.code,200);
