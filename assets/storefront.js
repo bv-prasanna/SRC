@@ -255,13 +255,14 @@ async function previewCart(event,section){
  const coupon=String(new FormData(form).get("couponCode")||"").trim().toUpperCase();
  const lines=state.cart.filter(x=>x.section===section);
  const output=form.querySelector(".quote-preview");
+ const quoteMoney=n=>"₹"+(Number(n||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
  output.textContent="Calculating quote…";
  try{
   const data={sectionSlug:section,items:lines.map(l=>({productId:l.productId,quantity:l.quantity}))};
   if(coupon)data.couponCode=coupon;
   const quote=await request("/api/billing/quote",{method:"POST",body:JSON.stringify(data)});
-  output.innerHTML='<div class="panel"><strong>Itemized estimate</strong>'+quote.lines.map(l=>'<p>'+esc(l.name)+' × '+Number(l.quantity)+' · '+price(l.totalPaise)+'</p>').join("")+
-   '<p>Dynamic adjustment: '+(quote.dynamicAdjustmentPaise<0?'-':'+')+price(Math.abs(quote.dynamicAdjustmentPaise))+'</p><p>Offer discount: -'+price(quote.discountPaise)+'</p><p>Tax: '+price(quote.taxPaise)+'</p><h3>Total: '+price(quote.totalPaise)+'</h3><p class="muted">Estimate only. Final pricing is recalculated on submission; no payment is collected by this preview.</p></div>';
+  output.innerHTML='<div class="panel"><strong>Itemized estimate</strong>'+quote.lines.map(l=>'<p>'+esc(l.name)+' × '+Number(l.quantity)+' · '+quoteMoney(l.totalPaise)+'</p>').join("")+
+   '<p>Dynamic adjustment: '+(quote.dynamicAdjustmentPaise<0?'-':'+')+quoteMoney(Math.abs(quote.dynamicAdjustmentPaise))+'</p><p>Offer discount: -'+quoteMoney(quote.discountPaise)+'</p><p>Tax: '+quoteMoney(quote.taxPaise)+'</p><h3>Total: '+quoteMoney(quote.totalPaise)+'</h3><p class="muted">Estimate only. Final pricing is recalculated on submission; no payment is collected by this preview.</p></div>';
  }catch(e){output.textContent="Quote unavailable: "+e.message}
 }
 async function ensureRazorpay(){if(window.Razorpay)return;await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src="https://checkout.razorpay.com/v1/checkout.js";s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
