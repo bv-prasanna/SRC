@@ -55,11 +55,11 @@ export function validateBillingRule(kind:"taxes"|"pricing"|"offers",raw:unknown)
  if(kind==="offers"&&((v.kind==="PERCENT"&&v.value>10000)||(v.kind==="FIXED"&&v.value>100000000)))throw Error("INVALID_DISCOUNT");
  return v;
 }
-const tables={
+const tables:Record<"taxes"|"pricing"|"offers",{table:string;audit:string;columns:string[];map:string[]}>={
  taxes:{table:"src_tax_rules",audit:"TAX",columns:["name","scope","section_slug","category","product_id","component","rate_bps","tax_inclusive","hsn_sac","active","valid_from","valid_until"],map:["name","scope","sectionSlug","category","productId","component","rateBps","taxInclusive","hsnSac","active","validFrom","validUntil"]},
  pricing:{table:"src_dynamic_pricing_rules",audit:"PRICING",columns:["name","scope","section_slug","category","product_id","adjustment_bps","min_quantity","max_quantity","reason","active","valid_from","valid_until"],map:["name","scope","sectionSlug","category","productId","adjustmentBps","minQuantity","maxQuantity","reason","active","validFrom","validUntil"]},
  offers:{table:"src_sales_offers",audit:"OFFER",columns:["name","scope","section_slug","category","product_id","code","kind","value","min_subtotal_paise","max_discount_paise","description","active","valid_from","valid_until"],map:["name","scope","sectionSlug","category","productId","code","kind","value","minSubtotalPaise","maxDiscountPaise","description","active","validFrom","validUntil"]}
-} as const;
+};
 const idValue=(v:string)=>Number.isSafeInteger(Number(v))&&Number(v)>0?Number(v):null;
 export function billingRouter(db:Pool){
  const r=Router(),admin=requireRole(db,["ADMIN"]);
