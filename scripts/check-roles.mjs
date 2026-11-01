@@ -30,5 +30,5 @@ assert(router.includes("section_slug<>'crackers'")||router.includes("section_slu
 const admin=read("admin.html");
 assert(admin.includes("renderDashboard()")&&admin.includes("renderWorkflows()"),"Admin dashboard/workflow missing");
 const setup=read("scripts/local-setup.ps1");
-assert(setup.includes("npm run migrate")&&setup.includes("dev_seed_catalogue_v3.sql"),"Docker-free setup or 96 seed missing");
+assert(setup.includes("npm run migrate")&&setup.includes("npm run seed:demo")&&setup.includes("SeedDemo"),"Docker-free setup or 96 seed missing");
 console.log("SRC role + 96-product smoke checks passed.");
