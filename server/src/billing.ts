@@ -44,7 +44,7 @@ export function calculateQuote(input:z.infer<typeof quoteSchema>,products:Produc
   if(unit<1)throw Error("INVALID_AMOUNT");
   const lineTotal=ensureMoney(unit*qty);
   base=ensureMoney(base+perUnit*qty);subtotal=ensureMoney(subtotal+lineTotal);
-  lines.push({productId:p.id,name:p.name,category:p.category,quantity:qty,baseUnitPaise:perUnit,dynamicRuleId:dyn?.id||null,dynamicReason:dyn?.reason||null,unitPricePaise:unit,subtotalPaise:lineTotal,discountPaise:0,taxablePaise:0,taxInclusive:false,taxes:[],totalPaise:0});
+  lines.push({productId:Number(p.id),name:p.name,category:p.category,quantity:qty,baseUnitPaise:perUnit,dynamicRuleId:dyn?.id||null,dynamicReason:dyn?.reason||null,unitPricePaise:unit,subtotalPaise:lineTotal,discountPaise:0,taxablePaise:0,taxInclusive:false,taxes:[],totalPaise:0});
  }
  const eligible=offers.filter(r=>input.items.some(i=>matchesRule(r,map.get(i.productId)!,i.quantity)));
  const candidates=eligible.filter(o=>input.couponCode?o.code===input.couponCode:!o.code);
