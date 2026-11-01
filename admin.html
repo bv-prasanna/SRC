@@ -79,7 +79,7 @@ async function assignAgent(i){
  const enquiry=rows[i];
  try{
   const users=await api("/api/admin/users");
-  const agents=users.filter(u=>u.active&&["AGENT","ADMIN","SUPER_ADMIN"].includes(u.role));
+  const agents=users.filter(u=>u.active&&u.role==="AGENT");
   if(!agents.length){notify("No active agents exist. Create or assign an Agent role in Staff permissions.");return}
   const selected=await adminForm("Assign enquiry #"+enquiry.id,[{key:"agentId",label:"Select an active agent",options:agents.map(u=>({value:u.id,label:u.email+" · "+u.role}))}]);
   if(!selected)return;
