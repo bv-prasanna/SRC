@@ -4,7 +4,7 @@
 <header><div class="header-brand"><img src="assets/src-corporate-logo.webp" alt="SRC Enterprises"><b>SRC <span style="font-size:14px;font-weight:500">Operations & Admin</span></b></div><div class="row"><a style="color:white" href="./index.html">← Storefront</a><a style="color:white" href="./scheme-admin.html">Scheme Manager</a><a style="color:white" href="./billing-admin.html">Finance &amp; Pricing</a><button id="signout" class="alt hide">Sign out</button></div></header><main>
 <section class="panel" id="signin"><h1>Administrator sign in</h1><p class="help">Use an account provisioned with ADMIN or SUPER_ADMIN role. No demo role switching or browser-stored administrator password.</p><form id="login"><div class="grid"><label>Email<input id="email" type="email" required autocomplete="username"></label><label>Password<input id="password" type="password" required autocomplete="current-password"></label></div><button type="submit">Sign in</button></form></section>
 <section id="workspace" class="hide"><h1>SRC Control Centre</h1><p class="help">Products, departments, customers, agents, procurement, packing, dispatch, stock and campaigns in one PostgreSQL-backed operations console. Payment collection is disabled unless separately verified and configured. Crackers remain catalogue-only for online purchases; free festival registration and in-store ID verification are available.</p>
-<div class="tabs" id="tabs"></div><section id="body"></section></section><div id="message" role="status"></div><dialog id="adminDialog" class="admin-dialog"><form id="adminDialogForm"><h2 id="adminDialogTitle">Update</h2><div id="adminDialogFields"></div><div class="dialog-actions"><button type="button" class="alt" id="adminDialogCancel">Cancel</button><button type="submit">Save changes</button></div></form></dialog></main>
+<div class="tabs" id="tabs"></div><section id="body"></section></section><div id="message" role="status"></div><dialog id="orderDetailDialog" class="admin-dialog order-detail-dialog" aria-labelledby="orderDetailHeading"><div class="row" style="justify-content:space-between"><h2 id="orderDetailHeading">Order details</h2><button class="alt" type="button" id="closeOrderDetails">Close</button></div><div id="orderDetailContent"></div></dialog><dialog id="adminDialog" class="admin-dialog"><form id="adminDialogForm"><h2 id="adminDialogTitle">Update</h2><div id="adminDialogFields"></div><div class="dialog-actions"><button type="button" class="alt" id="adminDialogCancel">Cancel</button><button type="submit">Save changes</button></div></form></dialog></main>
 <script src="./config.js"></script><script>
 const base=(window.SRC_API_BASE||((location.hostname==='localhost'||location.hostname==='127.0.0.1')&&location.port==='8000'?'http://localhost:8080':'')).replace(/\/$/,'');
 let token='',currentRole='',tab='dashboard',rows=[],availableSections=['crackers','housekeeping','stationery'];
@@ -133,5 +133,27 @@ async function adjustStock(i){
  try{await api('/api/admin/inventory/movements',{method:'POST',body:JSON.stringify({productId:Number(r.product_id),warehouseCode:r.warehouse_code,delta,reason:v.reason.trim()})});await openTab('inventory');notify('Inventory movement recorded successfully')}
  catch(e){notify(e.message)}
 }
-function showCheckout(i){const r=rows[i];notify("Order #"+r.id+" · "+r.status+" · "+r.section_slug+". Changes to paid orders must follow the operational workflow.");}
+async function showCheckout(i){
+ const r=rows[i],dlg=document.getElementById("orderDetailDialog"),root=document.getElementById("orderDetailContent");
+ try{
+  const details=await api("/api/admin/checkout/orders/"+encodeURIComponent(r.id));
+  const o=details.order,q=o.quote_snapshot||{};
+  const money=n=>"₹"+(Number(n||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const list=(details.items||[]).map(line=>'<tr><td>'+esc(line.name)+'</td><td>'+Number(line.qty)+'</td><td>'+money(line.unit_price_paise)+'</td></tr>').join("");
+  root.innerHTML='<p><strong>Status:</strong> '+esc(o.status)+' · <strong>Department:</strong> '+esc(o.section_slug)+'</p>'+
+   '<p><strong>Customer:</strong> '+esc(o.customer_email)+' · <strong>Order:</strong> #'+esc(o.id)+'</p>'+
+   '<p><strong>Delivery address:</strong> '+esc(o.address)+'</p>'+
+   '<div class="table"><table><thead><tr><th>Product</th><th>Qty</th><th>Unit price</th></tr></thead><tbody>'+list+'</tbody></table></div>'+
+   '<div class="order-breakdown"><div><span>Catalogued subtotal</span><b>'+money(q.subtotalPaise||o.amount_paise)+'</b></div>'+
+   '<div><span>Dynamic adjustment</span><b>'+money(q.dynamicAdjustmentPaise)+'</b></div>'+
+   '<div><span>Offer / coupon discount</span><b>-'+money(q.discountPaise)+'</b></div>'+
+   '<div><span>Tax</span><b>'+money(q.taxPaise)+'</b></div>'+
+   '<div class="total"><span>Order total</span><b>'+money(o.amount_paise)+'</b></div></div>'+
+   '<p class="help">Coupon: '+esc(o.coupon_code||"None")+' · Bill: '+esc(details.invoice?.invoice_number||"Pending")+' ('+esc(details.invoice?.kind||"Not issued")+')</p>'+
+   '<p class="help">Operational status changes must follow Procurement, Packing and Delivery tasks.</p>';
+  document.getElementById("orderDetailHeading").textContent="Order #"+o.id;
+  dlg.showModal();
+ }catch(err){notify(err.message)}
+}
+document.getElementById("closeOrderDetails").onclick=()=>document.getElementById("orderDetailDialog").close();
 </script></body></html>
