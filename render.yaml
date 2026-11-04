@@ -5,10 +5,11 @@ services:
     name: src-enterprises-api
     runtime: docker
     plan: free
+    region: singapore
     dockerfilePath: ./server/Dockerfile
     dockerContext: ./server
     healthCheckPath: /ready
-    autoDeploy: false
+    autoDeployTrigger: off
     envVars:
       - key: NODE_ENV
         value: production
