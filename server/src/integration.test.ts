@@ -30,6 +30,7 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
    return {code:res.status,data:await res.json().catch(()=>({}))};
   };
   assert.equal((await call("/health")).code,200);
+  assert.equal((await call("/ready")).code,200);
   const sections=await call("/api/catalog/sections");
   assert.equal(sections.code,200);assert.equal(sections.data.some((s:any)=>s.slug==="crackers"),true);
   assert.deepEqual(sections.data.slice(0,4).map((section:any)=>section.slug),["scheme","stationery","housekeeping","crackers"]);
@@ -49,6 +50,12 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   const product=await call("/api/admin/products","POST",{name:"UAT "+randomUUID(),category:"Cleaning",description:"Integration test",published:true,fireworks:false,sectionSlug:"housekeeping",pricePaise:12500},token);
   assert.equal(product.code,201);
   const id=Number(product.data.id);
+  // A fresh staging DB has no configured sales taxes. Valid quotes must still work.
+  const untaxed=await call("/api/billing/quote","POST",{sectionSlug:"housekeeping",items:[{productId:id,quantity:2}]});
+  assert.equal(untaxed.code,200);
+  assert.equal(untaxed.data.totalPaise,25000);
+  assert.equal(untaxed.data.taxPaise,0);
+
   const stock=await call("/api/admin/inventory","POST",{productId:id,warehouseCode:"MAIN",reorderLevel:3},token);
   assert.equal(stock.code,201);
   const movement=await call("/api/admin/inventory/movements","POST",{productId:id,warehouseCode:"MAIN",delta:10,reason:"UAT receiving"},token);
