@@ -69,7 +69,7 @@ export function calculateQuote(input:z.infer<typeof quoteSchema>,products:Produc
  for(const l of lines){
   const p=map.get(l.productId)!;
   const components=["CGST","SGST","IGST","CESS","OTHER"].map(component=>chooseRule(taxRules.filter(t=>t.component===component),p,l.quantity)).filter(Boolean) as BillRule[];
-  if(components.some(t=>!!t.tax_inclusive)!==components.every(t=>!!t.tax_inclusive))throw Error("MIXED_TAX_MODES");
+  if(components.length>0&&components.some(t=>!!t.tax_inclusive)!==components.every(t=>!!t.tax_inclusive))throw Error("MIXED_TAX_MODES");
   if(components.some(x=>x.component==="IGST")&&components.some(x=>x.component==="CGST"||x.component==="SGST"))throw Error("CONFLICTING_TAX_COMPONENTS");
   const inclusive=components.length>0&&!!components[0].tax_inclusive;
   const net=l.subtotalPaise-l.discountPaise;
