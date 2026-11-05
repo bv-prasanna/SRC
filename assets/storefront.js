@@ -252,6 +252,8 @@ async function startSchemeTestPayment(){
       membershipCode:membership,paymentProof:proof,razorpay_payment_id:p.razorpay_payment_id,
       razorpay_subscription_id:p.razorpay_subscription_id,razorpay_signature:p.razorpay_signature})});
      result.querySelector(".festival-receipt").insertAdjacentHTML("beforeend",'<p role="status" class="notice">'+esc(confirmation.message)+'</p>');
+     const status=await request("/api/scheme/payments/status",{method:"POST",body:JSON.stringify({membershipCode:membership,paymentProof:proof})});
+     result.querySelector(".festival-receipt").insertAdjacentHTML("beforeend",'<p class="muted">Subscription status: '+esc(status.status)+' · Instalments confirmed: '+Number(status.paidCycles)+' / '+Number(status.totalCycles)+'</p>');
     }catch(e){result.querySelector(".festival-receipt").insertAdjacentHTML("beforeend",'<p role="alert" class="notice">'+esc(e.message)+'</p>')}
    },
    modal:{ondismiss:()=>{button.disabled=false;button.textContent="Test subscription authorization"}}
