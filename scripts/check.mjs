@@ -34,7 +34,7 @@ const tags=[...page.matchAll(/<\/?section\b/g)].map(x=>x[0]);
 assert.equal(tags.filter(x=>x.startsWith("</")).length,tags.filter(x=>!x.startsWith("</")).length,"Mismatched section tags");
 const ids=[...page.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
 assert.equal(new Set(ids).size,ids.length,"Duplicate HTML element IDs");
-const dynamicIds=new Set(["allCategoryMenu"]);
+const dynamicIds=new Set(["allCategoryMenu","schemeTestPayButton"]);
 for(const [,name] of js.matchAll(/\$\("([A-Za-z0-9_-]+)"\)/g))assert(ids.includes(name)||dynamicIds.has(name),"Unknown DOM id "+name);
 assert(!page.includes("No fireworks orders, scheme memberships, instalments or online payments are accepted on this site."),"Old inaccurate blanket membership notice still present");
 assert(page.includes("Register for this scheme"),"Published-plan registration form unavailable");
