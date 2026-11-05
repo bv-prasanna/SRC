@@ -11,7 +11,7 @@ export function newJti(){return randomBytes(32).toString("hex")}
 export function issueJwt(userId:number,jti:string,now=Math.floor(Date.now()/1000)){
  if(!Number.isSafeInteger(userId)||userId<1||!/^[a-f0-9]{64}$/.test(jti))throw Error("Invalid session");
  const header=b64(JSON.stringify({alg:"HS256",typ:"JWT"}));
- const payload=b64(JSON.stringify({iss:issuer,aud:aud,sub:String(userId),jti,iat:now,exp:now+JWT_MAX_AGE_SECONDS}));
+ const payload=b64(JSON.stringify({iss:issuer,aud:audience,sub:String(userId),jti,iat:now,exp:now+JWT_MAX_AGE_SECONDS}));
  const signed=header+"."+payload;
  const signature=createHmac("sha256",secret()).update(signed).digest("base64url");
  return signed+"."+signature;
