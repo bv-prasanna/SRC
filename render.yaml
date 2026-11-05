@@ -29,3 +29,5 @@ services:
         sync: false
       - key: SRC_JWT_SECRET
         sync: false
+      - key: SRC_PAN_ENCRYPTION_KEY
+        sync: false
