@@ -8,6 +8,7 @@ import type {AddressInfo} from "node:net";
 import pg from "pg";
 import {createApp} from "./app.js";
 process.env.SRC_JWT_SECRET="integration-only-"+ "f".repeat(64);
+process.env.SRC_PAN_ENCRYPTION_KEY="b".repeat(64);
 const url=process.env.SRC_TEST_DATABASE_URL;
 if(!url)throw Error("SRC_TEST_DATABASE_URL is required. Use a disposable database named *_test.");
 const db=new pg.Pool({connectionString:url});
@@ -15,9 +16,9 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
  const name=await db.query("SELECT current_database() AS name");
  assert.match(name.rows[0].name,/_test$/,"Refusing to test against a non-test database");
  const dir=resolve(dirname(fileURLToPath(import.meta.url)),"../sql");
- for(let i=1;i<=17;i++){
+ for(let i=1;i<=18;i++){
   const file=resolve(dir,String(i).padStart(3,"0")+"_"+({
-   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management",16:"jwt_superadmin",17:"billing_pricing"
+   1:"init",2:"business_sections",3:"scheme_drafts",4:"content",5:"standard_orders",6:"inventory",7:"identity",8:"fulfillment",9:"commerce",10:"paid_fulfillment",11:"operational_roles",12:"festival_members",13:"festival_counter_receipts",14:"standalone_scheme_section",15:"scheme_management",16:"jwt_superadmin",17:"billing_pricing",18:"scheme_member_kyc"
   } as Record<number,string>)[i]+".sql");
   await db.query(readFileSync(file,"utf8"));
  }
@@ -150,8 +151,11 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal(published.code,200);
   const visible=await call("/api/scheme/plans");
   assert.equal(visible.code,200);assert.equal(visible.data.some((p:any)=>Number(p.id)===planId&&p.collectionEnabled===false),true);
+  const schemeKyc={email:"uat-scheme@example.org",addressLine1:"12 Main Road Vijayanagar",addressLine2:"Near School",city:"Bengaluru",state:"Karnataka",pincode:"560040",pan:"ABCDE1234F",consent:true,panConsent:true};
+  const missingPlan=await call("/api/festival/enrol","POST",{fullName:"Old format",phone:"9876543210",durationMonths:10,consent:true});
+  assert.equal(missingPlan.code,400);
   const planPhone="8"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
-  const linked=await call("/api/festival/enrol","POST",{fullName:"Plan test",phone:planPhone,email:"",durationMonths:10,schemePlanId:planId,consent:true});
+  const linked=await call("/api/festival/enrol","POST",{...schemeKyc,fullName:"Plan test",phone:planPhone,schemePlanId:planId});
   assert.equal(linked.code,201);
   // Next year's published plan must allow current-year sign-up and issue the correct year-coded ID.
   const futurePlan=await call("/api/admin/scheme-plans","POST",{...plan,code:code+"_NEXT",schemeYear:year+1},adminSession);
@@ -160,16 +164,23 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   assert.equal((await call("/api/admin/scheme-plans/"+futurePlanId+"/status","PATCH",{status:"IN_REVIEW",version:1},adminSession)).code,200);
   assert.equal((await call("/api/admin/scheme-plans/"+futurePlanId+"/status","PATCH",{status:"PUBLISHED",version:2},adminSession)).code,200);
   const futurePhone="7"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
-  const nextYearReg=await call("/api/festival/enrol","POST",{fullName:"Next year test",phone:futurePhone,email:"",durationMonths:10,schemePlanId:futurePlanId,consent:true});
+  const nextYearReg=await call("/api/festival/enrol","POST",{...schemeKyc,fullName:"Next year test",phone:futurePhone,schemePlanId:futurePlanId});
   assert.equal(nextYearReg.code,201);
   assert.equal(nextYearReg.data.year,year+1);
   assert.match(nextYearReg.data.membershipCode,new RegExp("^SRC-"+(year+1)+"-"));
   const members=await db.query("SELECT scheme_plan_id FROM festival_members WHERE membership_code=$1",[linked.data.membershipCode]);
   assert.equal(Number(members.rows[0].scheme_plan_id),planId);
+  const protectedMember=await db.query("SELECT pan_ciphertext,pan_digits,scheme_snapshot,address_line1 FROM festival_members WHERE membership_code=$1",[linked.data.membershipCode]);
+  assert.equal(protectedMember.rows[0].pan_ciphertext.includes("ABCDE1234F"),false);
+  assert.equal(protectedMember.rows[0].pan_digits,"1234");
+  assert.equal(protectedMember.rows[0].scheme_snapshot.durationMonths,10);
+  assert.equal(protectedMember.rows[0].scheme_snapshot.amountPaise,100000);
+  assert.equal(protectedMember.rows[0].address_line1,schemeKyc.addressLine1);
+
   assert.equal((await call("/api/admin/scheme-plans/summary","GET",undefined,adminSession)).data.gateway.subscriptionCollectionEnabled,false);
   // Free festival registration, private member lookup and in-store verification only.
   const mobile="9"+Math.floor(Math.random()*1_000_000_000).toString().padStart(9,"0");
-  const freeRegistration=await call("/api/festival/enrol","POST",{fullName:"Festival UAT Customer",phone:mobile,email:"",durationMonths:10,consent:true});
+  const freeRegistration=await call("/api/festival/enrol","POST",{...schemeKyc,fullName:"Festival UAT Customer",phone:mobile,schemePlanId:planId});
   assert.equal(freeRegistration.code,201);
   assert.match(freeRegistration.data.membershipCode,/^SRC-[0-9]{4}-[A-F0-9]{24}$/);
   const privateList=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,procSession);
@@ -177,6 +188,11 @@ test("SRC integration against isolated PostgreSQL test database",async()=>{
   const lookup=await call("/api/admin/festival/members?search="+mobile,"GET",undefined,adminSession);
   assert.equal(lookup.code,200);
   assert.equal(lookup.data.some((m:any)=>m.membership_code===freeRegistration.data.membershipCode),true);
+  const customerRecord=lookup.data.find((m:any)=>m.membership_code===freeRegistration.data.membershipCode);
+  assert.equal(customerRecord.pan_masked,"*****1234*");
+  assert.equal("pan_ciphertext" in customerRecord,false);
+  assert.equal("pan_digits" in customerRecord,false);
+
   const verify=await call("/api/admin/festival/members/"+freeRegistration.data.membershipCode+"/verify","PATCH",{phoneLast4:mobile.slice(-4)},adminSession);
   assert.equal(verify.code,200);
   const visit=await call("/api/admin/festival/members/"+freeRegistration.data.membershipCode+"/visit","POST",{phoneLast4:mobile.slice(-4),notes:"UAT-only shop verification"},adminSession);
