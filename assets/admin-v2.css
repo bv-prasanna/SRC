@@ -24,3 +24,12 @@ tr[hidden]{display:none!important}
 .order-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:13px}
 .order-breakdown .total{border-top:1px solid #d7e5f0;padding-top:12px;font-size:17px;color:#0b528d}
 @media(max-width:650px){.order-detail-dialog{padding:16px}.order-detail-dialog .table{max-width:100%}}
+
+/* Scheme member KYC: only permitted profile data and masked PAN are displayed */
+.member-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:20px 0}
+.member-detail-grid>div{padding:12px 14px;background:#f3f7fb;border:1px solid #dce7f0;border-radius:9px;min-width:0}
+.member-detail-grid small{display:block;color:#607b94;font-size:11px;margin-bottom:5px}
+.member-detail-grid strong{display:block;overflow-wrap:anywhere;font-size:13px;color:#173b5c}
+#festivalMemberDialog .task-delivery{border-left:3px solid #ec813c;background:#fff8f1;padding:14px;border-radius:7px;margin:14px 0;overflow-wrap:anywhere}
+#festivalMemberDialog .task-delivery p{white-space:pre-wrap;margin-bottom:0;font-size:13px}
+@media(max-width:600px){.member-detail-grid{grid-template-columns:1fr}}
