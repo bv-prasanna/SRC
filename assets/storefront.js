@@ -177,41 +177,60 @@ function featured(section){
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
 function openScheme(){show("scheme");history.replaceState(null,"","#section/scheme")}
+function schemeMoney(paise){return "₹"+(Number(paise||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function renderSchemePlans(){
  const plans=state.schemePlans;
- $("schemeLivePlans").innerHTML=plans.length?plans.map((p,i)=>{
-  const frequency=p.frequency==="QUARTERLY"?"quarter":"month",amount="₹"+(Number(p.amountPaise)/100).toLocaleString("en-IN");
-  return '<article class="scheme-option"><span class="tag">Registration open · '+esc(p.schemeYear)+'</span><h3>'+esc(displayProductName(p.name))+'</h3><strong>'+Number(p.durationMonths)+' months</strong><p class="muted">'+esc(p.description||"SRC Deepavali membership plan")+'</p><p><b>Proposed:</b> '+amount+' per '+frequency+' · '+Number(p.durationMonths)+'-month duration</p><p class="muted">'+esc(p.benefits||"Benefits subject to confirmed terms")+'</p><button type="button" class="btn light" onclick="SRC.selectSchemePlan('+i+')">Register free for this plan</button></article>'
- }).join(""):'';
+ $("schemeLivePlans").innerHTML=plans.map((p,i)=>{
+  const frequency=p.frequency==="QUARTERLY"?"quarter":"month";
+  return '<article class="scheme-option"><span class="tag">Registration open · '+esc(p.schemeYear)+'</span>'+
+   '<h3>'+esc(p.name)+'</h3><strong>'+Number(p.durationMonths)+' months</strong>'+
+   '<p class="muted">'+esc(p.description||"SRC festival membership plan")+'</p>'+
+   '<p><b>Configured contribution:</b> '+schemeMoney(p.amountPaise)+' per '+frequency+'</p>'+
+   '<p class="muted">'+esc(p.benefits||"Terms subject to confirmation")+'</p>'+
+   '<button type="button" class="btn light" onclick="SRC.selectSchemePlan('+i+')">Select this scheme</button></article>';
+ }).join("");
  $("schemeExamplePlans").classList.toggle("hide",plans.length>0);
+ const id=Number($("schemePlanId").value);
+ if(!plans.some(p=>Number(p.id)===id)){
+  $("schemePlanId").value="";
+  $("schemeRegistration").classList.add("hide");
+ }
 }
 function selectSchemePlan(index){
- const plan=state.schemePlans[index];if(!plan)return;
- $("schemePlanId").value=String(plan.id);$("festivalDuration").value=String(plan.durationMonths);
- $("schemeRegistration")?.scrollIntoView({behavior:"smooth",block:"center"});
+ const plan=state.schemePlans[index];
+ if(!plan||plan.status!=="PUBLISHED")return;
+ $("schemePlanId").value=String(plan.id);
+ const frequency=plan.frequency==="QUARTERLY"?"quarter":"month";
+ $("schemeSelectedSummary").innerHTML='<div class="scheme-plan-summary"><div><span class="tag">Selected scheme</span><h4>'+esc(plan.name)+'</h4>'+
+ '<p>'+Number(plan.durationMonths)+' months · '+esc(plan.frequency)+' · '+Number(plan.schemeYear)+'</p></div>'+
+ '<div><strong>'+schemeMoney(plan.amountPaise)+'</strong><small>per '+frequency+'</small>'+
+ '<p class="muted">Proposed total: '+schemeMoney(plan.projectedTotalPaise)+'</p></div></div>';
+ $("schemeRegistration").classList.remove("hide");
+ $("festivalEnrolResult").textContent="";
+ $("schemeRegistration").scrollIntoView({behavior:"smooth",block:"start"});
 }
 let lastFestivalCode="";
-function selectFestivalDuration(months){
- $("schemePlanId").value="";
- const input=$("festivalDuration");
- if(![6,10,12].includes(months)||!input)return;
- input.value=String(months);
- $("schemeRegistration")?.scrollIntoView({behavior:"smooth",block:"center"});
-}
 async function registerFestival(e){
  e.preventDefault();
  const form=e.currentTarget,data=Object.fromEntries(new FormData(form));
  const result=$("festivalEnrolResult"),button=$("festivalEnrolButton");
+ const plan=state.schemePlans.find(p=>Number(p.id)===Number(data.schemePlanId));
+ if(!plan){result.textContent="Select a published scheme above before registering.";return}
  if(!form.reportValidity())return;
- button.disabled=true;result.textContent="Registering your scheme ID…";
+ button.disabled=true;result.textContent="Submitting your scheme registration…";
  try{
-  const body={fullName:data.fullName,phone:data.phone,email:data.email||"",durationMonths:Number(data.durationMonths),...(data.schemePlanId?{schemePlanId:Number(data.schemePlanId)}:{}),consent:data.consent==="on"};
+  const body={fullName:data.fullName,phone:data.phone,email:data.email,schemePlanId:Number(plan.id),
+   addressLine1:data.addressLine1,addressLine2:data.addressLine2||"",city:data.city,state:data.state,pincode:data.pincode,
+   pan:String(data.pan||"").trim().toUpperCase(),consent:data.consent==="on",panConsent:data.panConsent==="on"};
   const response=await request("/api/festival/enrol",{method:"POST",body:JSON.stringify(body)});
   lastFestivalCode=response.membershipCode;
-  result.innerHTML='<div class="festival-receipt"><span class="tag">Registration received</span><h3>Your SRC membership ID</h3><div class="festival-code">'+esc(lastFestivalCode)+'</div><p>Selected duration: '+Number(response.durationMonths)+' months · '+Number(response.year)+'</p><p>Save this ID and bring it with your registered mobile to the SRC shop for verification. No money has been collected and this is not a fireworks order.</p><button type="button" class="btn light" onclick="SRC.copyFestivalCode()">Copy membership ID</button></div>';
-  form.reset();
+  result.innerHTML='<div class="festival-receipt"><span class="tag">Registration received</span><h3>Your SRC membership ID</h3><div class="festival-code">'+esc(lastFestivalCode)+'</div>'+
+   '<p>Scheme: '+esc(response.plan.name)+' · '+Number(response.durationMonths)+' months · '+Number(response.year)+'</p>'+
+   '<p>Save this ID and your registered mobile for shop verification. No UPI mandate, payment or online fireworks order was created.</p>'+
+   '<button type="button" class="btn light" onclick="SRC.copyFestivalCode()">Copy membership ID</button></div>';
+  form.reset();$("schemePlanId").value=String(plan.id);
  }catch(err){result.textContent=err.message}
- finally{button.disabled=false}
+ finally{$("schemePan").value="";button.disabled=false}
 }
 async function copyFestivalCode(){
  if(!lastFestivalCode)return;
@@ -344,6 +363,6 @@ $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEvent
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
 $("festivalEnrolForm").addEventListener("submit",registerFestival);
-window.SRC={go,openDepartment,openScheme,selectFestivalDuration,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,changeCartQuantity,submitCart,previewCart,invoice};
+window.SRC={go,openDepartment,openScheme,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,changeCartQuantity,submitCart,previewCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
