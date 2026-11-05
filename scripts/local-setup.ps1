@@ -55,6 +55,83 @@ try{
   else{$raw+="`nSRC_JWT_SECRET=$secret`n"}
   Write-Host "Generated local-only signing secret (not printed)" -ForegroundColor Yellow
  }
+ if($raw -notmatch '(?m)^SRC_PAN_ENCRYPTION_KEY=[a-fA-F0-9]{64}
+ npm install --no-audit --no-fund
+ if($LASTEXITCODE -ne 0){throw "Dependency installation failed"}
+ npm run migrate
+ if($LASTEXITCODE -ne 0){throw "Database migration failed; verify DATABASE_URL, TLS and existing schema"}
+ if($SeedDemo -and !$SkipDemoSeed){
+  if($raw -match '(?m)^NODE_ENV=production'){throw "Refusing demo seed in a production environment"}
+  npm run seed:demo
+  if($LASTEXITCODE -ne 0){throw "Demo seed failed"}
+ }
+ npm run build
+ if($LASTEXITCODE -ne 0){throw "TypeScript build failed"}
+ npm test
+ if($LASTEXITCODE -ne 0){throw "Node tests failed"}
+ if($RunCoverage){
+  npm run coverage
+  if($LASTEXITCODE -ne 0){throw "Coverage run failed"}
+ }
+ if($RunIntegrationTests){
+  if(!$env:SRC_TEST_DATABASE_URL){throw "Set SRC_TEST_DATABASE_URL to an isolated PostgreSQL database ending _test"}
+  npm run test:integration
+  if($LASTEXITCODE -ne 0){throw "Integration tests failed"}
+ }
+ if($StartApi){
+  Start-Process -FilePath "npm.cmd" -ArgumentList @("run","dev") -WorkingDirectory (Get-Location).Path
+  Write-Host "Backend starting at http://localhost:8080/ready"
+ }
+}finally{Pop-Location}
+if($StartWeb){
+ Require python
+ Start-Process -FilePath "python" -ArgumentList @("-m","http.server","8000") -WorkingDirectory $repo
+ Write-Host "Frontend starting at http://localhost:8000"
+}
+Write-Host "SRC setup completed; financial collections remain disabled unless separately configured." -ForegroundColor Green
+){
+  [byte[]]$panBytes=New-Object byte[] 32
+  $panRng=[System.Security.Cryptography.RandomNumberGenerator]::Create()
+  try{$panRng.GetBytes($panBytes)}finally{$panRng.Dispose()}
+  $panKey=($panBytes|ForEach-Object{$_.ToString("x2")}) -join ''
+  if($raw -match '(?m)^SRC_PAN_ENCRYPTION_KEY='){$raw=[regex]::Replace($raw,'(?m)^SRC_PAN_ENCRYPTION_KEY=.*
+ npm install --no-audit --no-fund
+ if($LASTEXITCODE -ne 0){throw "Dependency installation failed"}
+ npm run migrate
+ if($LASTEXITCODE -ne 0){throw "Database migration failed; verify DATABASE_URL, TLS and existing schema"}
+ if($SeedDemo -and !$SkipDemoSeed){
+  if($raw -match '(?m)^NODE_ENV=production'){throw "Refusing demo seed in a production environment"}
+  npm run seed:demo
+  if($LASTEXITCODE -ne 0){throw "Demo seed failed"}
+ }
+ npm run build
+ if($LASTEXITCODE -ne 0){throw "TypeScript build failed"}
+ npm test
+ if($LASTEXITCODE -ne 0){throw "Node tests failed"}
+ if($RunCoverage){
+  npm run coverage
+  if($LASTEXITCODE -ne 0){throw "Coverage run failed"}
+ }
+ if($RunIntegrationTests){
+  if(!$env:SRC_TEST_DATABASE_URL){throw "Set SRC_TEST_DATABASE_URL to an isolated PostgreSQL database ending _test"}
+  npm run test:integration
+  if($LASTEXITCODE -ne 0){throw "Integration tests failed"}
+ }
+ if($StartApi){
+  Start-Process -FilePath "npm.cmd" -ArgumentList @("run","dev") -WorkingDirectory (Get-Location).Path
+  Write-Host "Backend starting at http://localhost:8080/ready"
+ }
+}finally{Pop-Location}
+if($StartWeb){
+ Require python
+ Start-Process -FilePath "python" -ArgumentList @("-m","http.server","8000") -WorkingDirectory $repo
+ Write-Host "Frontend starting at http://localhost:8000"
+}
+Write-Host "SRC setup completed; financial collections remain disabled unless separately configured." -ForegroundColor Green
+,"SRC_PAN_ENCRYPTION_KEY=$panKey")}
+  else{$raw+="`nSRC_PAN_ENCRYPTION_KEY=$panKey`n"}
+  Write-Host "Generated local AES-256 PAN encryption key (stored only in .env)" -ForegroundColor Yellow
+ }
  Set-Content ".env" $raw
  npm install --no-audit --no-fund
  if($LASTEXITCODE -ne 0){throw "Dependency installation failed"}
