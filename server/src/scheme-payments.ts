@@ -72,6 +72,19 @@ export function schemePaymentRouter(db:Pool){
  const r=Router();
  const limiter=rateLimit({windowMs:15*60*1000,limit:5,standardHeaders:"draft-7",legacyHeaders:false,message:{error:"Too many payment attempts. Please retry later."}});
  r.get("/api/scheme/payments/readiness",(_req,res)=>res.json({testEnabled:schemeTestPaymentsEnabled(),liveEnabled:false}));
+ r.post("/api/scheme/payments/status",limiter,async(req,res)=>{
+  const checked=schemePaymentStart.safeParse(req.body);
+  if(!checked.success||!verifySchemePaymentProof(checked.data.membershipCode,checked.data.paymentProof)){
+   res.status(403).json({error:"Valid registration payment session required"});return;
+  }
+  try{
+   const q=await db.query(
+    "SELECT s.status,s.cycles_paid,sp.billing_cycles FROM src_scheme_subscriptions s JOIN festival_members m ON m.id=s.member_id JOIN src_scheme_plans sp ON sp.id=s.scheme_plan_id WHERE m.membership_code=$1",
+    [checked.data.membershipCode]);
+   if(!q.rowCount){res.status(404).json({error:"No test subscription created"});return}
+   res.json({status:q.rows[0].status,paidCycles:Number(q.rows[0].cycles_paid),totalCycles:Number(q.rows[0].billing_cycles),testMode:true});
+  }catch{res.status(503).json({error:"Subscription status unavailable"})}
+ });
  r.post("/api/scheme/payments/start",limiter,async(req,res)=>{
   const checked=schemePaymentStart.safeParse(req.body);
   if(!checked.success){res.status(400).json({error:"Invalid membership payment request"});return}
