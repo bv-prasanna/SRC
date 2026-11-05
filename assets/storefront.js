@@ -210,6 +210,7 @@ function selectSchemePlan(index){
  $("schemeRegistration").scrollIntoView({behavior:"smooth",block:"start"});
 }
 let lastFestivalCode="";
+let currentSchemePaymentProof="";
 async function registerFestival(e){
  e.preventDefault();
  const form=e.currentTarget,data=Object.fromEntries(new FormData(form));
@@ -224,13 +225,39 @@ async function registerFestival(e){
    pan:String(data.pan||"").trim().toUpperCase(),consent:data.consent==="on",panConsent:data.panConsent==="on"};
   const response=await request("/api/festival/enrol",{method:"POST",body:JSON.stringify(body)});
   lastFestivalCode=response.membershipCode;
+  currentSchemePaymentProof=response.paymentProof||"";
   result.innerHTML='<div class="festival-receipt"><span class="tag">Registration received</span><h3>Your SRC membership ID</h3><div class="festival-code">'+esc(lastFestivalCode)+'</div>'+
    '<p>Scheme: '+esc(response.plan.name)+' · '+Number(response.durationMonths)+' months · '+Number(response.year)+'</p>'+
-   '<p>Save this ID and your registered mobile for shop verification. No UPI mandate, payment or online fireworks order was created.</p>'+
+   '<p>Save this ID and your registered mobile for shop verification. Registration itself does not debit your account.</p>'+(currentSchemePaymentProof?'<p class="muted">Razorpay TEST checkout is available for validating authorization only. No live charge will be made.</p><button type="button" class="btn orange" id="schemeTestPayButton" onclick="SRC.startSchemeTestPayment()">Test subscription authorization</button>':'<p class="muted">Online subscription authorization is currently unavailable.</p>')+
    '<button type="button" class="btn light" onclick="SRC.copyFestivalCode()">Copy membership ID</button></div>';
   form.reset();$("schemePlanId").value=String(plan.id);
  }catch(err){result.textContent=err.message}
  finally{$("schemePan").value="";button.disabled=false}
+}
+async function startSchemeTestPayment(){
+ const button=$("schemeTestPayButton"),result=$("festivalEnrolResult");
+ if(!button||!currentSchemePaymentProof||!lastFestivalCode)return;
+ button.disabled=true;button.textContent="Preparing secure test authorization…";
+ try{
+  const checkout=await request("/api/scheme/payments/start",{method:"POST",body:JSON.stringify({membershipCode:lastFestivalCode,paymentProof:currentSchemePaymentProof})});
+  if(!checkout.testMode||!checkout.keyId||!checkout.subscriptionId)throw Error("Test checkout is not ready");
+  await ensureRazorpay();
+  const membership=lastFestivalCode,proof=currentSchemePaymentProof;
+  const instance=new window.Razorpay({
+   key:checkout.keyId,subscription_id:checkout.subscriptionId,name:"SRC Enterprises",
+   description:"Test-mode scheme subscription authorization",
+   handler:async p=>{
+    try{
+     const confirmation=await request("/api/scheme/payments/confirm",{method:"POST",body:JSON.stringify({
+      membershipCode:membership,paymentProof:proof,razorpay_payment_id:p.razorpay_payment_id,
+      razorpay_subscription_id:p.razorpay_subscription_id,razorpay_signature:p.razorpay_signature})});
+     result.querySelector(".festival-receipt").insertAdjacentHTML("beforeend",'<p role="status" class="notice">'+esc(confirmation.message)+'</p>');
+    }catch(e){result.querySelector(".festival-receipt").insertAdjacentHTML("beforeend",'<p role="alert" class="notice">'+esc(e.message)+'</p>')}
+   },
+   modal:{ondismiss:()=>{button.disabled=false;button.textContent="Test subscription authorization"}}
+  });
+  instance.open();
+ }catch(err){button.disabled=false;button.textContent="Retry test authorization";result.querySelector(".festival-receipt")?.insertAdjacentHTML("beforeend",'<p role="alert" class="notice">'+esc(err.message)+'</p>')}
 }
 async function copyFestivalCode(){
  if(!lastFestivalCode)return;
@@ -365,6 +392,6 @@ $("authForm").addEventListener("submit",authSubmit);$("authModeToggle").addEvent
 $("logoutButton").addEventListener("click",async()=>{await request("/api/auth/logout",{method:"POST"}).catch(()=>{});state.token="";state.user=null;renderAuth()});
 $("recoverForm").addEventListener("submit",recoverSubmit);
 $("festivalEnrolForm").addEventListener("submit",registerFestival);
-window.SRC={go,openDepartment,openScheme,selectSchemePlan,copyFestivalCode,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,changeCartQuantity,submitCart,previewCart,invoice};
+window.SRC={go,openDepartment,openScheme,selectSchemePlan,copyFestivalCode,startSchemeTestPayment,toggleCategories,featured,slide,jumpSlide,departmentSlide,jumpDepartmentSlide,setDepartmentCategory,addToCart,removeCart,changeCartQuantity,submitCart,previewCart,invoice};
 load();setInterval(()=>{if(state.active==="home")slide(1);else if(state.active==="department")departmentSlide(1)},6500);
 })();
