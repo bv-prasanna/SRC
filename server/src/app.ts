@@ -18,6 +18,7 @@ import { paidOrdersRouter } from "./paidOrders.js";
 import { workspacesRouter } from "./workspaces.js";
 import { festivalRouter } from "./festival.js";
 import { schemeManagementRouter } from "./scheme-management.js";
+import {schemePaymentRouter,schemePaymentWebhook} from "./scheme-payments.js";
 import {requireRole} from "./access.js";
 import {billingRouter} from "./billing-admin.js";
 import {panEncryptionConfigured} from "./pan-security.js";
@@ -30,13 +31,14 @@ export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),ca
 export function createApp(pool:Pick<Pool,"query">,config:{adminToken?:string;corsOrigin:string}){
  const app=express();app.disable("x-powered-by");app.set("trust proxy",process.env.TRUST_PROXY==="true"?1:false);app.use(helmet());app.use(cors({origin:config.corsOrigin.split(",").map(s=>s.trim())}));
  app.post("/api/payments/webhook",express.raw({type:"application/json",limit:"128kb"}),paymentWebhook(pool as Pool));
+ app.post("/api/scheme/payments/webhook",express.raw({type:"application/json",limit:"128kb"}),schemePaymentWebhook(pool as Pool));
  app.use(express.json({limit:"100kb"}));
  const authLimiter=rateLimit({windowMs:15*60*1000,limit:8,standardHeaders:"draft-7",legacyHeaders:false,message:{error:"Too many attempts. Try later."}});
  app.use(["/api/auth/login","/api/auth/register","/api/auth/password/forgot","/api/auth/password/reset"],authLimiter);
 
  const admin=requireRole(pool as Pool,["ADMIN"]);
 
- app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));app.use(paidOrdersRouter(pool as Pool));app.use(workspacesRouter(pool as Pool));app.use(festivalRouter(pool as Pool));app.use(schemeManagementRouter(pool as Pool));app.use(billingRouter(pool as Pool));
+ app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));app.use(paidOrdersRouter(pool as Pool));app.use(workspacesRouter(pool as Pool));app.use(festivalRouter(pool as Pool));app.use(schemeManagementRouter(pool as Pool));app.use(schemePaymentRouter(pool as Pool));app.use(billingRouter(pool as Pool));
  app.get("/health",(_req,res)=>res.json({status:"ok"}));
  app.get("/ready",async(_req,res)=>{
   try{
