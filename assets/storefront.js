@@ -56,7 +56,7 @@ function drawDots(){
 function slide(delta){if(!state.slides.length)return;state.slide=(state.slide+delta+state.slides.length)%state.slides.length;drawDots()}
 function jumpSlide(i){state.slide=i;drawDots()}
 function show(view){state.active=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view));nav();window.scrollTo(0,0)}
-function go(view){show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
+function go(view){if(view==="home"&&document.body.classList.contains("scheme-first-launch")){openScheme();return}show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
 const sectionCampaigns={
  crackers:[
   {title:"Make every celebration memorable.",description:"Discover festive collections, educational product demonstrations and in-store information.",photo:photos.crackers},
@@ -353,15 +353,11 @@ async function load(){
  if(billingOffers.status==="fulfilled"&&Array.isArray(billingOffers.value))state.billingOffers=billingOffers.value;
  if(calls.some(x=>x.status==="rejected"))console.warn("Some SRC APIs are unavailable. Other departments remain browsable.");
  sectionsCards();hero();nav();saveCart();featured(selectedFeatured);renderOffers();renderSchemePlans();
- // Public launch navigation is scheme-only; retain admin URLs and full storefront code for post-festival restoration.
- if(document.body.classList.contains("scheme-first-launch")){
-   $("mainNav").innerHTML='<button type="button" onclick="SRC.openScheme()">Deepavali Scheme</button>';
-   $("footerSections").innerHTML="";
- }
+
  const route=location.hash.slice(1);
  if(route.startsWith("section/"))openDepartment(route.split("/")[1]);
  else if(route==="account"||route==="recover")go(route);
- else openScheme(); // Temporary scheme-first launch: avoid sending the public homepage to unfinished departments.
+ else openScheme(); // Temporary homepage opens the scheme; other departments remain accessible.
 }
 $("deptSearch").addEventListener("input",renderProducts);$("deptCategory").addEventListener("change",renderProducts);
 $("globalSearch").addEventListener("submit",e=>{e.preventDefault();const term=$("siteSearch").value.trim();const found=state.products.find(p=>(p.name+" "+p.category).toLowerCase().includes(term.toLowerCase()));if(found){openDepartment(found.sectionSlug);$("deptSearch").value=term;renderProducts()}else alert("No matching published product found. Choose a department to browse.")});
