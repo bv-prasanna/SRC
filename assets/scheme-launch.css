@@ -3,8 +3,12 @@ body.scheme-first-launch{background:#fff9f0;color:#352516}
 .scheme-first-launch .topbar{background:#321c14;color:#f5dfb2}
 .scheme-first-launch .masthead{background:#fffaf3;border-bottom:1px solid #ead8bf}
 .scheme-first-launch .mast-inner{min-height:86px}
-.scheme-first-launch .search,.scheme-first-launch .cart-action,.scheme-first-launch .navbar,.scheme-first-launch .footer,.scheme-first-launch #home{display:none!important}
+.scheme-first-launch #home{display:none!important}
 .scheme-first-launch .mast-actions .account-action{border-radius:30px}
+.scheme-first-launch .navbar{display:block;background:#3b241c}
+.scheme-first-launch .nav-inner{display:flex;overflow-x:auto;gap:10px;scrollbar-width:thin}
+.scheme-first-launch .nav-inner>button{white-space:nowrap}
+.scheme-first-launch .footer{display:block}
 .scheme-first-launch .scheme-page-hero{position:relative;overflow:hidden;min-height:340px;display:flex;align-items:center;background:radial-gradient(circle at 80% 20%,#aa5f2c 0%,transparent 35%),linear-gradient(125deg,#27120f,#68301f 64%,#8a3c1e);color:#fff6df;padding:74px 0}
 .scheme-first-launch .scheme-page-hero:after{content:"✦  ✧  ✦";position:absolute;right:5%;top:18%;font-size:82px;letter-spacing:16px;opacity:.14;pointer-events:none}
 .scheme-first-launch .scheme-page-hero h1{font-size:clamp(42px,6vw,80px);line-height:1.05;letter-spacing:-.045em;max-width:760px;margin:15px 0 20px;color:#ffe1a0}
