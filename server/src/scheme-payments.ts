@@ -19,7 +19,7 @@ export function makeSchemePaymentProof(code:string){
  return expiry+"."+signature;
 }
 export function verifySchemePaymentProof(code:string,proof:string){
- if(!schemeTestPaymentsEnabled()||!/^\\d{10}\\.[a-f0-9]{64}$/.test(proof))return false;
+ if(!schemeTestPaymentsEnabled()||!/^\d{10}\.[a-f0-9]{64}$/.test(proof))return false;
  const [time,signature]=proof.split(".");
  const expiry=Number(time),now=Math.floor(Date.now()/1000);
  if(!Number.isSafeInteger(expiry)||expiry<now||expiry>now+1800)return false;
