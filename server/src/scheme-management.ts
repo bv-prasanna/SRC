@@ -2,6 +2,7 @@ import {Router} from "express";
 import {z} from "zod";
 import type {Pool} from "pg";
 import {requireRole} from "./access.js";
+import {schemeTestPaymentsEnabled} from "./scheme-payments.js";
 
 export const planForm=z.object({
  code:z.string().trim().regex(/^[A-Z][A-Z0-9_-]{2,39}$/),
@@ -59,7 +60,7 @@ export function schemeManagementRouter(db:Pool){
     db.query("SELECT sp.code,sp.name,COUNT(fm.id)::int AS registrations FROM src_scheme_plans sp LEFT JOIN festival_members fm ON fm.scheme_plan_id=sp.id GROUP BY sp.id ORDER BY registrations DESC,sp.id DESC LIMIT 15")
    ]);
    res.json({statuses:plans.rows,members:members.rows[0],planRegistrations:byStatus.rows,
-    gateway:{configured:!!(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET),mode:(process.env.RAZORPAY_KEY_ID||"").startsWith("rzp_test_")?"TEST":(process.env.RAZORPAY_KEY_ID||"").startsWith("rzp_live_")?"LIVE":"NOT_CONFIGURED",subscriptionCollectionEnabled:false}});
+    gateway:{configured:!!(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET),testSubscriptionEnabled:schemeTestPaymentsEnabled(),mode:(process.env.RAZORPAY_KEY_ID||"").startsWith("rzp_test_")?"TEST":(process.env.RAZORPAY_KEY_ID||"").startsWith("rzp_live_")?"LIVE":"NOT_CONFIGURED",subscriptionCollectionEnabled:false}});
   }catch{res.status(503).json({error:"Scheme summary unavailable"})}
  });
  r.post("/api/admin/scheme-plans",admin,async(req,res)=>{
