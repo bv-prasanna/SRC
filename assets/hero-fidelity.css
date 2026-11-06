@@ -83,16 +83,16 @@
  .src-scheme-checkout .intro:before,
  .scheme-first-launch .scheme-page-hero:before{
   content:""!important;display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:url("scheme-hero-final.webp") left bottom/auto 80% no-repeat;
+  background:url("scheme-hero-final.webp") left bottom/auto 64% no-repeat;
   -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);
-  mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);opacity:.67
+  mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);opacity:.60
  }
  .src-scheme-checkout .intro:after,
  .scheme-first-launch .scheme-page-hero:after{
   content:""!important;display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:url("scheme-hero-final.webp") right bottom/auto 80% no-repeat;
+  background:url("scheme-hero-final.webp") right bottom/auto 64% no-repeat;
   -webkit-mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);
-  mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);opacity:.67;box-shadow:none!important
+  mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);opacity:.60;box-shadow:none!important
  }
  .src-scheme-checkout .intro>*{position:relative;z-index:2}
  .src-scheme-checkout .intro h1,.scheme-first-launch .scheme-page-hero h1{font-size:clamp(30px,8vw,38px);max-width:350px;margin:10px auto}
