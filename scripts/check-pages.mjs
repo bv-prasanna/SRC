@@ -37,7 +37,15 @@ for(const role of rolePages){
 }
 const workspaces=read("assets/workspaces.js");
 for(const marker of ['function details(id)','taskDetailDialog','if(note===null)return','downloadInvoice(id)'])assert(workspaces.includes(marker),"Workspace missing "+marker);
+const launch=read("index.html");
+assert(launch.includes('class="scheme-first-launch"'),"Scheme-first landing mode missing");
+assert(launch.includes('assets/scheme-launch.css'),"Scheme landing styles missing");
+assert(launch.includes('id="schemeLivePlans"')&&launch.includes('id="festivalEnrolForm"'),"Scheme selection or registration missing");
+assert(launch.includes('name="panConsent"')&&launch.includes('name="consent"'),"Customer consent fields missing");
 const storefront=read("assets/storefront.js");
+assert(storefront.includes('else openScheme(); // Temporary homepage opens the scheme'),"Scheme launch is not the default route");
+assert(storefront.includes('startSchemeTestPayment'),"Scheme test payment checkout handler missing");
+assert(storefront.includes('function go(view){if(view===\"home\"'),"Home must route to the scheme");
 for(const marker of ['function changeCartQuantity(','function previewCart(','function renderCart(','decodeURIComponent('])assert(storefront.includes(marker),"Storefront missing "+marker);
 const billing=read("server/src/billing.ts");
 assert(billing.includes("Number(r.product_id)===Number(p.id)")&&billing.includes("productId:Number(p.id)"),"Bigint quote normalization absent");

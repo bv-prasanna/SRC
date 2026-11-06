@@ -5,6 +5,7 @@ import {z} from "zod";
 import type {Pool} from "pg";
 import {requireRole} from "./access.js";
 import {encryptedPan,maskedPan,panEncryptionConfigured,panLastFourDigits} from "./pan-security.js";
+import {makeSchemePaymentProof} from "./scheme-payments.js";
 
 export const festivalRegistrationSchema=z.object({
  fullName:z.string().trim().min(2).max(120),
@@ -58,7 +59,7 @@ export function festivalRouter(db:Pool){
     [code,year,v.fullName,v.phone,v.email,Number(plan.duration_months),v.schemePlanId,v.addressLine1,v.addressLine2,v.city,v.state,v.pincode,ciphertext,panLastFourDigits(v.pan),JSON.stringify(snapshot)]);
    if(!q.rowCount){await client.query("ROLLBACK");res.status(409).json({error:"This mobile number is already registered for the selected scheme. Contact SRC to retrieve your membership ID."});return}
    await client.query("COMMIT");
-   res.status(201).json({membershipCode:q.rows[0].membership_code,schemePlanId:q.rows[0].scheme_plan_id,year:q.rows[0].scheme_year,durationMonths:q.rows[0].duration_months,status:q.rows[0].status,plan:snapshot,message:"Registration recorded. No UPI mandate or financial payment has been created."});
+   res.status(201).json({membershipCode:q.rows[0].membership_code,schemePlanId:q.rows[0].scheme_plan_id,year:q.rows[0].scheme_year,durationMonths:q.rows[0].duration_months,status:q.rows[0].status,plan:snapshot,paymentProof:makeSchemePaymentProof(code),message:"Registration recorded. No UPI mandate or financial payment has been created."});
   }catch{if(client)await client.query("ROLLBACK").catch(()=>{});res.status(503).json({error:"Registration temporarily unavailable"})}
   finally{client?.release()}
  });
