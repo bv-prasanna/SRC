@@ -1,0 +1,119 @@
+/* SRC approved festive hero compositions: self-hosted, cropped, responsive.
+   The hero artwork contains no text. Copy remains accessible HTML. */
+:root{--src-fest-hero-blue:#171f49;--src-fest-hero-accent:#ffae65}
+.scheme-first-launch .scheme-page-hero{
+  position:relative;isolation:isolate;overflow:hidden;min-height:318px;
+  display:flex;align-items:center;padding:48px 0 51px;
+  background:linear-gradient(90deg,#111a4030 0%,#111a4024 29%,#111a4029 70%,#111a4030 100%),
+   url("scheme-hero-final.webp") center center/cover no-repeat #171c43!important;
+  border-bottom:3px solid #d7a878;box-shadow:0 9px 21px #34305920
+}
+.scheme-first-launch .scheme-page-hero:before,
+.scheme-first-launch .scheme-page-hero:after{content:none!important;display:none!important}
+.scheme-first-launch .scheme-page-hero .wrap{position:relative;z-index:3;text-align:center;max-width:940px;padding:15px 24px}
+.scheme-first-launch .scheme-page-hero .eyebrow{font-size:11px;letter-spacing:.25em;color:#f9ca80;font-weight:800}
+.scheme-first-launch .scheme-page-hero h1{font-size:clamp(37px,4.4vw,60px);color:#fff9f0;line-height:1.1;margin:11px auto 12px;max-width:860px;font-weight:800;text-wrap:balance;text-shadow:0 3px 13px #07112b}
+.scheme-first-launch .scheme-page-hero h1 span{color:#ffb66c}
+.scheme-first-launch .scheme-page-hero p{font-size:clamp(13px,1.3vw,16px);color:#fff2e6;max-width:660px;line-height:1.6;margin:0 auto 16px;text-shadow:0 2px 10px #101535}
+.scheme-first-launch .scheme-page-hero .src-fest-hero-action{padding:11px 24px;font-size:13px}
+.scheme-first-launch .scheme-page-hero .src-fest-hero-note{font-size:11px;color:#f7d8ae;margin:9px 0 0}
+
+/* Customer QR registration shares the exact same hero visual and retail shell. */
+.src-scheme-checkout .intro{
+  position:relative;isolation:isolate;overflow:hidden;text-align:center;align-items:center;
+  background:linear-gradient(90deg,#111a4030,#111a401c 40%,#111a401c 60%,#111a4030),
+    url("scheme-hero-final.webp") center center/cover no-repeat #171c43!important;
+  min-height:300px;padding:42px 25px 47px;border-bottom:3px solid #daa675;
+  box-shadow:0 9px 22px #2a225123;max-width:none
+}
+.src-scheme-checkout .intro:before,
+.src-scheme-checkout .intro:after{content:none!important;display:none!important}
+.src-scheme-checkout .intro .eyebrow{color:#ffd18b;font-size:11px;letter-spacing:.23em}
+.src-scheme-checkout .intro h1{font-size:clamp(36px,4.2vw,60px);line-height:1.12;margin:11px 0 13px;text-wrap:balance;text-shadow:0 3px 14px #0c1736;color:#fffaf2}
+.src-scheme-checkout .intro h1 em{color:#ffc07d}
+.src-scheme-checkout .intro p{color:#fff3e7;font-size:clamp(13px,1.3vw,16px);line-height:1.62;max-width:660px;text-shadow:0 2px 10px #0a1533;margin:0 auto}
+.src-scheme-checkout .steps{max-width:1040px;margin-left:auto;margin-right:auto}
+.src-scheme-checkout .panel{max-width:1050px;margin-left:auto;margin-right:auto;border-color:#e9d7c9;box-shadow:0 10px 28px #9b542214}
+.src-scheme-checkout .plan{border-color:#efdbcb;box-shadow:0 4px 15px #9b592010}
+.src-scheme-checkout .plan button{font-size:13px;min-height:45px}
+.src-scheme-checkout .src-scheme-benefitbar{margin-top:24px}
+
+/* Information-only Crackers hero uses the cropped, approved firework illustration.
+   No external stock photos or synthetic vector overlay. */
+#deptBanner[data-section="crackers"]{
+  position:relative;isolation:isolate;width:calc(100% - 48px);max-width:1570px;min-height:345px;
+  margin:19px auto 0;border:2px solid #e4ae79;border-radius:15px;
+  background:#151d44!important;overflow:hidden;box-shadow:0 13px 28px #2a1d4829
+}
+#deptBanner[data-section="crackers"]::before{
+  content:"";display:block!important;position:absolute;inset:0;z-index:1;
+  background:linear-gradient(90deg,#111b4025 0%,#111b401e 33%,#111b401e 66%,#111b4025 100%),
+    url("crackers-hero-final.webp") center center/cover no-repeat!important;
+  opacity:1!important;pointer-events:none
+}
+#deptBanner[data-section="crackers"]::after{content:none!important;display:none!important}
+#deptBanner[data-section="crackers"] .dept-hero-stage{opacity:0!important;pointer-events:none}
+#deptBanner[data-section="crackers"] .page-banner-content{position:relative;z-index:4;padding:56px 30px 60px;text-align:center}
+#deptBanner[data-section="crackers"] .page-banner-content .eyebrow{letter-spacing:.24em;color:#ffce86;font-weight:800;font-size:11px}
+#deptBanner[data-section="crackers"] .page-banner-content h1{font-size:clamp(36px,4.5vw,60px);color:#ffbb6a;line-height:1.09;letter-spacing:-.038em;max-width:720px;margin:9px auto 12px;text-wrap:balance;text-shadow:0 3px 15px #06142d}
+#deptBanner[data-section="crackers"] .page-banner-content p{font-size:clamp(13px,1.35vw,16px);max-width:670px;margin:0 auto 16px;line-height:1.55;color:#fff2df;text-shadow:0 2px 9px #06142d}
+#deptBanner[data-section="crackers"] .src-fest-crackers-action{min-height:43px;padding:10px 21px;font-size:13px}
+#deptBanner[data-section="crackers"] .hero-dots{bottom:12px}
+
+/* Real cropped cracker category pictures, not the flat SVG substitutes. */
+.src-cracker-category .src-cracker-category-image{display:block;object-fit:contain;object-position:center;width:100%;height:100px;max-height:100px;border-radius:6px;mix-blend-mode:multiply;filter:drop-shadow(0 3px 3px #6e491621)}
+.src-cracker-category:hover .src-cracker-category-image{transform:translateY(-2px)}
+.src-cracker-category{min-height:165px;background:linear-gradient(180deg,#fff 0%,#fff9f1 100%);border-color:#e9d6c4}
+.src-cracker-promo--offers::before{background:linear-gradient(90deg,#151c47b8,#151c478a),url("crackers-hero-final.webp") 30% center/cover no-repeat!important;opacity:1}
+.src-cracker-promo--guides::before{background:url("crackers-hero-final.webp") 76% center/auto 120% no-repeat!important;opacity:.15}
+.src-cracker-promo--scheme::before{background:url("scheme-hero-final.webp") right center/auto 115% no-repeat!important;opacity:.52}
+
+@media(max-width:770px){
+ .scheme-first-launch .scheme-page-hero{min-height:290px;padding:35px 0}
+ .src-scheme-checkout .intro{min-height:280px;padding:39px 26px 43px}
+ #deptBanner[data-section="crackers"]{width:calc(100% - 24px);min-height:310px;margin:12px auto 0;border-radius:12px}
+ #deptBanner[data-section="crackers"] .page-banner-content{padding:47px 20px 56px}
+ #deptBanner[data-section="crackers"] .page-banner-content h1{font-size:clamp(32px,6vw,46px)}
+}
+@media(max-width:600px){
+ /* The original wide artwork has ornaments at both edges. Two masked
+    crops preserve those ornaments on narrow viewports without text collision. */
+ .src-scheme-checkout .intro,
+ .scheme-first-launch .scheme-page-hero{background:#171c43!important;min-height:294px}
+ .src-scheme-checkout .intro:before,
+ .scheme-first-launch .scheme-page-hero:before{
+  content:""!important;display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url("scheme-hero-final.webp") left bottom/auto 52% no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);
+  mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);opacity:.60
+ }
+ .src-scheme-checkout .intro:after,
+ .scheme-first-launch .scheme-page-hero:after{
+  content:""!important;display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url("scheme-hero-final.webp") right bottom/auto 52% no-repeat;
+  -webkit-mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);
+  mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);opacity:.60;box-shadow:none!important
+ }
+ .src-scheme-checkout .intro>*{position:relative;z-index:2}
+ .src-scheme-checkout .intro h1,.scheme-first-launch .scheme-page-hero h1{font-size:clamp(30px,8vw,38px);max-width:350px;margin:10px auto}
+ .src-scheme-checkout .intro p,.scheme-first-launch .scheme-page-hero p{font-size:12px;line-height:1.55;max-width:320px;margin:0 auto 12px}
+ .scheme-first-launch .scheme-page-hero .wrap{padding:5px 20px}
+ .scheme-first-launch .scheme-page-hero .eyebrow,.src-scheme-checkout .intro .eyebrow{font-size:9px;letter-spacing:.18em}
+ #deptBanner[data-section="crackers"]{background:#171b43!important;min-height:300px}
+ #deptBanner[data-section="crackers"]::before{
+  background:url("crackers-hero-final.webp") left bottom/auto 100% no-repeat!important;
+  -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 15%,transparent 58%);
+  mask-image:linear-gradient(90deg,#000 0%,#000 15%,transparent 58%);opacity:.7!important
+ }
+ #deptBanner[data-section="crackers"]::after{
+  content:""!important;display:block!important;position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:url("crackers-hero-final.webp") right bottom/auto 100% no-repeat!important;
+  -webkit-mask-image:linear-gradient(270deg,#000 0%,#000 15%,transparent 58%);
+  mask-image:linear-gradient(270deg,#000 0%,#000 15%,transparent 58%);opacity:.7
+ }
+ #deptBanner[data-section="crackers"] .page-banner-content{padding:46px 15px 56px}
+ #deptBanner[data-section="crackers"] .page-banner-content h1{font-size:clamp(28px,7.5vw,37px);max-width:330px}
+ #deptBanner[data-section="crackers"] .page-banner-content p{font-size:12px;max-width:300px}
+ .src-cracker-category .src-cracker-category-image{height:93px;max-height:93px}
+}
+@media(prefers-reduced-motion:reduce){.src-cracker-category:hover .src-cracker-category-image{transform:none}}

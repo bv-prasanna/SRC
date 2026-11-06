@@ -1,7 +1,7 @@
 import {Router} from "express";
 import {z} from "zod";
 import type {Pool} from "pg";
-import {requireRole} from "./access.js";
+import {scopedAccess} from "./staff-access.js";
 import {schemeTestPaymentsEnabled} from "./scheme-payments.js";
 
 export const planForm=z.object({
@@ -40,7 +40,7 @@ function publicRow(row:any){
   collectionEnabled:false};
 }
 export function schemeManagementRouter(db:Pool){
- const r=Router(),admin=requireRole(db,["ADMIN"]);
+ const r=Router(),admin=scopedAccess(db,"scheme");
  const columns="id,code,name,scheme_year,duration_months,frequency,billing_cycles,amount_paise,description,benefits,terms_summary,internal_notes,start_date,end_date,max_members,status,razorpay_plan_id,gateway_status,created_at,updated_at,version";
  r.get("/api/scheme/plans",async(_req,res)=>{
   try{
@@ -48,11 +48,11 @@ export function schemeManagementRouter(db:Pool){
    res.json(q.rows.map(publicRow));
   }catch{res.status(503).json({error:"Scheme plans temporarily unavailable"})}
  });
- r.get("/api/admin/scheme-plans",admin,async(_req,res)=>{
+ r.get("/api/admin/scheme-plans",...admin,async(_req,res)=>{
   try{const q=await db.query("SELECT p.*, (SELECT COUNT(*)::int FROM festival_members fm WHERE fm.scheme_plan_id=p.id) AS registered_members FROM src_scheme_plans p ORDER BY p.scheme_year DESC,p.id DESC LIMIT 500");res.json(q.rows)}
   catch{res.status(503).json({error:"Could not load scheme plans"})}
  });
- r.get("/api/admin/scheme-plans/summary",admin,async(_req,res)=>{
+ r.get("/api/admin/scheme-plans/summary",...admin,async(_req,res)=>{
   try{
    const [plans,members,byStatus,subscriptionStatuses]=await Promise.all([
     db.query("SELECT status,COUNT(*)::int AS count FROM src_scheme_plans GROUP BY status"),
@@ -64,7 +64,7 @@ export function schemeManagementRouter(db:Pool){
     gateway:{configured:!!(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET),testSubscriptionEnabled:schemeTestPaymentsEnabled(),mode:(process.env.RAZORPAY_KEY_ID||"").startsWith("rzp_test_")?"TEST":(process.env.RAZORPAY_KEY_ID||"").startsWith("rzp_live_")?"LIVE":"NOT_CONFIGURED",subscriptionCollectionEnabled:false}});
   }catch{res.status(503).json({error:"Scheme summary unavailable"})}
  });
- r.post("/api/admin/scheme-plans",admin,async(req,res)=>{
+ r.post("/api/admin/scheme-plans",...admin,async(req,res)=>{
   const parsed=planForm.safeParse(req.body);if(!parsed.success){res.status(400).json({error:"Invalid plan",details:parsed.error.flatten()});return}
   const p=parsed.data;
   try{
@@ -78,7 +78,7 @@ export function schemeManagementRouter(db:Pool){
    }catch(err){await client.query("ROLLBACK").catch(()=>{});throw err}finally{client.release()}
   }catch(err:any){res.status(err?.code==="23505"?409:503).json({error:err?.code==="23505"?"Scheme code already exists":"Cannot create scheme plan"})}
  });
- r.put("/api/admin/scheme-plans/:id",admin,async(req,res)=>{
+ r.put("/api/admin/scheme-plans/:id",...admin,async(req,res)=>{
   const id=idParam(req.params.id);
   const raw=req.body&&typeof req.body==="object"&&!Array.isArray(req.body)?req.body:{};
   const {version:rawVersion,...rest}=raw;
@@ -100,7 +100,7 @@ export function schemeManagementRouter(db:Pool){
    await client.query("COMMIT");res.json(q.rows[0]);
   }catch(err:any){if(client)await client.query("ROLLBACK").catch(()=>{});res.status(err?.code==="23505"?409:503).json({error:err?.code==="23505"?"Scheme code already exists":"Could not update scheme plan"})}finally{client?.release()}
  });
- r.patch("/api/admin/scheme-plans/:id/status",admin,async(req,res)=>{
+ r.patch("/api/admin/scheme-plans/:id/status",...admin,async(req,res)=>{
   const id=idParam(req.params.id),parsed=statusForm.safeParse(req.body);
   if(!id||!parsed.success){res.status(400).json({error:"Invalid status change"});return}
   let client;
@@ -117,7 +117,7 @@ export function schemeManagementRouter(db:Pool){
    await client.query("COMMIT");res.json(q.rows[0]);
   }catch{if(client)await client.query("ROLLBACK").catch(()=>{});res.status(503).json({error:"Cannot change plan status"})}finally{client?.release()}
  });
- r.get("/api/admin/scheme-plans/:id/gateway-preview",admin,async(req,res)=>{
+ r.get("/api/admin/scheme-plans/:id/gateway-preview",...admin,async(req,res)=>{
   const id=idParam(req.params.id);if(!id){res.status(400).json({error:"Invalid plan id"});return}
   try{
    const q=await db.query("SELECT code,name,frequency,billing_cycles,amount_paise,description,status FROM src_scheme_plans WHERE id=$1",[id]);
@@ -131,7 +131,7 @@ export function schemeManagementRouter(db:Pool){
     explanation:"This is a preview only. No Razorpay request, plan, mandate or subscription is created."});
   }catch{res.status(503).json({error:"Plan preview unavailable"})}
  });
- r.get("/api/admin/scheme-plans/:id/history",admin,async(req,res)=>{
+ r.get("/api/admin/scheme-plans/:id/history",...admin,async(req,res)=>{
   const id=idParam(req.params.id);if(!id){res.status(400).json({error:"Invalid id"});return}
   try{res.json((await db.query("SELECT id,action,actor_id,created_at FROM src_scheme_plan_audit WHERE scheme_plan_id=$1 ORDER BY id DESC LIMIT 100",[id])).rows)}
   catch{res.status(503).json({error:"Audit log unavailable"})}

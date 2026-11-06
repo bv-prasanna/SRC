@@ -148,10 +148,58 @@ function openDepartment(slug){closeCategories();
  $("crackersFestiveInfo").classList.toggle("hide",slug!=="crackers");
  $("crackersTrustBar").classList.toggle("hide",slug!=="crackers");
  $("crackersCategorySection").classList.toggle("hide",slug!=="crackers");
+ $("everydayCollection").classList.toggle("hide",!["housekeeping","stationery"].includes(slug));
  $("deptSearch").value="";$("deptCategory").value="";
- renderDepartmentHero(slug);renderProducts();renderDepartmentSpotlight(slug);
+ renderDepartmentHero(slug);renderProducts();renderEverydayCollections(slug);renderDepartmentSpotlight(slug);
  if(slug==="crackers"){renderVideos();window.SRCFestival?.activate("crackers")}
 }
+
+function renderEverydayCollections(slug){
+ const root=$("everydayCollection");if(!root||!["housekeeping","stationery"].includes(slug))return;
+ root.dataset.section=slug;
+ const isHouse=slug==="housekeeping";
+ const title=isHouse?"Housekeeping essentials for every space":"Stationery for ideas big and small";
+ $("everydayEyebrow").textContent=isHouse?"CLEAN SPACES · EVERYDAY COMFORT":"WORK · STUDY · CREATE";
+ $("everydayHeading").textContent=title;
+ $("everydayDescription").textContent=isHouse?"Explore published cleaning, facility and home-care supplies for homes, offices and businesses.":"Browse practical stationery for classrooms, offices, projects and daily creativity.";
+ const highlights=isHouse?[
+  ["♧","Everyday cleaning","Practical supplies for routine care"],
+  ["⌂","Homes and offices","Products for different spaces"],
+  ["▤","Organised catalogue","Compare the published range"],
+  ["✉","Bulk enquiries","Contact SRC for volume requests"]
+ ]:[
+  ["✎","Writing essentials","Pens, pencils and supplies"],
+  ["▤","Paper and notebooks","Study and office essentials"],
+  ["▣","Schools and workplaces","Organised product collections"],
+  ["✉","Bulk enquiries","Contact SRC for quantity needs"]
+ ];
+ $("everydayHighlights").innerHTML=highlights.map(x=>'<div><span aria-hidden="true">'+x[0]+'</span><p><strong>'+x[1]+'</strong><small>'+x[2]+'</small></p></div>').join("");
+ const products=catalogueFor(slug);
+ const categories=[...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))].slice(0,8);
+ $("everydayCategories").innerHTML=categories.length?categories.map((category,i)=>{
+  const product=products.find(p=>p.category===category&&productImage(p))||products.find(p=>p.category===category);
+  const src=product?productImage(product):"";
+  const icon=isHouse?["🧹","🧽","🧴","🪣","🧤","🫧","🧼","🏠"][i%8]:["📒","✏️","🖊️","📘","📐","🗂️","📎","📝"][i%8];
+  return '<button type="button" class="src-everyday-category" data-category="'+esc(category)+'">'+
+   '<span class="src-everyday-category-photo">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy">':'<span class="src-everyday-category-icon" aria-hidden="true">'+icon+'</span>')+'</span>'+
+   '<span class="src-everyday-category-name">'+esc(category)+'</span><small>Explore collection →</small></button>';
+ }).join(""):'<p class="src-everyday-empty">No published categories available yet. SRC can add products through the relevant maintenance screen.</p>';
+ $("everydayPromos").innerHTML=isHouse?
+ '<article class="src-everyday-promo promo-a"><div class="eyebrow">CLEANING & CARE</div><h3>Make daily maintenance simpler</h3><p>Find published cleaning essentials and supplies for busy spaces.</p><button type="button" class="src-everyday-view-products">Browse housekeeping →</button></article>'+
+ '<article class="src-everyday-promo promo-b"><div class="eyebrow">FOR BUSINESSES</div><h3>Planning a larger purchase?</h3><p>Contact SRC about products and available quantities.</p><button type="button" class="src-everyday-view-products">View products →</button></article>':
+ '<article class="src-everyday-promo promo-a"><div class="eyebrow">CREATIVE ESSENTIALS</div><h3>Ideas deserve great stationery</h3><p>Everything from everyday writing to practical office supplies.</p><button type="button" class="src-everyday-view-products">Explore stationery →</button></article>'+
+ '<article class="src-everyday-promo promo-b"><div class="eyebrow">CLASSROOMS & OFFICES</div><h3>Find supplies for your team</h3><p>Compare published products and enquire for quantity needs.</p><button type="button" class="src-everyday-view-products">View products →</button></article>';
+}
+document.addEventListener("click",event=>{
+ const button=event.target.closest("#everydayCategories button[data-category]");
+ if(button){
+  const category=button.dataset.category;
+  $("deptCategory").value=category;renderProducts();
+  $("deptProducts").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+ }
+ const view=event.target.closest(".src-everyday-view-products");
+ if(view)$("deptProducts").scrollIntoView({behavior:"smooth",block:"start"});
+});
 function renderDepartmentSpotlight(slug){
  const promos={
   crackers:{eyebrow:"Festival collection",title:"Explore. Learn. Celebrate responsibly.",text:"Approved demonstrations, catalogue information and safety guidance. Visit licensed stores for permitted in-person purchases.",button:"Browse crackers catalogue",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1000&q=78&fit=crop"},
@@ -186,7 +234,7 @@ function renderProducts(){
   categoryArea.innerHTML=["",...cats].slice(0,12).map(c=>{
    const art=categoryIcon(c),active=category===c;
    return '<button type="button" class="src-cracker-category'+(active?" active":"")+'" data-category="'+esc(c)+'" aria-pressed="'+String(active)+'">'+
-    '<svg viewBox="0 0 160 130" aria-hidden="true" focusable="false"><use href="assets/cracker-category-art.svg#'+art+'"></use></svg>'+
+    '<img class="src-cracker-category-image" src="assets/cracker-art-'+(art==="gift"?"assorted":art)+'.webp" alt="" loading="lazy" decoding="async">'+
     '<span>'+esc(c||"All published categories")+'</span></button>';
   }).join("");
   categoryArea.onclick=event=>{

@@ -27,4 +27,17 @@ assert(home.includes("No online fireworks orders or payments"),"No-fireworks-onl
 assert(!home.includes("Shop Crackers Now"),"Unsafe online fireworks shopping CTA");
 execFileSync(process.execPath,["--check","assets/storefront.js"],{stdio:"inherit"});
 execFileSync(process.execPath,["--check","assets/scheme-register.js"],{stdio:"inherit"});
+const cropCss=read("assets/hero-fidelity.css");
+for(const name of ["scheme-hero-final.webp","crackers-hero-final.webp","cracker-art-rockets.webp","cracker-art-sparklers.webp","cracker-art-flower-pots.webp","cracker-art-chakars.webp","cracker-art-aerials.webp","cracker-art-garland.webp","cracker-art-assorted.webp"]){
+ const file="assets/"+name;
+ assert(existsSync(file),"Missing self-hosted approved artwork: "+file);
+ const bytes=readFileSync(file);
+ assert(bytes.length>1000 && bytes.toString("ascii",0,4)==="RIFF" && bytes.toString("ascii",8,12)==="WEBP","Invalid WebP artwork: "+file);
+}
+assert(home.includes('assets/hero-fidelity.css')&&qr.includes('assets/hero-fidelity.css'),"Approved hero style must load on both scheme pages");
+assert(cropCss.includes('url("scheme-hero-final.webp")') && cropCss.includes('url("crackers-hero-final.webp")'),"Approved cropped hero artwork not selected");
+assert(cropCss.includes('max-width:600px') && cropCss.includes('mask-image'),"Mobile art crops must preserve both ornaments without overlapping text");
+assert(!cropCss.includes('unsplash.com'),"Approved hero must not depend on generic external stock photos");
+assert(store.includes("src-cracker-category-image") && store.includes("cracker-art-"),"Crackers categories must use detailed cropped artwork");
+
 console.log("SRC premium Deepavali UI checks: PASS (retail header, hero, categories, animations, compliance, Kannada).");

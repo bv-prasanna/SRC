@@ -1,0 +1,75 @@
+/* SRC Everyday Retail — editorial, modern, non-festive sections */
+#deptBanner[data-section="housekeeping"],#deptBanner[data-section="stationery"]{
+ width:calc(100% - 58px);max-width:1570px;margin:22px auto 0;min-height:370px;border-radius:18px;overflow:hidden;
+ border:1px solid #cadde2;box-shadow:0 16px 35px #0b3d4b18;isolation:isolate
+}
+#deptBanner[data-section="housekeeping"]{background:#0a5c68}
+#deptBanner[data-section="stationery"]{background:#173c75}
+#deptBanner[data-section="housekeeping"]::before{background:linear-gradient(90deg,#073d49ed 0%,#0c5866d7 31%,#0b6f7a72 69%,#0d476042 100%)!important}
+#deptBanner[data-section="stationery"]::before{background:linear-gradient(90deg,#102c59f2 0%,#163e77dc 35%,#4266a16b 70%,#2145734d 100%)!important}
+#deptBanner[data-section="housekeeping"] .page-banner-content,#deptBanner[data-section="stationery"] .page-banner-content{min-height:370px;padding:65px 68px 69px;position:relative;z-index:2}
+#deptBanner[data-section="housekeeping"] h1,#deptBanner[data-section="stationery"] h1{font:800 clamp(35px,4.3vw,59px)/1.08 Manrope,sans-serif;letter-spacing:-.045em;max-width:690px;margin:11px 0 14px;color:#fff;filter:drop-shadow(0 3px 12px #09264235)}
+#deptBanner[data-section="housekeeping"] p,#deptBanner[data-section="stationery"] p{font-size:15px;line-height:1.7;max-width:570px;color:#ecfcfd}
+#deptBanner[data-section="stationery"] p{color:#f2f5ff}
+#deptBanner[data-section="housekeeping"] .eyebrow{color:#b4f4d8;letter-spacing:.19em;font-size:11px}
+#deptBanner[data-section="stationery"] .eyebrow{color:#f8d49f;letter-spacing:.19em;font-size:11px}
+#deptBanner[data-section="housekeeping"] .dept-hero-media,#deptBanner[data-section="stationery"] .dept-hero-media{object-position:70% center}
+#deptBanner[data-section="housekeeping"] .hero-arrow,#deptBanner[data-section="stationery"] .hero-arrow{z-index:4}
+#deptBanner[data-section="housekeeping"] .hero-dots,#deptBanner[data-section="stationery"] .hero-dots{z-index:4}
+#department:has(#deptBanner[data-section="housekeeping"]){background:linear-gradient(180deg,#f4faf9,#fff 50%)}
+#department:has(#deptBanner[data-section="stationery"]){background:linear-gradient(180deg,#f5f8fe,#fff 50%)}
+.src-everyday-collection{padding:4px 0 36px}
+.src-everyday-trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid #e1e8e9;box-shadow:0 7px 22px #0b456113;border-radius:13px;margin:5px 0 35px;overflow:hidden}
+.src-everyday-trust>div{padding:18px;display:flex;gap:12px;align-items:center;border-right:1px solid #e3ebec}
+.src-everyday-trust>div:last-child{border-right:0}
+.src-everyday-trust>div>span{width:44px;height:44px;min-width:44px;display:grid;place-items:center;background:#e7f6f5;border-radius:12px;font:800 26px Manrope,sans-serif;color:#14817f}
+.src-everyday-collection[data-section="stationery"] .src-everyday-trust>div>span{background:#eef2fc;color:#406cae}
+.src-everyday-trust p{margin:0;font-size:12px;line-height:1.36}
+.src-everyday-trust strong{display:block;font:800 12px Manrope,sans-serif;color:#153a59}
+.src-everyday-trust small{font-size:10px;color:#718397;display:block;margin-top:4px}
+.src-everyday-heading{text-align:center;margin:0 0 23px}
+.src-everyday-heading .eyebrow{letter-spacing:.19em;font-size:10px;color:#138079}
+.src-everyday-collection[data-section="stationery"] .src-everyday-heading .eyebrow{color:#5368ae}
+.src-everyday-heading h2{font:800 clamp(25px,3vw,35px) Manrope,sans-serif;color:#123856;letter-spacing:-.04em;margin:6px 0}
+.src-everyday-heading p{max-width:690px;margin:0 auto;color:#667c8c;font-size:13px}
+.src-everyday-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0 0 27px}
+.src-everyday-category{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:7px;padding:0 0 17px;background:#fff;color:#173a56;border:1px solid #dfe9e8;border-radius:15px;box-shadow:0 7px 20px #1c4a5410;overflow:hidden;text-align:left;transition:transform .18s,box-shadow .18s}
+.src-everyday-category:hover,.src-everyday-category:focus-visible{transform:translateY(-3px);box-shadow:0 13px 29px #15405c20;border-color:#83c8c4;outline:0}
+.src-everyday-collection[data-section="stationery"] .src-everyday-category:hover{border-color:#a8bde9}
+.src-everyday-category-photo{display:grid;place-items:center;width:100%;height:142px;background:linear-gradient(135deg,#d9f1eb,#edf8f4);overflow:hidden}
+.src-everyday-collection[data-section="stationery"] .src-everyday-category-photo{background:linear-gradient(135deg,#e5eafa,#f9f8ff)}
+.src-everyday-category-photo img{width:100%;height:100%;object-fit:cover;transition:transform .22s}
+.src-everyday-category:hover img{transform:scale(1.05)}
+.src-everyday-category-icon{font-size:64px;filter:drop-shadow(0 7px 7px #235b4c28)}
+.src-everyday-category-name{font:800 15px Manrope,sans-serif;padding:0 15px;line-height:1.25;min-height:38px;color:#153954}
+.src-everyday-category small{font-size:11px;padding:0 15px;font-weight:800;color:#0a8782}
+.src-everyday-collection[data-section="stationery"] .src-everyday-category small{color:#4d68af}
+.src-everyday-empty{grid-column:1/-1;color:#64788c;border:1px dashed #cdd8e2;border-radius:12px;padding:28px;text-align:center}
+.src-everyday-promos{display:grid;grid-template-columns:1.12fr 1fr;gap:17px;margin:0 0 18px}
+.src-everyday-promo{position:relative;min-height:205px;overflow:hidden;border-radius:15px;padding:26px 30px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;isolation:isolate;background:linear-gradient(110deg,#0d4c61,#127e80);border:1px solid #bedcde}
+.src-everyday-promo:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#0a5867db,#126f764f),url("https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1000&q=78") 78% center/cover no-repeat;opacity:.65}
+.src-everyday-promo.promo-b{background:linear-gradient(110deg,#ecf8f6,#d5efeb);border-color:#cde9e4}
+.src-everyday-promo.promo-b:before{background:url("https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=1000&q=75") right center/cover no-repeat;opacity:.2}
+.src-everyday-collection[data-section="stationery"] .src-everyday-promo{background:linear-gradient(110deg,#153a78,#5472a2);border-color:#b1c6de}
+.src-everyday-collection[data-section="stationery"] .src-everyday-promo:before{background:linear-gradient(90deg,#153a78e8,#173f6d4d),url("https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=1000&q=76") right center/cover no-repeat;opacity:.82}
+.src-everyday-collection[data-section="stationery"] .src-everyday-promo.promo-b{background:linear-gradient(110deg,#eaf0fe,#dce7f8)}
+.src-everyday-collection[data-section="stationery"] .src-everyday-promo.promo-b:before{background:url("https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=1000&q=76") 84% center/cover no-repeat;opacity:.22}
+.src-everyday-promo .eyebrow{color:#b6f3e1;font-size:10px}
+.src-everyday-collection[data-section="stationery"] .src-everyday-promo .eyebrow{color:#f8dba5}
+.src-everyday-promo h3{font:800 clamp(20px,2.1vw,28px)/1.15 Manrope,sans-serif;color:#fff;max-width:410px;margin:7px 0}
+.src-everyday-promo p{font-size:12px;color:#e2f4f5;max-width:420px;line-height:1.55;margin:0 0 18px}
+.src-everyday-promo button{font-size:12px;font-weight:800;background:#fff;color:#17637a;border:0;border-radius:9px;padding:10px 17px;cursor:pointer}
+.src-everyday-promo button:hover{background:#fce9d2}
+.src-everyday-promo.promo-b h3{color:#153b59}
+.src-everyday-promo.promo-b p{color:#486c7b}
+.src-everyday-promo.promo-b .eyebrow{color:#1b8a88}
+.src-everyday-collection[data-section="stationery"] .src-everyday-promo.promo-b .eyebrow{color:#4568aa}
+.src-everyday-promo.promo-b button{background:#146a94;color:#fff}
+#department:has(#deptBanner[data-section="housekeeping"]) .department-chips button.active{background:#168c83;border-color:#168c83;color:#fff}
+#department:has(#deptBanner[data-section="stationery"]) .department-chips button.active{background:#3a69b0;border-color:#3a69b0;color:#fff}
+#department:has(#deptBanner[data-section="housekeeping"]) .product-photo{background:#edf8f4}
+#department:has(#deptBanner[data-section="stationery"]) .product-photo{background:#eef3ff}
+@media(max-width:1100px){.src-everyday-trust{grid-template-columns:repeat(2,minmax(0,1fr))}.src-everyday-trust>div:nth-child(2){border-right:0}.src-everyday-trust>div:nth-child(-n+2){border-bottom:1px solid #e3ebec}}
+@media(max-width:800px){#deptBanner[data-section="housekeeping"],#deptBanner[data-section="stationery"]{width:calc(100% - 22px);margin-top:10px;min-height:325px}#deptBanner[data-section="housekeeping"] .page-banner-content,#deptBanner[data-section="stationery"] .page-banner-content{padding:45px 25px 60px;min-height:325px}.src-everyday-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.src-everyday-promos{grid-template-columns:1fr}}
+@media(max-width:540px){.src-everyday-trust>div{gap:8px;padding:12px}.src-everyday-trust strong{font-size:10px}.src-everyday-trust small{font-size:9px}.src-everyday-trust>div>span{width:33px;height:33px;min-width:33px;font-size:20px}.src-everyday-category-photo{height:126px}.src-everyday-category-name{font-size:13px}.src-everyday-promo{min-height:185px;padding:22px}.src-everyday-heading h2{font-size:26px}}
+@media(prefers-reduced-motion:reduce){.src-everyday-category,.src-everyday-category-photo img{transition:none}}

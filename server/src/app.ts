@@ -22,6 +22,7 @@ import {schemePaymentRouter,schemePaymentWebhook} from "./scheme-payments.js";
 import {requireRole} from "./access.js";
 import {billingRouter} from "./billing-admin.js";
 import {panEncryptionConfigured} from "./pan-security.js";
+import {staffAccessRouter} from "./staff-access.js";
 export const catalogueSchema=z.object({name:z.string().trim().min(1).max(150),category:z.string().trim().min(1).max(100),description:z.string().max(1500).default(""),imageUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),demoVideoUrl:z.string().url().refine(s=>s.startsWith("https://")).optional().nullable(),published:z.boolean().default(false),fireworks:z.boolean().default(true),sectionSlug:z.string().regex(/^[a-z][a-z0-9-]{1,63}$/).default('crackers'),pricePaise:z.number().int().min(0).default(0)}).superRefine((p,ctx)=>{
  if(p.sectionSlug==="scheme")ctx.addIssue({code:"custom",message:"Scheme is not a merchandise catalogue",path:["sectionSlug"]});
  if(p.sectionSlug==="crackers"&&!p.fireworks)ctx.addIssue({code:"custom",message:"Crackers entries must be fireworks catalogue items",path:["fireworks"]});
@@ -38,11 +39,11 @@ export function createApp(pool:Pick<Pool,"query">,config:{adminToken?:string;cor
 
  const admin=requireRole(pool as Pool,["ADMIN"]);
 
- app.use(identityRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));app.use(paidOrdersRouter(pool as Pool));app.use(workspacesRouter(pool as Pool));app.use(festivalRouter(pool as Pool));app.use(schemeManagementRouter(pool as Pool));app.use(schemePaymentRouter(pool as Pool));app.use(billingRouter(pool as Pool));
+ app.use(identityRouter(pool as Pool));app.use(staffAccessRouter(pool as Pool));app.use(sectionsRouter(pool,admin));app.use(schemeRouter(pool,admin));app.use(contentRouter(pool,admin));app.use(orderRouter(pool as Pool,admin));app.use(inventoryRouter(pool as Pool,admin));app.use(fulfillmentRouter(pool as Pool,admin));app.use(agentsRouter(pool as Pool));app.use(recoveryRouter(pool as Pool));app.use(commerceRouter(pool as Pool));app.use(paidOrdersRouter(pool as Pool));app.use(workspacesRouter(pool as Pool));app.use(festivalRouter(pool as Pool));app.use(schemeManagementRouter(pool as Pool));app.use(schemePaymentRouter(pool as Pool));app.use(billingRouter(pool as Pool));
  app.get("/health",(_req,res)=>res.json({status:"ok"}));
  app.get("/ready",async(_req,res)=>{
   try{
-   const q=await pool.query("SELECT to_regclass('public.business_sections') IS NOT NULL AS sections, to_regclass('public.app_users') IS NOT NULL AS identity, to_regclass('public.src_scheme_plans') IS NOT NULL AS schemes, to_regclass('public.src_tax_rules') IS NOT NULL AS billing, to_regclass('public.operations_tasks') IS NOT NULL AS operations, EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='festival_members' AND column_name='pan_ciphertext') AS scheme_kyc");
+   const q=await pool.query("SELECT to_regclass('public.business_sections') IS NOT NULL AS sections, to_regclass('public.app_users') IS NOT NULL AS identity, to_regclass('public.user_staff_scopes') IS NOT NULL AS staff_scopes, to_regclass('public.src_scheme_plans') IS NOT NULL AS schemes, to_regclass('public.src_tax_rules') IS NOT NULL AS billing, to_regclass('public.operations_tasks') IS NOT NULL AS operations, EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='festival_members' AND column_name='pan_ciphertext') AS scheme_kyc");
    const all=q.rows[0];
    if(!all||!Object.values(all).every(Boolean)){res.status(503).json({status:"schema_not_ready"});return}
    if(!panEncryptionConfigured()){res.status(503).json({status:"scheme_encryption_key_not_ready"});return}
