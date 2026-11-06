@@ -59,3 +59,5 @@ console.log("Validated department isolation, dynamic navigation, hero media, sch
 
 // Include festival-specific static/a11y checks in the existing CI storefront job.
 await import("./check-deepavali.mjs");
+
+await import("./check-premium-festival.mjs");

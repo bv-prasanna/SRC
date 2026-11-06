@@ -91,7 +91,7 @@ function show(view){state.active=view;document.querySelectorAll(".view").forEach
 function go(view){closeCategories();if(view==="home"&&document.body.classList.contains("scheme-first-launch")){openScheme();return}show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
 const sectionCampaigns={
  crackers:[
-  {title:"Deepavali Crackers · Festival of Lights",description:"Explore festive cracker types, product demonstrations and licensed in-store information. No online fireworks orders.",photo:photos.crackers},
+  {title:"Deepavali Crackers",description:"Explore festival collections, sparkling effects and product demonstrations. In-store information only — no online fireworks orders.",photo:photos.crackers},
   {title:"Crackers catalogue & product demonstrations.",description:"Learn about festive effects and product information before visiting a licensed store.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
   {title:"Celebrate with safety in mind.",description:"Learn about product effects and safety guidance before visiting a licensed retail outlet.",photo:"https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1600&q=85&fit=crop"}
  ],
@@ -146,6 +146,8 @@ function openDepartment(slug){closeCategories();
  $("deptCrumb").textContent=sec.name;$("deptHeading").textContent=sec.name+" catalogue";
  $("crackersExtra").classList.toggle("hide",slug!=="crackers");
  $("crackersFestiveInfo").classList.toggle("hide",slug!=="crackers");
+ $("crackersTrustBar").classList.toggle("hide",slug!=="crackers");
+ $("crackersCategorySection").classList.toggle("hide",slug!=="crackers");
  $("deptSearch").value="";$("deptCategory").value="";
  renderDepartmentHero(slug);renderProducts();renderDepartmentSpotlight(slug);
  if(slug==="crackers"){renderVideos();window.SRCFestival?.activate("crackers")}
@@ -167,6 +169,33 @@ function renderProducts(){
  const cats=[...new Set(all.map(p=>p.category).filter(Boolean))].sort();
  $("deptCategory").innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
  $("deptCategory").value=cats.includes(category)?category:"";
+
+ const categoryArea=$("crackersCategoryShowcase");
+ if(section==="crackers"&&categoryArea){
+  function categoryIcon(name){
+   const n=name.toLowerCase();
+   if(n.includes("rocket"))return "rockets";
+   if(n.includes("sparkl"))return "sparklers";
+   if(n.includes("flower")||n.includes("fountain"))return "flower-pots";
+   if(n.includes("chakar")||n.includes("chakkar")||n.includes("spinner")||n.includes("ground"))return "chakars";
+   if(n.includes("aerial")||n.includes("shot")||n.includes("sky"))return "aerials";
+   if(n.includes("garland")||n.includes("string"))return "garland";
+   if(n.includes("gift"))return "gift";
+   return "assorted";
+  }
+  categoryArea.innerHTML=["",...cats].slice(0,12).map(c=>{
+   const art=categoryIcon(c),active=category===c;
+   return '<button type="button" class="src-cracker-category'+(active?" active":"")+'" data-category="'+esc(c)+'" aria-pressed="'+String(active)+'">'+
+    '<svg viewBox="0 0 160 130" aria-hidden="true" focusable="false"><use href="assets/cracker-category-art.svg#'+art+'"></use></svg>'+
+    '<span>'+esc(c||"All published categories")+'</span></button>';
+  }).join("");
+  categoryArea.onclick=event=>{
+   const button=event.target.closest("button[data-category]");
+   if(!button)return;
+   $("deptCategory").value=button.dataset.category;renderProducts();
+   $("deptProducts").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+  };
+ }else if(categoryArea){categoryArea.textContent="";}
  $("deptCategoryChips").innerHTML=['',...cats].map(c=>'<button type="button" class="'+(category===c?"active":"")+'" onclick="SRC.setDepartmentCategory(decodeURIComponent(\''+encodeURIComponent(c).replace(/'/g,"%27")+'\'))">'+esc(c||"All products")+'</button>').join("");
  const shown=all.filter(p=>(!category||p.category===category)&&(!q||(p.name+" "+p.category+" "+(p.description||"")).toLowerCase().includes(q)));
  $("resultCount").textContent=shown.length+" items";
@@ -416,9 +445,15 @@ async function load(){
  if(calls.some(x=>x.status==="rejected"))console.warn("Some SRC APIs are unavailable. Other departments remain browsable.");
  sectionsCards();hero();nav();saveCart();featured(selectedFeatured);renderOffers();renderSchemePlans();
 
+ const incomingSearch=new URLSearchParams(location.search).get("search");
+ if(incomingSearch&&incomingSearch.trim()){
+  const term=incomingSearch.trim().slice(0,120);
+  const found=state.products.find(p=>(p.name+" "+p.category).toLowerCase().includes(term.toLowerCase())&&["stationery","housekeeping","crackers"].includes(p.sectionSlug));
+  openDepartment(found?.sectionSlug||"housekeeping");$("deptSearch").value=term;renderProducts();return;
+ }
  const route=location.hash.slice(1);
  if(route.startsWith("section/"))openDepartment(route.split("/")[1]);
- else if(route==="account"||route==="recover")go(route);
+ else if(["account","recover","cart","orders","offers"].includes(route))go(route);
  else openScheme(); // Temporary homepage opens the scheme; other departments remain accessible.
 }
 $("deptSearch").addEventListener("input",renderProducts);$("deptCategory").addEventListener("change",renderProducts);
