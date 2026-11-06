@@ -151,3 +151,5 @@ body.scheme-first-launch,.src-scheme-checkout{background:var(--fest-cream)}
 .src-scheme-checkout .plan h3,.src-scheme-checkout .plan strong,.src-scheme-checkout .plan p{max-width:calc(100% - 86px)}
 .src-scheme-checkout .plan button{z-index:1;position:relative;width:100%}
 @media(max-width:500px){.src-scheme-checkout .plan .src-plan-card-art{width:72px;height:77px;right:7px}.src-scheme-checkout .plan h3,.src-scheme-checkout .plan strong,.src-scheme-checkout .plan p{max-width:calc(100% - 65px)}}
+
+.src-site-cart{display:flex;align-items:center;gap:5px;color:#133556;font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap}.src-site-cart span:first-child{font-size:19px}.src-site-cart:hover,.src-site-account:hover{color:#e9561d}@media(max-width:560px){.src-site-cart span:last-child,.src-site-account span:last-child{display:none}.src-site-header-actions{gap:10px}}
