@@ -453,7 +453,7 @@ async function load(){
  }
  const route=location.hash.slice(1);
  if(route.startsWith("section/"))openDepartment(route.split("/")[1]);
- else if(route==="account"||route==="recover")go(route);
+ else if(["account","recover","cart","orders","offers"].includes(route))go(route);
  else openScheme(); // Temporary homepage opens the scheme; other departments remain accessible.
 }
 $("deptSearch").addEventListener("input",renderProducts);$("deptCategory").addEventListener("change",renderProducts);
