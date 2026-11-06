@@ -234,7 +234,7 @@ function renderProducts(){
   categoryArea.innerHTML=["",...cats].slice(0,12).map(c=>{
    const art=categoryIcon(c),active=category===c;
    return '<button type="button" class="src-cracker-category'+(active?" active":"")+'" data-category="'+esc(c)+'" aria-pressed="'+String(active)+'">'+
-    '<svg viewBox="0 0 160 130" aria-hidden="true" focusable="false"><use href="assets/cracker-category-art.svg#'+art+'"></use></svg>'+
+    '<img class="src-cracker-category-image" src="assets/cracker-art-'+(art==="gift"?"assorted":art)+'.webp" alt="" loading="lazy" decoding="async">'+
     '<span>'+esc(c||"All published categories")+'</span></button>';
   }).join("");
   categoryArea.onclick=event=>{
