@@ -1,13 +1,14 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id);
 const base=(window.SRC_API_BASE||(["localhost","127.0.0.1"].includes(location.hostname)&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
+function friendlyError(err){if(err?.name==="AbortError")return "The request timed out. Please try again.";if(err instanceof TypeError)return "Cannot connect to SRC right now. Check your connection and try again.";return err?.message||"Unable to complete the request. Please try again."}
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let token="",sections=[],section="",rows=[],editing=null;
 function notice(msg,bad=false){$("feedback").textContent=msg;$("feedback").className=bad?"error":"ok"}
 async function api(path,options={}){
  const r=await fetch(base+path,{...options,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(options.headers||{})}});
  const data=r.status===204?{}:await r.json().catch(()=>({}));
- if(!r.ok){if(r.status===401&&token){token="";$("workspace").classList.add("hidden");$("loginPanel").classList.remove("hidden")}throw Error(data.error||"Request failed ("+r.status+")")}
+ if(!r.ok){if(r.status===401&&token){token="";$("workspace").classList.add("hidden");$("loginPanel").classList.remove("hidden")}throw Error(r.status===429?"Too many requests. Please try later.":r.status>=500?"SRC service is temporarily unavailable. Please try again.":data.error||"Request could not be completed.")}
  return data;
 }
 function reset(){editing=null;$("productForm").reset();$("formHeading").textContent="Add a product";$("priceRupees").value="0";$("saveProduct").textContent="Save product";}
@@ -19,7 +20,7 @@ function productPayload(){
 function render(){const q=$("productSearch").value.trim().toLowerCase(),visible=rows.filter(p=>(p.name+" "+p.category).toLowerCase().includes(q));
  $("productList").innerHTML=visible.length?visible.map(p=>'<article class="staff-product"><div><small>'+esc(p.category)+' · '+(p.published?"Published":"Draft")+'</small><h3>'+esc(p.name)+'</h3><p>'+esc((p.description||"").slice(0,130))+'</p><strong>'+(section==="crackers"?"Information only":"₹"+(Number(p.pricePaise||0)/100).toLocaleString("en-IN"))+'</strong></div><div class="actions"><button class="subtle" type="button" data-edit="'+Number(p.id)+'">Edit</button><button class="subtle" type="button" data-unpublish="'+Number(p.id)+'" '+(!p.published?"disabled":"")+'>Unpublish</button></div></article>').join(""):'<p class="muted">No products match this section or search. Add a product to get started.</p>';
 }
-async function loadProducts(){if(!section)return;try{rows=await api("/api/staff/sections/"+encodeURIComponent(section)+"/products");render()}catch(e){notice(e.message,true)}}
+async function loadProducts(){if(!section)return;try{rows=await api("/api/staff/sections/"+encodeURIComponent(section)+"/products");render()}catch(e){notice(friendlyError(e),true)}}
 function switchSection(slug){
  if(!sections.some(x=>x.slug===slug))return;section=slug;editing=null;reset();
  $("accessLabel").textContent=sections.find(x=>x.slug===slug)?.name||slug;
@@ -49,7 +50,7 @@ $("productList").onclick=async e=>{
   form.namedItem("published").checked=!!p.published;$("formHeading").textContent="Edit "+p.name;$("saveProduct").textContent="Update product";$("productForm").scrollIntoView({behavior:"smooth"});return;
  }
  if(del&&confirm("Unpublish this item from the selected section?")){
-  try{await api("/api/staff/sections/"+encodeURIComponent(section)+"/products/"+Number(del.dataset.unpublish)+"/unpublish",{method:"PATCH"});notice("Product unpublished");await loadProducts()}catch(err){notice(err.message,true)}
+  try{await api("/api/staff/sections/"+encodeURIComponent(section)+"/products/"+Number(del.dataset.unpublish)+"/unpublish",{method:"PATCH"});notice("Product unpublished");await loadProducts()}catch(err){notice(friendlyError(err),true)}
  }
 };
 $("productForm").onsubmit=async e=>{
@@ -60,6 +61,6 @@ $("productForm").onsubmit=async e=>{
   const url="/api/staff/sections/"+encodeURIComponent(section)+"/products"+(editing?"/"+Number(editing):"");
   await api(url,{method:editing?"PUT":"POST",body:JSON.stringify(payload)});
   notice(editing?"Product updated":"Product created");reset();await loadProducts();
- }catch(err){notice(err.message,true)}finally{$("saveProduct").disabled=false}
+ }catch(err){notice(friendlyError(err),true)}finally{$("saveProduct").disabled=false}
 };
 })();
