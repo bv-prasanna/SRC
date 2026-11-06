@@ -41,7 +41,7 @@ export function festivalRouter(db:Pool){
    // The customer cannot choose or override the plan's configured duration or amount.
    // Lock the plan while checking its capacity, preventing concurrent over-enrolment.
    const pq=await client.query(
-    "SELECT id,code,name,scheme_year,duration_months,frequency,billing_cycles,amount_paise,max_members FROM src_scheme_plans WHERE id=$1 AND status='PUBLISHED' AND (start_date IS NULL OR start_date<=current_date) AND (end_date IS NULL OR end_date>=current_date) FOR UPDATE",
+    "SELECT id,code,name,scheme_year,duration_months,frequency,billing_cycles,amount_paise,max_members FROM src_scheme_plans WHERE id=$1 AND status='PUBLISHED' AND (start_date IS NULL OR start_date<=(now() AT TIME ZONE 'Asia/Kolkata')::date) AND (end_date IS NULL OR end_date>=(now() AT TIME ZONE 'Asia/Kolkata')::date) FOR UPDATE",
     [v.schemePlanId]);
    if(!pq.rowCount){await client.query("ROLLBACK");res.status(409).json({error:"This scheme is not currently open for registration"});return}
    const plan=pq.rows[0],year=Number(plan.scheme_year);
