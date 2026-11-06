@@ -1,0 +1,62 @@
+/* SRC Deepavali theme extension — shared navy/orange retail visual language */
+.scheme-first-launch .scheme-page-hero{background:linear-gradient(90deg,#071d43c7 0%,#0b2a53a3 35%,#0b2a539c 65%,#071d43c7 100%),url("deepavali-scheme-art.svg") center/cover no-repeat;min-height:380px;display:flex;align-items:center;border-bottom:4px solid #f4ae62;isolation:isolate}
+.scheme-first-launch .scheme-page-hero:after{display:none}
+.scheme-first-launch .scheme-page-hero .wrap{position:relative;z-index:3;text-align:center;width:100%}
+.scheme-first-launch .scheme-page-hero h1{font-size:clamp(34px,4.5vw,64px);max-width:850px;margin:14px auto 17px;color:#fff8e8;text-shadow:0 4px 15px #071939}
+.scheme-first-launch .scheme-page-hero p{font-size:clamp(14px,1.5vw,18px);max-width:710px;margin:0 auto 14px;color:#fff2e7;text-shadow:0 2px 8px #071939}
+.scheme-first-launch .scheme-page-hero .eyebrow{color:#ffd690;letter-spacing:.27em}
+.scheme-first-launch .scheme-page-hero .tag{color:#81431e;background:#fff7e8;border:1px solid #ffdca6}
+.scheme-first-launch #scheme{background:linear-gradient(110deg,#fff8f0,#fff 18%,#fff 82%,#fff8f0)}
+.scheme-first-launch .scheme-panel{border-color:#e8dac9}
+.scheme-first-launch .scheme-option{background:linear-gradient(145deg,#fff,#fff8ed);border-color:#efd7bb}
+.scheme-first-launch .scheme-launch-step{background:#fff8ef;border-color:#f1dec5}
+.scheme-first-launch .scheme-launch-step strong{color:#a95424}
+.scheme-first-launch .scheme-option .btn,.scheme-first-launch .scheme-cta{background:#ff581b;color:white}
+#deptBanner[data-section="crackers"]{min-height:425px;background:#081c41;isolation:isolate;border-bottom:4px solid #efa44f}
+#deptBanner[data-section="crackers"]::before{background:linear-gradient(90deg,#071c42da,#0b28586b 39%,#0b28586b 61%,#071c42da),url("deepavali-crackers-art.svg") center/cover no-repeat!important;z-index:1}
+#deptBanner[data-section="crackers"] .dept-hero-stage{opacity:.16;z-index:0}
+#deptBanner[data-section="crackers"] .page-banner-content{position:relative;z-index:3;text-align:center;padding:86px 24px 72px}
+#deptBanner[data-section="crackers"] .page-banner-content .eyebrow{color:#ffcd76;letter-spacing:.25em}
+#deptBanner[data-section="crackers"] .page-banner-content h1{font-size:clamp(35px,4.8vw,62px);max-width:780px;margin:12px auto 17px;color:#fff8e7;text-shadow:0 3px 19px #06193a}
+#deptBanner[data-section="crackers"] .page-banner-content p{max-width:720px;margin:auto;color:#fff2e0;text-shadow:0 3px 10px #07193a}
+#deptBanner[data-section="crackers"] .hero-arrow,#deptBanner[data-section="crackers"] .hero-dots{z-index:5}
+#department:has(#deptBanner[data-section="crackers"]){background:#fffdf8}
+#department:has(#deptBanner[data-section="crackers"]) .department-chips button{background:#fff7ec;border-color:#ebd9c2}
+#department:has(#deptBanner[data-section="crackers"]) .department-chips button.active{background:#ff5b22;color:#fff;border-color:#ff5b22}
+#department:has(#deptBanner[data-section="crackers"]) .product{border-color:#efdfce}
+.src-festival-cracker-intro{margin:22px 0;background:linear-gradient(100deg,#fff5e7,#fff);border:1px solid #f1d9b9;border-radius:13px;padding:18px 23px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.src-festival-cracker-intro strong{font:800 17px Manrope,sans-serif;color:#123855}
+.src-festival-cracker-intro p{margin:5px 0 0;color:#607085;font-size:13px;max-width:740px}
+.src-festival-cracker-intro a{background:#f56522;color:white;border-radius:9px;padding:11px 18px;font-weight:800}
+.src-festival-cracker-intro a:hover{background:#d85016}
+.src-festival-cracker-intro .fest-icon{font-size:27px;vertical-align:middle;margin-right:9px}
+#crackersExtra .src-festival-info{background:#fff9ee;border:1px solid #f1dfc5;padding:16px 20px;border-radius:11px;margin-top:12px}
+#crackersExtra .src-festival-info strong{color:#a8551e}
+.src-festival-layer{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+.src-festival-layer .fest-burst{position:absolute;left:var(--x);top:var(--y);width:4px;height:4px;opacity:0}
+.src-festival-layer .fest-burst::before,.src-festival-layer .fest-burst::after{content:"";position:absolute;inset:-19px;border-radius:50%;background:repeating-conic-gradient(var(--spark) 0deg 6deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 0 7px,#000 8px 21px,transparent 22px);mask:radial-gradient(circle,transparent 0 7px,#000 8px 21px,transparent 22px);filter:drop-shadow(0 0 4px var(--spark))}
+.src-festival-layer .fest-burst::after{inset:-12px;transform:rotate(18deg);opacity:.75}
+.src-festival-layer .fest-glimmer{position:absolute;left:var(--x);top:var(--y);width:4px;height:4px;border-radius:50%;background:var(--spark);box-shadow:0 0 14px 2px var(--spark);opacity:0}
+.fest-playing .fest-burst{animation:fest-pop 1.4s ease-out var(--delay) 1 both}
+.fest-playing .fest-glimmer{animation:fest-twinkle 2.3s ease-out var(--delay) 1 both}
+.fest-playing.scheme-page-hero .wrap,#deptBanner.fest-playing .page-banner-content{animation:fest-title .65s ease-out .1s both}
+@keyframes fest-pop{0%{opacity:0;transform:scale(.15) rotate(-10deg)}25%{opacity:1;transform:scale(1.12) rotate(0)}70%{opacity:.6;transform:scale(1.55) rotate(16deg)}100%{opacity:0;transform:scale(1.8) rotate(28deg)}}
+@keyframes fest-twinkle{0%,100%{opacity:0;transform:scale(.25)}20%,60%{opacity:1;transform:scale(1.35)}}
+@keyframes fest-title{from{opacity:.1;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:750px){.scheme-first-launch .scheme-page-hero{min-height:345px}.scheme-first-launch .scheme-page-hero h1{font-size:clamp(30px,6vw,43px)}#deptBanner[data-section="crackers"]{min-height:335px}#deptBanner[data-section="crackers"] .page-banner-content{padding:55px 18px 65px}#deptBanner[data-section="crackers"] .page-banner-content h1{font-size:clamp(30px,6vw,44px)}.src-festival-cracker-intro{padding:16px}}
+@media(prefers-reduced-motion:reduce){.fest-playing .fest-burst,.fest-playing .fest-glimmer,.fest-playing.scheme-page-hero .wrap,#deptBanner.fest-playing .page-banner-content{animation:none!important}.fest-burst,.fest-glimmer{display:none}}
+
+/* The QR enrollment page uses the same self-hosted diya artwork without changing KYC fields. */
+body:has(#enrolForm) .intro{position:relative;isolation:isolate;width:100vw;max-width:none;margin:0 calc(50% - 50vw) 24px;padding:47px max(18px,calc((100vw - 950px)/2)) 49px;background:linear-gradient(90deg,#061b40bf,#0a2756ab 34%,#0a2756a6 66%,#061b40bf),url("deepavali-scheme-art.svg") center/cover no-repeat;border-bottom:4px solid #efb267;min-height:245px;display:flex;flex-direction:column;justify-content:center;align-items:center;box-sizing:border-box}
+body:has(#enrolForm) .container{max-width:1120px;padding-top:0}
+body:has(#enrolForm) .intro .eyebrow{color:#ffd59a;text-shadow:0 2px 8px #071d3e;position:relative;z-index:3}
+body:has(#enrolForm) .intro h1{font-size:clamp(31px,3.7vw,52px);color:#fff9ec;max-width:770px;text-shadow:0 3px 14px #061a39;position:relative;z-index:3}
+body:has(#enrolForm) .intro p{font-size:clamp(13px,1.4vw,16px);color:#f8f1e8;max-width:700px;text-shadow:0 2px 7px #061a39;position:relative;z-index:3}
+body:has(#enrolForm) .panel{box-shadow:0 10px 29px #a46b3012}
+body:has(#enrolForm) .selected{background:linear-gradient(115deg,#fff8ec,#fff0e3)}
+body:has(#enrolForm) .steps{max-width:1000px;margin-left:auto;margin-right:auto}
+body:has(#enrolForm) .intro.fest-playing .eyebrow,
+body:has(#enrolForm) .intro.fest-playing h1,
+body:has(#enrolForm) .intro.fest-playing p{animation:fest-title .7s ease-out .1s both}
+@media(max-width:600px){body:has(#enrolForm) .intro{min-height:240px;padding:39px 22px;background-position:center}body:has(#enrolForm) .intro h1{font-size:30px}body:has(#enrolForm) .intro p{font-size:13px}}
+@media(prefers-reduced-motion:reduce){body:has(#enrolForm) .intro.fest-playing .eyebrow,body:has(#enrolForm) .intro.fest-playing h1,body:has(#enrolForm) .intro.fest-playing p{animation:none!important}}

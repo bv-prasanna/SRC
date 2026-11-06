@@ -91,7 +91,7 @@ function show(view){state.active=view;document.querySelectorAll(".view").forEach
 function go(view){closeCategories();if(view==="home"&&document.body.classList.contains("scheme-first-launch")){openScheme();return}show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
 const sectionCampaigns={
  crackers:[
-  {title:"Make every celebration memorable.",description:"Discover festive collections, educational product demonstrations and in-store information.",photo:photos.crackers},
+  {title:"Deepavali Crackers · Festival of Lights",description:"Explore festive cracker types, product demonstrations and licensed in-store information. No online fireworks orders.",photo:photos.crackers},
   {title:"Crackers catalogue & product demonstrations.",description:"Learn about festive effects and product information before visiting a licensed store.",photo:"https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&q=85&fit=crop"},
   {title:"Celebrate with safety in mind.",description:"Learn about product effects and safety guidance before visiting a licensed retail outlet.",photo:"https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1600&q=85&fit=crop"}
  ],
@@ -145,9 +145,10 @@ function openDepartment(slug){closeCategories();
  $("deptLabel").textContent="SRC ENTERPRISES / "+sec.name;
  $("deptCrumb").textContent=sec.name;$("deptHeading").textContent=sec.name+" catalogue";
  $("crackersExtra").classList.toggle("hide",slug!=="crackers");
+ $("crackersFestiveInfo").classList.toggle("hide",slug!=="crackers");
  $("deptSearch").value="";$("deptCategory").value="";
  renderDepartmentHero(slug);renderProducts();renderDepartmentSpotlight(slug);
- if(slug==="crackers")renderVideos()
+ if(slug==="crackers"){renderVideos();window.SRCFestival?.activate("crackers")}
 }
 function renderDepartmentSpotlight(slug){
  const promos={
@@ -208,7 +209,7 @@ function featured(section){
  return '<article class="product"><div class="product-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(p.name)+'">':'<span class="photo-fallback">'+esc(p.category||section)+'</span>')+'</div><div class="product-info"><span class="tag">'+esc(p.category||section)+'</span><h3>'+esc(displayProductName(p.name))+'</h3>'+(demo?'<span class="demo-label">Demo item · illustrative image</span>':'')+'<strong>'+(demo||Number(p.pricePaise)===0?'Price on request':price(p.pricePaise))+'</strong>'+(demo?'<button class="btn light" onclick="SRC.openDepartment(\''+section+'\')">View demo collection</button>':'<button class="btn orange" onclick="SRC.addToCart('+Number(p.id)+')">Add to enquiry</button>')+'</div></article>'
  }).join(""):'<div class="empty"><h3>Products arriving soon</h3><p class="muted">No published '+esc(section)+' products are available yet. SRC administrators can publish products and images in the catalogue.</p><button class="btn" onclick="SRC.openDepartment(\''+section+'\')">Browse '+esc(section)+'</button></div>';
 }
-function openScheme(){show("scheme");history.replaceState(null,"","#section/scheme")}
+function openScheme(){show("scheme");history.replaceState(null,"","#section/scheme");window.SRCFestival?.activate("scheme")}
 function schemeMoney(paise){return "₹"+(Number(paise||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function renderSchemePlans(){
  const plans=state.schemePlans;

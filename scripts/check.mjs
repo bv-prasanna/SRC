@@ -56,3 +56,6 @@ assert(js.includes('function closeCategories()'),"Dropdown close behavior missin
 assert(js.includes('event.key==="Escape"'),"Dropdown keyboard close behavior missing");
 console.log("SRC retail storefront smoke: PASS");
 console.log("Validated department isolation, dynamic navigation, hero media, scheme, products, offers, cart restrictions and JavaScript syntax.");
+
+// Include festival-specific static/a11y checks in the existing CI storefront job.
+await import("./check-deepavali.mjs");
