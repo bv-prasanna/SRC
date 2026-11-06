@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset password | SRC Enterprises</title><meta name="description" content="Secure SRC Enterprises account password reset"><link rel="icon" type="image/webp" href="assets/src-corporate-logo.webp"><link rel="stylesheet" href="assets/storefront.css"><link rel="stylesheet" href="assets/auth-pages.css"></head><body class="auth-page">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset password | SRC Enterprises</title><meta name="description" content="Secure SRC Enterprises account password reset"><link rel="icon" type="image/webp" href="assets/src-corporate-logo.webp"><link rel="stylesheet" href="assets/storefront.css"><link rel="stylesheet" href="assets/auth-pages.css"><link rel="stylesheet" href="assets/site-i18n.css"></head><body class="auth-page">
 <header class="auth-header"><a href="index.html" class="auth-brand"><img src="assets/src-corporate-logo.webp" alt="SRC Enterprises"><span><strong>SRC Enterprises</strong><small>Account Security</small></span></a><a href="index.html#account">Return to sign in</a></header>
 <main class="auth-shell"><div class="auth-copy"><span class="eyebrow">Secure account recovery</span><h1>Create a new password</h1><p>Use the one-time reset link sent to your registered email address. Links expire after 30 minutes.</p></div>
 <section class="panel auth-panel" aria-labelledby="resetTitle"><h2 id="resetTitle">Password reset</h2><form id="reset">
@@ -30,4 +30,4 @@ document.getElementById("reset").onsubmit=async e=>{
   if(r.ok){document.getElementById("reset").reset();button.textContent="Password updated"}else button.disabled=false;
  }catch{result.textContent="Reset service unavailable. Try again after checking the API connection.";button.disabled=false}
 };
-</script></body></html>
+</script><script defer src="assets/site-i18n.js"></script></body></html>
