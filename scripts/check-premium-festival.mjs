@@ -10,6 +10,8 @@ assert(home.includes('assets/festival-premium.css')&&qr.includes('assets/festiva
 for(const id of ["crackersTrustBar","crackersCategorySection","crackersCategoryShowcase","crackersPromoGrid","crackersFestiveInfo"])assert(home.includes('id="'+id+'"'),"Missing crackers UI "+id);
 for(const key of ["src-site-topbar","src-site-masthead","src-site-nav","srcSchemeSearch","langEn","langKn","enrolForm","choosePanel","detailsPanel","confirmationPanel","src-scheme-benefitbar"])assert(qr.includes(key),"QR enrollment missing "+key);
 assert(home.includes('href="scheme-register.html"'),"Scheme CTA missing");
+assert(qr.includes('href="index.html#cart"')&&qr.includes('href="index.html#offers"'),"QR header must link to working store sections");
+assert(store.includes('["account","recover","cart","orders","offers"].includes(route)'),"Direct cross-page links must work");
 assert(qr.includes('name="pan"')&&qr.includes('name="panConsent"'),"KYC fields must be preserved");
 assert(store.includes('categoryArea.onclick')&&store.includes('button.dataset.category;renderProducts()'),"Category cards must filter real catalogue");
 assert(store.includes('"crackersTrustBar"')&&store.includes('"crackersCategorySection"'),"Non-crackers sections must hide festive category UI");
