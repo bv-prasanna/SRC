@@ -2,13 +2,14 @@
 const role=document.body.dataset.role||"CUSTOMER";
 const title={CUSTOMER:"Customer Portal",DELIVERY:"Delivery Workspace",PROCUREMENT:"Procurement Workspace",PACKING:"Packing Workspace",OPERATIONS:"Operations Control Centre"}[role]||"SRC Workspace";
 const API=(window.SRC_API_BASE||((["localhost","127.0.0.1"].includes(location.hostname)&&location.port==="8000")?"http://localhost:8080":"")).replace(/\/$/,"");
+function friendlyError(err){if(err?.name==="AbortError")return "The request timed out. Please try again.";if(err instanceof TypeError)return "Cannot connect to SRC right now. Check your connection and try again.";return err?.message||"Unable to complete the request. Please try again."}
 const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let token="",user=null,items=[],staff=[];
 $("portalTitle").textContent=title;$("loginTitle").textContent=title+" sign in";
 async function api(path,options={}){
  const r=await fetch(API+path,{...options,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(options.headers||{})}});
  if(r.status===204)return {};
- const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||"Request failed");return data
+ const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(r.status===429?"Too many requests. Please try later.":r.status>=500?"SRC service is temporarily unavailable. Please try again.":data.error||"Request could not be completed.");return data
 }
 function status(text,failed=false){$("status").textContent=text;$("status").className=failed?"error":"success"}
 $("signin").onsubmit=async e=>{
@@ -19,7 +20,7 @@ $("signin").onsubmit=async e=>{
   if(result.user?.role!==role&&!["ADMIN","SUPER_ADMIN"].includes(result.user?.role))throw Error("This account does not have "+role+" access");
   token=result.token;user=result.user;e.target.reset();$("loginPanel").classList.add("hidden");$("workspace").classList.remove("hidden");$("identity").textContent=result.user.email+" · "+result.user.role;
   status("Signed in.");await refresh();
- }catch(err){status(err.message,true)}
+ }catch(err){status(friendlyError(err),true)}
 };
 $("logout").onclick=async()=>{await api("/api/auth/logout",{method:"POST"}).catch(()=>{});token="";location.reload()};
 $("refresh").onclick=refresh;
@@ -48,7 +49,7 @@ async function refresh(){
   if(role==="OPERATIONS"||["ADMIN","SUPER_ADMIN"].includes(user?.role))staff=await api("/api/workspace/staff");
   summary();$("queueTitle").textContent=role==="OPERATIONS"?"All active operational tasks":title+" · Assigned tasks";
   $("queue").innerHTML=items.length?items.map(taskCard).join(""):'<div class="empty">No tasks available for this role yet. Orders appear here after eligible standard-goods payment and task assignment.</div>'
- }catch(err){status(err.message,true)}
+ }catch(err){status(friendlyError(err),true)}
 }
 async function details(id){
  try{
@@ -58,7 +59,7 @@ async function details(id){
   root.innerHTML='<div class="task-items">'+(d.items||[]).map(x=>'<div class="task-item-row"><strong>'+esc(x.name)+'</strong><span>Qty '+Number(x.quantity)+'</span></div>').join("")+'</div>'+
     (d.deliveryAddress?'<div class="task-delivery"><strong>Delivery address</strong><p>'+esc(d.deliveryAddress)+'</p></div>':"");
   dlg.showModal();
- }catch(err){status(err.message,true)}
+ }catch(err){status(friendlyError(err),true)}
 }
 async function update(id,next){
  try{
@@ -69,19 +70,19 @@ async function update(id,next){
   if(next==="COMPLETED"&&!confirm("Confirm this operational stage is complete? This action advances the order workflow."))return;
   await api("/api/workspace/tasks/"+id+"/status",{method:"PATCH",body:JSON.stringify({status:next,notes})});
   status("Stage updated and logged.");await refresh()
- }catch(err){status(err.message,true)}
+ }catch(err){status(friendlyError(err),true)}
 }
 async function assign(id){
  const member=Number($("assign-"+id)?.value);
  if(!Number.isSafeInteger(member)||member<1){status("Select a team member with the matching role",true);return}
  try{await api("/api/admin/workspace/tasks/"+id+"/assign",{method:"PATCH",body:JSON.stringify({userId:member})});status("Task assigned.");await refresh()}
- catch(err){status(err.message,true)}
+ catch(err){status(friendlyError(err),true)}
 }
 async function startOrder(){
  const id=Number(prompt("Paid housekeeping/stationery order ID:"));
  if(!Number.isSafeInteger(id)||id<1)return;
  try{await api("/api/admin/workspace/orders/"+id+"/start",{method:"POST"});status("Workflow created.");await refresh()}
- catch(err){status(err.message,true)}
+ catch(err){status(friendlyError(err),true)}
 }
 if(role==="OPERATIONS")$("operatorActions").classList.remove("hidden");
 $("startOrder").onclick=startOrder;
@@ -98,14 +99,14 @@ async function findFestivalMember(){
     (m.status==="REGISTERED"?'<button onclick="WORK.verifyFestival('+i+')">Verify member</button>':'')+
     (m.status==="VERIFIED"?'<button onclick="WORK.visitFestival('+i+')">Log in-store visit</button><button class="alt" onclick="WORK.counterReceipt('+i+')">Link shop receipt</button>':'')+
     '</div></article>').join(""):'<div class="empty">No member matches the ID or mobile number.</div>';
- }catch(err){status(err.message,true)}
+ }catch(err){status(friendlyError(err),true)}
 }
 async function verifyFestival(i){
  const m=festivalResults[i];if(!m)return;
  const last4=prompt("Confirm the customer's registered mobile: last four digits");
  if(!last4||!/^[0-9]{4}$/.test(last4))return;
  try{await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/verify",{method:"PATCH",body:JSON.stringify({phoneLast4:last4})});status("Member ID verified. No financial transaction recorded.");await findFestivalMember()}
- catch(err){status(err.message,true)}
+ catch(err){status(friendlyError(err),true)}
 }
 async function visitFestival(i){
  const m=festivalResults[i];if(!m)return;
@@ -113,7 +114,7 @@ async function visitFestival(i){
  if(!last4||!/^[0-9]{4}$/.test(last4))return;
  const notes=prompt("Optional visit note (not payment or product orders):","")||"";
  try{await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/visit",{method:"POST",body:JSON.stringify({phoneLast4:last4,notes})});status("Shop visit recorded; licensed-counter purchase handled separately.");await findFestivalMember()}
- catch(err){status(err.message,true)}
+ catch(err){status(friendlyError(err),true)}
 }
 async function counterReceipt(i){
  const m=festivalResults[i];if(!m||m.status!=="VERIFIED")return;
@@ -124,10 +125,10 @@ async function counterReceipt(i){
  try{
   await api("/api/admin/festival/members/"+encodeURIComponent(m.membership_code)+"/counter-receipt",{method:"POST",body:JSON.stringify({phoneLast4,receiptReference,notes:"Physical store purchase receipt reference only"})});
   status("Physical-store receipt linked to membership ID. No online sale or payment was processed.");
- }catch(err){status(err.message,true)}
+ }catch(err){status(friendlyError(err),true)}
 }
 if($("festivalLookup"))$("festivalLookup").onclick=findFestivalMember;
 $("closeTaskDetails").onclick=()=>$("taskDetailDialog").close();
-async function downloadInvoice(id){try{const invoice=await api("/api/checkout/orders/"+id+"/invoice");window.SRCReceipt.download(invoice);status("Draft bill downloaded. Open it to print or save as PDF.")}catch(e){status(e.message,true)}}
+async function downloadInvoice(id){try{const invoice=await api("/api/checkout/orders/"+id+"/invoice");window.SRCReceipt.download(invoice);status("Draft bill downloaded. Open it to print or save as PDF.")}catch(e){status(friendlyError(e),true)}}
 window.WORK={update,assign,details,verifyFestival,visitFestival,counterReceipt,downloadInvoice};
 })();
