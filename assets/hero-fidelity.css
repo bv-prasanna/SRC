@@ -83,14 +83,14 @@
  .src-scheme-checkout .intro:before,
  .scheme-first-launch .scheme-page-hero:before{
   content:""!important;display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:url("scheme-hero-final.webp") left bottom/auto 64% no-repeat;
+  background:url("scheme-hero-final.webp") left bottom/auto 52% no-repeat;
   -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);
   mask-image:linear-gradient(90deg,#000 0%,#000 16%,transparent 56%);opacity:.60
  }
  .src-scheme-checkout .intro:after,
  .scheme-first-launch .scheme-page-hero:after{
   content:""!important;display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:url("scheme-hero-final.webp") right bottom/auto 64% no-repeat;
+  background:url("scheme-hero-final.webp") right bottom/auto 52% no-repeat;
   -webkit-mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);
   mask-image:linear-gradient(270deg,#000 0%,#000 16%,transparent 56%);opacity:.60;box-shadow:none!important
  }
