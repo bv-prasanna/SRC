@@ -46,5 +46,13 @@ assert(js.includes("copyFestivalCode"),"Customer must be able to keep membership
 const festival=readFileSync("server/src/festival.ts","utf8");
 for(const route of ["/api/festival/enrol","/api/admin/festival/members","/api/admin/festival/members/:code/verify","/api/admin/festival/members/:code/visit","/api/admin/festival/members/:code/counter-receipt"])assert(festival.includes(route),"Missing member service: "+route);
 assert(!festival.includes("RAZORPAY"),"Festival registration must not use Razorpay");
+const schemeTheme=readFileSync("assets/scheme-launch.css","utf8");
+assert(schemeTheme.includes("body.scheme-first-launch{background:#f7f9fc"),"Scheme background must match retail palette");
+assert(schemeTheme.includes(".scheme-first-launch .navbar{display:block;background:#083767"),"Scheme navigation must retain retail blue");
+assert(schemeTheme.includes(".src-category-overlay{position:fixed!important"),"Dropdown must escape scrollable navigation");
+assert(js.includes('document.body.appendChild(menu)'),"Dropdown must be portalled outside navigation");
+assert(js.includes('function positionCategories()'),"Dropdown needs viewport positioning");
+assert(js.includes('function closeCategories()'),"Dropdown close behavior missing");
+assert(js.includes('event.key==="Escape"'),"Dropdown keyboard close behavior missing");
 console.log("SRC retail storefront smoke: PASS");
 console.log("Validated department isolation, dynamic navigation, hero media, scheme, products, offers, cart restrictions and JavaScript syntax.");
