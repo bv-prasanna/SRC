@@ -45,3 +45,18 @@
 @keyframes fest-title{from{opacity:.1;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:750px){.scheme-first-launch .scheme-page-hero{min-height:345px}.scheme-first-launch .scheme-page-hero h1{font-size:clamp(30px,6vw,43px)}#deptBanner[data-section="crackers"]{min-height:335px}#deptBanner[data-section="crackers"] .page-banner-content{padding:55px 18px 65px}#deptBanner[data-section="crackers"] .page-banner-content h1{font-size:clamp(30px,6vw,44px)}.src-festival-cracker-intro{padding:16px}}
 @media(prefers-reduced-motion:reduce){.fest-playing .fest-burst,.fest-playing .fest-glimmer,.fest-playing.scheme-page-hero .wrap,#deptBanner.fest-playing .page-banner-content{animation:none!important}.fest-burst,.fest-glimmer{display:none}}
+
+/* The QR enrollment page uses the same self-hosted diya artwork without changing KYC fields. */
+body:has(#enrolForm) .intro{position:relative;isolation:isolate;width:100vw;max-width:none;margin:0 calc(50% - 50vw) 24px;padding:47px max(18px,calc((100vw - 950px)/2)) 49px;background:linear-gradient(90deg,#061b40bf,#0a2756ab 34%,#0a2756a6 66%,#061b40bf),url("deepavali-scheme-art.svg") center/cover no-repeat;border-bottom:4px solid #efb267;min-height:245px;display:flex;flex-direction:column;justify-content:center;align-items:center;box-sizing:border-box}
+body:has(#enrolForm) .container{max-width:1120px;padding-top:0}
+body:has(#enrolForm) .intro .eyebrow{color:#ffd59a;text-shadow:0 2px 8px #071d3e;position:relative;z-index:3}
+body:has(#enrolForm) .intro h1{font-size:clamp(31px,3.7vw,52px);color:#fff9ec;max-width:770px;text-shadow:0 3px 14px #061a39;position:relative;z-index:3}
+body:has(#enrolForm) .intro p{font-size:clamp(13px,1.4vw,16px);color:#f8f1e8;max-width:700px;text-shadow:0 2px 7px #061a39;position:relative;z-index:3}
+body:has(#enrolForm) .panel{box-shadow:0 10px 29px #a46b3012}
+body:has(#enrolForm) .selected{background:linear-gradient(115deg,#fff8ec,#fff0e3)}
+body:has(#enrolForm) .steps{max-width:1000px;margin-left:auto;margin-right:auto}
+body:has(#enrolForm) .intro.fest-playing .eyebrow,
+body:has(#enrolForm) .intro.fest-playing h1,
+body:has(#enrolForm) .intro.fest-playing p{animation:fest-title .7s ease-out .1s both}
+@media(max-width:600px){body:has(#enrolForm) .intro{min-height:240px;padding:39px 22px;background-position:center}body:has(#enrolForm) .intro h1{font-size:30px}body:has(#enrolForm) .intro p{font-size:13px}}
+@media(prefers-reduced-motion:reduce){body:has(#enrolForm) .intro.fest-playing .eyebrow,body:has(#enrolForm) .intro.fest-playing h1,body:has(#enrolForm) .intro.fest-playing p{animation:none!important}}
