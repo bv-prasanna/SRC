@@ -61,3 +61,5 @@ console.log("Validated department isolation, dynamic navigation, hero media, sch
 await import("./check-deepavali.mjs");
 
 await import("./check-premium-festival.mjs");
+
+await import("./check-office-retail.mjs");
