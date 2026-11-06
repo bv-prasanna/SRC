@@ -30,7 +30,7 @@ function makeLayer(host){
 }
 function stop(host){if(host)host.classList.remove("fest-playing");}
 function activate(kind){
- const host=kind==="crackers"?document.getElementById("deptBanner"):kind==="scheme"?document.querySelector("#scheme .scheme-page-hero"):null;
+ const host=kind==="crackers"?document.getElementById("deptBanner"):kind==="scheme"?document.querySelector("#scheme .scheme-page-hero"):kind==="registration"?document.querySelector("body:has(#enrolForm) .intro"):null;
  if(!host)return;
  const other=kind==="crackers"?document.querySelector("#scheme .scheme-page-hero"):document.getElementById("deptBanner");
  stop(other);window.clearTimeout(stopHandle);
@@ -40,7 +40,7 @@ function activate(kind){
  host.classList.remove("fest-playing");void host.offsetWidth;host.classList.add("fest-playing");
  stopHandle=window.setTimeout(()=>stop(host),4400);
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){window.clearTimeout(stopHandle);stop(document.querySelector("#scheme .scheme-page-hero"));stop(document.getElementById("deptBanner"));}});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){window.clearTimeout(stopHandle);stop(document.querySelector("#scheme .scheme-page-hero"));stop(document.getElementById("deptBanner"));stop(document.querySelector("body:has(#enrolForm) .intro"));}});
 window.addEventListener("pagehide",()=>window.clearTimeout(stopHandle));
 window.SRCFestival={activate};
 })();
