@@ -187,7 +187,7 @@ function renderSchemePlans(){
    '<p class="muted">'+esc(p.description||"SRC festival membership plan")+'</p>'+
    '<p><b>Configured contribution:</b> '+schemeMoney(p.amountPaise)+' per '+frequency+'</p>'+
    '<p class="muted">'+esc(p.benefits||"Terms subject to confirmation")+'</p>'+
-   '<button type="button" class="btn light" onclick="SRC.selectSchemePlan('+i+')">Select this scheme</button></article>';
+   '<a class="btn light" href="scheme-register.html?plan='+encodeURIComponent(p.code)+'" style="text-decoration:none">Join this scheme / ಯೋಜನೆಗೆ ಸೇರಿ</a></article>';
  }).join("");
  $("schemeExamplePlans").classList.toggle("hide",plans.length>0);
  const id=Number($("schemePlanId").value);
