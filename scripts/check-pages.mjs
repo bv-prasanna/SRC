@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 import {execFileSync} from "node:child_process";
 const read=p=>readFileSync(p,"utf8");
-const pages=["index.html","admin.html","scheme-admin.html","scheme-register.html","billing-admin.html","customer.html","agent.html","procurement.html","packing.html","delivery.html","operations.html","reset.html"];
-const sharedScripts=["assets/storefront.js","assets/workspaces.js","assets/scheme-admin.js","assets/scheme-register.js","assets/billing-admin.js","assets/receipt.js"];
+const pages=["index.html","admin.html","scheme-admin.html","scheme-register.html","section-manager.html","billing-admin.html","customer.html","agent.html","procurement.html","packing.html","delivery.html","operations.html","reset.html"];
+const sharedScripts=["assets/storefront.js","assets/workspaces.js","assets/scheme-admin.js","assets/scheme-register.js","assets/section-manager.js","assets/billing-admin.js","assets/receipt.js"];
 for(const s of sharedScripts)execFileSync(process.execPath,["--check",s],{stdio:"pipe"});
 for(const page of pages){
  const html=read(page);
@@ -56,4 +56,4 @@ assert(read("reset.html").includes("confirmPassword"),"Password reset confirmati
 assert(read("agent.html").includes("assets/auth-pages.css"),"Agent design not updated");
 const deploy=read("scripts/build-pages.mjs");
 for(const page of pages)assert(deploy.includes('"'+page+'"'),"Cloudflare Pages build excludes "+page);
-console.log("SRC page audit passed: 12 routes, responsive viewport, local asset/link integrity, scripts, role controls and critical workflow wiring.");
+console.log("SRC page audit passed: 13 routes, responsive viewport, local asset/link integrity, scripts, role controls and critical workflow wiring.");
