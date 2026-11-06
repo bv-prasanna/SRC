@@ -12,7 +12,7 @@ const migration=readFileSync("server/sql/018_scheme_member_kyc.sql","utf8");
 for(const id of ["langEn","langKn","choosePanel","detailsPanel","confirmationPanel","plans","enrolForm","selectedPlan","membershipCode","testMandate","paymentStatus"])assert(html.includes('id="'+id+'"'),"Missing mobile enrollment control: "+id);
 for(const name of ["fullName","phone","email","pan","addressLine1","city","state","pincode","consent","panConsent"])assert(html.includes('name="'+name+'"'),"Missing required enrollment field "+name);
 for(const path of ["/api/scheme/plans","/api/festival/enrol","/api/scheme/payments/start","/api/scheme/payments/confirm","/api/scheme/payments/status"])assert(js.includes(path),"Missing API link "+path);
-assert(js.includes('lang==="kn"')&&js.includes('localStorage.setItem("src_scheme_language"'),"Kannada switch missing");
+assert(js.includes('lang==="kn"')&&js.includes('localStorage.setItem("src_site_language"'),"Kannada switch missing");
 assert(js.includes('startsWith("rzp_test_")'),"Test-only checkout gate missing");
 assert(!html.includes('name="amountPaise"')&&!html.includes('name="durationMonths"'),"Customer must not set scheme terms");
 assert(admin.includes("https://srcenterprises.in/scheme-register.html")&&admin.includes("api.qrserver.com/v1/create-qr-code/"),"Common QR missing");
@@ -20,5 +20,6 @@ assert(home.includes('href="scheme-register.html"')&&storefront.includes('scheme
 assert(migration.includes("festival_member_plan_phone_unique")&&migration.includes("(scheme_plan_id,phone)"),"Per-plan mobile uniqueness missing");
 assert(enrol.includes('ON CONFLICT DO NOTHING'),"Duplicate registration guard missing");
 assert(css.includes("@media(max-width:560px)"),"Mobile layout missing");
+for(const token of ["--src-orange:#ff551b","background:#fffaf4",".fields input{border:1px solid var(--src-border)",".primary{background:var(--src-orange)"])assert(css.includes(token),"Missing retail form style: "+token);
 execFileSync(process.execPath,["--check","assets/scheme-register.js"],{stdio:"inherit"});
 console.log("SRC mobile scheme enrollment audit: PASS — Kannada/English, common QR, form, plan isolation and TEST-only payment wiring.");
