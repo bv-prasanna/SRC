@@ -1,0 +1,56 @@
+/* SRC Enterprise Backoffice — shared professional retail design (not festival themed) */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap');
+body.src-office{--office-navy:#0b3157;--office-blue:#135d9b;--office-orange:#f66b2b;--office-border:#e5e5e2;--office-muted:#64788e;background:linear-gradient(180deg,#f8f5f0 0%,#f5f8fb 55%,#faf9f6 100%);color:#173755;font:14px/1.62 "DM Sans",system-ui,sans-serif;min-height:100vh}
+body.src-office .header,body.src-office>header:not(.topbar),body.src-office>header.topbar{background:linear-gradient(110deg,#082b4f,#0d3d69 73%,#11395e);border-bottom:4px solid #f36a2b;box-shadow:0 12px 28px #061c3618;color:white;min-height:92px}
+body.src-office .header nav,body.src-office>header nav{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:8px 15px}
+body.src-office .header nav a,body.src-office>header nav a,body.src-office>header .row>a{color:#edf6ff!important;text-decoration:none;font-weight:700;font-size:12px;padding:8px 10px;border-radius:8px}
+body.src-office .header nav a:hover,body.src-office>header nav a:hover,body.src-office>header .row>a:hover{background:#ffffff20}
+body.src-office .brand img,body.src-office .header-brand img{background:#fff!important;border-radius:11px;padding:6px;object-fit:contain;max-width:125px}
+body.src-office .brand strong,body.src-office .header-brand b{font:800 21px/1.3 Manrope,sans-serif;color:#fff;letter-spacing:-.03em}
+body.src-office .brand small,body.src-office .header-brand span{color:#d5e5f0;font-size:12px}
+body.src-office .wrap,body.src-office main{margin-top:32px}
+body.src-office .intro{border-radius:17px;padding:26px 29px;margin:0 0 25px;display:flex;align-items:center;justify-content:space-between;gap:25px;background:linear-gradient(120deg,#0c325c,#165f92 75%,#237b9b);color:#fff;box-shadow:0 14px 30px #10365822;position:relative;overflow:hidden}
+body.src-office .intro:after{content:"";position:absolute;right:-60px;top:-135px;border-radius:50%;width:280px;height:280px;border:32px solid #ffffff12;pointer-events:none}
+body.src-office .intro h1,body.src-office .intro .eyebrow,body.src-office .intro p{color:#fff}
+body.src-office .intro .eyebrow{color:#ffce9a}
+body.src-office .intro p{font-size:13px;max-width:770px;line-height:1.65}
+body.src-office .eyebrow{color:#e56831;font-size:10px;letter-spacing:.2em;font-weight:800}
+body.src-office h1,body.src-office h2,body.src-office h3{font-family:Manrope,sans-serif;letter-spacing:-.035em}
+body.src-office .panel{border:1px solid var(--office-border);background:white;border-radius:16px;padding:clamp(18px,2.5vw,29px);box-shadow:0 9px 27px #1e405814}
+body.src-office .panel h2{font-size:21px;color:#15385c}
+body.src-office .panel h1{color:#123c63}
+body.src-office .panel .eyebrow{margin-bottom:8px}
+body.src-office .login{max-width:690px;margin:72px auto;border-top:4px solid #f56b2e}
+body.src-office .login h1{font-size:clamp(28px,2.9vw,35px)}
+body.src-office .login p{max-width:550px}
+body.src-office .notice{border-left:4px solid #f56b2e;background:#fff6ec;color:#82512c}
+body.src-office button{background:#145e9c;border-radius:9px;min-height:39px;font-weight:800}
+body.src-office button:hover{filter:brightness(.94)}
+body.src-office .intro>button,body.src-office button[type="submit"],body.src-office #saveProduct{background:#f45f22;color:#fff}
+body.src-office button.alt,body.src-office button.subtle,body.src-office button.quiet{background:#e9f1f8;color:#1d557d}
+body.src-office .tabs button,body.src-office .section-tabs button{background:#fff;color:#16456c;border:1px solid #dfebf4}
+body.src-office .tabs button.active,body.src-office .section-tabs button.active{background:#155f9b;color:#fff;border-color:#155f9b}
+body.src-office label{font-size:12px;font-weight:800;color:#315170}
+body.src-office input:not([type="checkbox"]),body.src-office select,body.src-office textarea{border:1px solid #d3e0e9;background:#fff;border-radius:9px;color:#1b3855;padding:12px;font-size:13px;min-height:44px}
+body.src-office textarea{min-height:72px}
+body.src-office input:focus-visible,body.src-office textarea:focus-visible,body.src-office select:focus-visible{outline:3px solid #8dc5e8;outline-offset:1px}
+body.src-office .metric,body.src-office .stat{background:linear-gradient(140deg,#fff,#f5faff);border:1px solid #d9e7f1;border-top:3px solid #f18a42;border-radius:13px}
+body.src-office .metric strong,body.src-office .stat strong{color:#135c95}
+body.src-office .layout .panel,body.src-office .columns .panel{min-width:0}
+body.src-office .plan{border:1px solid #dce8f1;background:linear-gradient(145deg,#fff,#fffaf5);border-radius:12px;box-shadow:0 4px 13px #1336500a}
+body.src-office .plan.selected{border:2px solid #ef8a45;background:#fff7ed}
+body.src-office .plan-actions button{font-size:11px;padding:7px 12px}
+body.src-office .pill{background:#eaf2fa;color:#1b5e8b}
+body.src-office .status-pill{background:#eaf2fa;color:#1b5e8b}
+body.src-office table th{background:#eef4f8;color:#466987}
+body.src-office table tr:hover td{background:#fffaf5}
+body.src-office #schemeQr{background:linear-gradient(100deg,#fff,#f5faff);border-left:4px solid #f87b37}
+body.src-office #schemeQr img{background:#fff;border:1px solid #d7e5f2;padding:9px;border-radius:12px;max-width:100%;height:auto}
+body.src-office .action-shortcuts button{border:1px solid #dbe8f0;background:#edf6fc;color:#185781}
+body.src-office .action-shortcuts button:hover{background:#dceefa}
+body.src-office .role-info{background:#e9f5ff;border-left-color:#f57a35}
+body.src-office .src-admin-access-note{margin:0 0 16px;border:1px solid #dbe9f1;background:linear-gradient(110deg,#f4faff,#fffaf5);padding:14px 17px;border-radius:11px;font-size:12px;line-height:1.6}
+body.src-office .src-admin-access-note a{color:#1364a0;font-weight:800}
+body.src-office a{color:inherit}
+body.src-office a:focus-visible,body.src-office button:focus-visible{outline:3px solid #ffb570;outline-offset:3px}
+@media(max-width:750px){body.src-office .header,body.src-office>header{padding:12px 16px!important}body.src-office .intro{padding:21px;flex-direction:column;align-items:flex-start}body.src-office .wrap,body.src-office main{margin-top:18px}body.src-office .login{margin:35px auto}body.src-office .header nav,body.src-office>header nav{gap:4px 8px}body.src-office .header nav a,body.src-office>header .row>a{font-size:11px;padding:6px}}
