@@ -2,7 +2,7 @@
 import {existsSync,mkdirSync,rmSync,copyFileSync,cpSync,readFileSync} from "node:fs";
 import {join,resolve} from "node:path";
 const root=resolve(import.meta.dirname,".."),out=join(root,".pages-dist");
-const html=["index.html","admin.html","scheme-admin.html","billing-admin.html","agent.html","customer.html","procurement.html","packing.html","delivery.html","operations.html","reset.html"];
+const html=["index.html","admin.html","scheme-admin.html","scheme-register.html","billing-admin.html","agent.html","customer.html","procurement.html","packing.html","delivery.html","operations.html","reset.html"];
 const files=[...html,"config.js","src-cart.js","_headers"];
 rmSync(out,{recursive:true,force:true});mkdirSync(out,{recursive:true});
 for(const f of files){const from=join(root,f);if(!existsSync(from))throw Error("Required Pages asset missing: "+f);copyFileSync(from,join(out,f))}
