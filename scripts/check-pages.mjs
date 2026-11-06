@@ -45,7 +45,7 @@ assert(launch.includes('name="panConsent"')&&launch.includes('name="consent"'),"
 const storefront=read("assets/storefront.js");
 assert(storefront.includes('else openScheme(); // Temporary homepage opens the scheme'),"Scheme launch is not the default route");
 assert(storefront.includes('startSchemeTestPayment'),"Scheme test payment checkout handler missing");
-assert(storefront.includes('function go(view){if(view===\"home\"'),"Home must route to the scheme");
+assert(/function go\(view\)\s*\{[\s\S]{0,200}if\(view==="home"/.test(storefront),"Home must route to the scheme");
 for(const marker of ['function changeCartQuantity(','function previewCart(','function renderCart(','decodeURIComponent('])assert(storefront.includes(marker),"Storefront missing "+marker);
 const billing=read("server/src/billing.ts");
 assert(billing.includes("Number(r.product_id)===Number(p.id)")&&billing.includes("productId:Number(p.id)"),"Bigint quote normalization absent");
