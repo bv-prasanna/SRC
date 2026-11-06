@@ -1,1 +1,56 @@
 :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#102f4b;background:#f3f7fa}*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}a{color:#0b5e9b}.top{height:77px;background:#092947;color:white;display:flex;align-items:center;justify-content:space-between;padding:10px max(18px,calc((100vw - 1000px)/2));gap:12px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:white;font-weight:800;font-size:20px}.brand img{width:68px;height:48px;object-fit:contain;background:white;border-radius:7px}.brand small{display:block;font-size:11px;letter-spacing:2px}.lang{display:flex;gap:5px}.lang button{border:1px solid #8daabd;background:transparent;color:white;border-radius:9px;padding:9px 11px}.lang button[aria-pressed=true]{background:white;color:#092947;font-weight:700}.container{max-width:1000px;margin:0 auto;padding:26px 17px 55px}.intro{text-align:center;padding:12px 0 20px}.eyebrow{font-size:11px;letter-spacing:2px;color:#bd572b;font-weight:900}.intro h1{font-size:clamp(29px,5vw,46px);line-height:1.12;margin:12px 0}.intro p{max-width:650px;margin:0 auto;color:#506578;line-height:1.65}.steps{display:flex;list-style:none;gap:10px;padding:0;margin:0 0 24px}.steps li{flex:1;padding:12px;border:1px solid #d4e1ec;border-radius:12px;text-align:center;color:#6c7f8c;font-size:13px}.steps li b{border-radius:50%;background:#e3ecf4;padding:5px 10px;margin-right:8px}.steps li.active{color:#114a75;background:#eaf3fa;border-color:#90bdde;font-weight:700}.panel{background:white;border:1px solid #dce6ef;border-radius:22px;padding:clamp(18px,4vw,36px);box-shadow:0 8px 32px #102f4b0b}.panel[hidden], [hidden]{display:none!important}.panel h2{font-size:25px;margin:0 0 9px}.sub,.note{color:#617287;line-height:1.55}.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:15px;margin-top:20px}.plan{border:1px solid #d6e3ed;padding:20px;border-radius:15px;display:flex;flex-direction:column;gap:10px}.plan h3{margin:0;font-size:19px}.plan p{margin:0;line-height:1.5;color:#526b7c}.plan strong{font-size:23px}.plan button{margin-top:auto}.tag{font-size:12px;font-weight:700;color:#137c56}.primary{border:0;border-radius:11px;background:#ec6d2f;color:#fff;padding:14px 20px;font-weight:800;min-height:48px}.primary:hover{background:#d45419}.primary:disabled{opacity:.65;cursor:wait}.secondary,.back{border:1px solid #b7cede;border-radius:10px;background:#eaf3fa;color:#164c75;padding:11px 16px;font-weight:700}.back{margin-bottom:18px}.selected{border-left:4px solid #eb7636;background:#fff5ec;padding:15px;margin:16px 0 25px;border-radius:8px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fields label{display:flex;flex-direction:column;gap:7px;font-weight:700;font-size:14px}.fields label.wide{grid-column:1/-1}.fields input{width:100%;border:1px solid #c8d9e6;border-radius:10px;padding:13px;background:#fcfdff;font-weight:400;min-height:47px}.fields input:focus{outline:2px solid #458cbf}.agree{display:flex;align-items:flex-start;gap:12px;margin:18px 0;line-height:1.55;font-size:14px}.agree input{width:18px;height:18px;flex-shrink:0}.confirmation{text-align:center}.success{color:#177c51;font-weight:700}.code{display:block;overflow-wrap:anywhere;font-size:clamp(18px,4vw,30px);background:#e9f6ee;border-radius:10px;padding:18px;margin:18px 0}.confirmation .secondary{margin:5px}.payment{background:#f3f7fa;border-radius:14px;padding:18px;margin-top:27px;text-align:left}.payment h3{margin-top:0}.message{border:1px solid #d48888;background:#fff0f0;color:#973b3b;padding:14px;border-radius:10px;margin-bottom:15px}footer{text-align:center;padding:25px 15px 35px;color:#627689;font-size:13px}footer a{font-weight:700}@media(max-width:560px){.top{height:70px}.brand{font-size:16px}.brand img{width:57px}.lang button{padding:9px 8px;font-size:13px}.steps li{padding:9px 4px;font-size:11px}.steps li b{display:block;margin:0 auto 7px;width:max-content}.fields{grid-template-columns:1fr}.fields label.wide{grid-column:auto}.panel{border-radius:15px}.primary{width:100%}}
+
+/* Unified SRC retail design tokens: same type, field scale and accent as storefront/account. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap');
+:root{--src-ink:#102e52;--src-navy:#073767;--src-orange:#ff551b;--src-border:#d7e1ed;--src-muted:#65758a;font-family:'DM Sans',sans-serif;color:var(--src-ink);background:#fffaf4}
+body{font:14px/1.65 'DM Sans',sans-serif;background:#fffaf4;color:var(--src-ink)}
+h1,h2,h3,h4{font-family:'Manrope',sans-serif;letter-spacing:-.04em;line-height:1.2;color:var(--src-ink)}
+button,input{font-family:'DM Sans',sans-serif}
+.top{background:#fff;border-top:4px solid var(--src-navy);border-bottom:1px solid #e6eaf0;color:var(--src-ink);height:87px;box-shadow:0 2px 10px #10284008}
+.brand{color:var(--src-ink);font-family:'Manrope',sans-serif;font-size:18px;letter-spacing:-.025em}
+.brand img{width:88px;height:62px;background:transparent;padding:2px}
+.brand small{font-family:'DM Sans',sans-serif;letter-spacing:1.2px;color:#516c83}
+.lang button{color:var(--src-navy);border:1px solid #ccdceb;background:#f7f9fc;font-weight:700}
+.lang button[aria-pressed=true]{background:var(--src-navy);color:#fff;border-color:var(--src-navy)}
+.lang button:focus-visible,.primary:focus-visible,.secondary:focus-visible,.back:focus-visible{outline:3px solid #ffb58d;outline-offset:2px}
+.container{max-width:1120px;padding:25px 18px 65px}
+.intro{padding:9px 0 23px}
+.eyebrow{font-size:10px;letter-spacing:.21em;color:#f35c23}
+.intro h1{font-size:clamp(29px,3.6vw,43px);font-weight:800;margin:9px 0 12px}
+.intro p{font-size:14px;line-height:1.7;color:var(--src-muted);max-width:680px}
+.steps{max-width:100%;margin-bottom:22px;gap:12px}
+.steps li{background:#fff;border:1px solid var(--src-border);border-radius:9px;color:#6b7d90;font-size:12px;padding:11px}
+.steps li b{background:#eef3f8;color:#42627d;font-family:'Manrope',sans-serif}
+.steps li.active{background:#edf5fc;border-color:#a7c8e2;color:#0b4b7d}
+.steps li.active b{background:#0d5d9c;color:#fff}
+.panel{border:1px solid #dce5ee;border-radius:13px;box-shadow:0 6px 25px #1028400a;padding:clamp(19px,3vw,35px);background:#fff}
+.panel h2{font-size:clamp(22px,2.5vw,28px);font-weight:800;margin-bottom:11px}
+.sub,.note{font-size:13px;color:var(--src-muted)}
+.plans{gap:16px}
+.plan{background:#fff;border:1px solid #dbe5ee;border-radius:12px;padding:20px;box-shadow:0 4px 16px #10284008}
+.plan:hover{border-color:#a6cae4;box-shadow:0 9px 25px #10284012}
+.plan h3{font-size:17px;font-weight:800}
+.plan strong{font:800 23px 'Manrope',sans-serif;color:#0b3d69}
+.plan p{font-size:13px}
+.primary{background:var(--src-orange);border-radius:9px;font-size:13px;font-weight:800;padding:12px 21px;min-height:49px}
+.primary:hover{background:#e74b15}
+.secondary,.back{background:#edf3fa;border:1px solid #d5e1ed;color:#0d4b81;border-radius:8px;font-size:13px;padding:11px 16px}
+.secondary:hover,.back:hover{background:#e1eef9}
+.back{margin:0 0 20px}
+.selected{background:#fff6ef;border-left:4px solid var(--src-orange);border-radius:9px;padding:16px 18px;margin:16px 0 25px}
+.selected strong{font-family:'Manrope',sans-serif;font-size:16px}
+.selected p{font-size:13px;color:#486078;margin:9px 0 0}
+.fields{gap:15px 18px}
+.fields label{gap:7px;color:#1e3855;font-size:12px;font-weight:800}
+.fields input{border:1px solid var(--src-border);border-radius:9px;padding:12px 14px;min-height:55px;font-size:14px;color:#102e52;background:#fff}
+.fields input::placeholder{color:#8594a3}
+.fields input:focus{outline:2px solid #77b7e5;outline-offset:1px;border-color:#2980ba}
+.agree{font-size:12px;color:#4e6376;max-width:910px;margin:17px 0}
+.agree input{accent-color:#0864ad}
+#submitRegistration{margin-top:4px}
+.confirmation .code{font-family:'Manrope',sans-serif}
+.payment{background:#f6f9fd;border:1px solid #e3ebf3;border-radius:12px}
+.message{font-size:13px}
+footer{background:#092f56;color:#d1e1ed;padding:25px 16px}
+footer a{color:#fff}
+@media(max-width:560px){.top{height:75px;padding:8px 15px}.brand{font-size:15px}.brand img{width:63px;height:48px}.lang button{padding:8px;font-size:12px}.container{padding:17px 13px 45px}.intro{padding:11px 0 19px}.intro h1{font-size:30px}.intro p{font-size:13px}.steps{gap:6px;margin-bottom:15px}.steps li{padding:8px 4px;font-size:10px}.fields{gap:13px}.fields input{min-height:50px}.panel{border-radius:12px}.primary{width:100%}.selected{padding:14px}}
