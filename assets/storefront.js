@@ -15,17 +15,49 @@ async function request(path,options={}){
  const data=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(data.error||"Request failed: "+resp.status);return data;
 }
 function badge(name){return name==="scheme"?"Free membership registration":name==="crackers"?"Catalogue only":"Products & enquiries"}
+function closeCategories(){
+ const menu=$("allCategoryMenu"),button=document.querySelector(".nav-category>button");
+ if(menu)menu.classList.remove("open");
+ if(button)button.setAttribute("aria-expanded","false");
+}
+function positionCategories(){
+ const menu=$("allCategoryMenu"),button=document.querySelector(".nav-category>button");
+ if(!menu||!button||!menu.classList.contains("open"))return;
+ const rect=button.getBoundingClientRect();
+ const width=Math.min(Math.max(rect.width,255),320,window.innerWidth-24);
+ menu.style.width=width+"px";
+ menu.style.left=Math.max(12,Math.min(rect.left,window.innerWidth-width-12))+"px";
+ menu.style.top=Math.max(0,Math.min(rect.bottom,window.innerHeight-60))+"px";
+}
 function nav(){
+ closeCategories();
+ $("allCategoryMenu")?.remove();
  const current=state.active==="department"?state.department:state.active;
- const deptButtons=state.sections.map(sec=>'<button data-route="'+esc(sec.slug)+'" onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+(sec.slug==="crackers"?' <span class="nav-info">Info</span>':'')+'</button>').join('');
- $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button><div class="nav-category-panel" id="allCategoryMenu">'+state.sections.map(sec=>'<button onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('')+'</div></div><button data-route="home" onclick="SRC.go(\'home\')">Home</button>'+deptButtons+'<button data-route="offers" onclick="SRC.go(\'offers\')">Deals & Offers</button><button onclick="SRC.openDepartment(\'housekeeping\')">Bulk Enquiries</button>';
- $("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\''+esc(x.slug)+'\')">'+esc(x.name)+'</button>').join("");
+ const deptButtons=state.sections.map(sec=>'<button data-route="'+esc(sec.slug)+'" onclick="SRC.openDepartment(\\''+esc(sec.slug)+'\\')">'+esc(sec.name)+(sec.slug==="crackers"?' <span class="nav-info">Info</span>':'')+'</button>').join('');
+ $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" aria-controls="allCategoryMenu" aria-haspopup="true" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button></div><button data-route="home" onclick="SRC.go(\\'home\\')">Home</button>'+deptButtons+'<button data-route="offers" onclick="SRC.go(\\'offers\\')">Deals & Offers</button><button onclick="SRC.openDepartment(\\'housekeeping\\')">Bulk Enquiries</button>';
+ const menu=document.createElement("div");
+ menu.id="allCategoryMenu";menu.className="nav-category-panel src-category-overlay";
+ menu.setAttribute("role","group");menu.setAttribute("aria-label","All business categories");
+ menu.innerHTML=state.sections.map(sec=>'<button type="button" onclick="SRC.openDepartment(\\''+esc(sec.slug)+'\\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('');
+ document.body.appendChild(menu);
+ $("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\\''+esc(x.slug)+'\\')">'+esc(x.name)+'</button>').join("");
  document.querySelectorAll(".nav-inner>button").forEach(b=>b.classList.toggle("active",b.dataset.route===current));
 }
 function toggleCategories(){
- const menu=$("allCategoryMenu"),button=document.querySelector(".nav-category>button");if(!menu||!button)return;
+ const menu=$("allCategoryMenu"),button=document.querySelector(".nav-category>button");
+ if(!menu||!button)return;
  const open=menu.classList.toggle("open");button.setAttribute("aria-expanded",String(open));
+ if(open)positionCategories();
 }
+document.addEventListener("pointerdown",event=>{
+ const menu=$("allCategoryMenu"),trigger=document.querySelector(".nav-category>button");
+ if(menu?.classList.contains("open")&&!menu.contains(event.target)&&!trigger?.contains(event.target))closeCategories();
+});
+document.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){const open=$("allCategoryMenu")?.classList.contains("open");closeCategories();if(open)document.querySelector(".nav-category>button")?.focus();}
+});
+window.addEventListener("resize",positionCategories);
+window.addEventListener("scroll",()=>{if($("allCategoryMenu")?.classList.contains("open"))closeCategories();},{passive:true});
 function sectionsCards(){
  $("departmentCards").innerHTML=state.sections.map(s=>{
  const img=photos[s.slug]||"https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000&q=80&fit=crop";
@@ -56,7 +88,7 @@ function drawDots(){
 function slide(delta){if(!state.slides.length)return;state.slide=(state.slide+delta+state.slides.length)%state.slides.length;drawDots()}
 function jumpSlide(i){state.slide=i;drawDots()}
 function show(view){state.active=view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===view));nav();window.scrollTo(0,0)}
-function go(view){if(view==="home"&&document.body.classList.contains("scheme-first-launch")){openScheme();return}show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
+function go(view){closeCategories();if(view==="home"&&document.body.classList.contains("scheme-first-launch")){openScheme();return}show(view);history.replaceState(null,"","#"+view);if(view==="cart")renderCart();if(view==="orders")renderOrders();if(view==="offers")renderOffers();if(view==="account")renderAuth()}
 const sectionCampaigns={
  crackers:[
   {title:"Make every celebration memorable.",description:"Discover festive collections, educational product demonstrations and in-store information.",photo:photos.crackers},
@@ -106,7 +138,7 @@ function updateDepartmentSlide(){
 }
 function departmentSlide(delta){if(state.active!=="department"||!state.sectionSlides.length)return;state.sectionSlide=(state.sectionSlide+delta+state.sectionSlides.length)%state.sectionSlides.length;updateDepartmentSlide()}
 function jumpDepartmentSlide(i){if(i<0||i>=state.sectionSlides.length)return;state.sectionSlide=i;updateDepartmentSlide()}
-function openDepartment(slug){
+function openDepartment(slug){closeCategories();
  if(slug==="scheme"){openScheme();return}
  const sec=state.sections.find(s=>s.slug===slug);if(!sec)return;
  state.department=slug;show("department");history.replaceState(null,"","#section/"+slug);
