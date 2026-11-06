@@ -33,14 +33,14 @@ function nav(){
  closeCategories();
  $("allCategoryMenu")?.remove();
  const current=state.active==="department"?state.department:state.active;
- const deptButtons=state.sections.map(sec=>'<button data-route="'+esc(sec.slug)+'" onclick="SRC.openDepartment(\\''+esc(sec.slug)+'\\')">'+esc(sec.name)+(sec.slug==="crackers"?' <span class="nav-info">Info</span>':'')+'</button>').join('');
- $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" aria-controls="allCategoryMenu" aria-haspopup="true" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button></div><button data-route="home" onclick="SRC.go(\\'home\\')">Home</button>'+deptButtons+'<button data-route="offers" onclick="SRC.go(\\'offers\\')">Deals & Offers</button><button onclick="SRC.openDepartment(\\'housekeeping\\')">Bulk Enquiries</button>';
+ const deptButtons=state.sections.map(sec=>'<button data-route="'+esc(sec.slug)+'" onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+(sec.slug==="crackers"?' <span class="nav-info">Info</span>':'')+'</button>').join('');
+ $("mainNav").innerHTML='<div class="nav-category"><button type="button" aria-expanded="false" aria-controls="allCategoryMenu" aria-haspopup="true" onclick="SRC.toggleCategories()">☰ &nbsp; All Categories <span aria-hidden="true">⌄</span></button></div><button data-route="home" onclick="SRC.go(\'home\')">Home</button>'+deptButtons+'<button data-route="offers" onclick="SRC.go(\'offers\')">Deals & Offers</button><button onclick="SRC.openDepartment(\'housekeeping\')">Bulk Enquiries</button>';
  const menu=document.createElement("div");
  menu.id="allCategoryMenu";menu.className="nav-category-panel src-category-overlay";
  menu.setAttribute("role","group");menu.setAttribute("aria-label","All business categories");
- menu.innerHTML=state.sections.map(sec=>'<button type="button" onclick="SRC.openDepartment(\\''+esc(sec.slug)+'\\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('');
+ menu.innerHTML=state.sections.map(sec=>'<button type="button" onclick="SRC.openDepartment(\''+esc(sec.slug)+'\')">'+esc(sec.name)+' <span aria-hidden="true">›</span></button>').join('');
  document.body.appendChild(menu);
- $("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\\''+esc(x.slug)+'\\')">'+esc(x.name)+'</button>').join("");
+ $("footerSections").innerHTML=state.sections.map(x=>'<button onclick="SRC.openDepartment(\''+esc(x.slug)+'\')">'+esc(x.name)+'</button>').join("");
  document.querySelectorAll(".nav-inner>button").forEach(b=>b.classList.toggle("active",b.dataset.route===current));
 }
 function toggleCategories(){
