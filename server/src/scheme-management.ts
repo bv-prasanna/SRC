@@ -44,7 +44,7 @@ export function schemeManagementRouter(db:Pool){
  const columns="id,code,name,scheme_year,duration_months,frequency,billing_cycles,amount_paise,description,benefits,terms_summary,internal_notes,start_date,end_date,max_members,status,razorpay_plan_id,gateway_status,created_at,updated_at,version";
  r.get("/api/scheme/plans",async(_req,res)=>{
   try{
-   const q=await db.query("SELECT "+columns+" FROM src_scheme_plans WHERE status='PUBLISHED' AND (start_date IS NULL OR start_date<=current_date) AND (end_date IS NULL OR end_date>=current_date) ORDER BY duration_months,amount_paise");
+   const q=await db.query("SELECT "+columns+" FROM src_scheme_plans WHERE status='PUBLISHED' AND (start_date IS NULL OR start_date<=(now() AT TIME ZONE 'Asia/Kolkata')::date) AND (end_date IS NULL OR end_date>=(now() AT TIME ZONE 'Asia/Kolkata')::date) ORDER BY duration_months,amount_paise");
    res.json(q.rows.map(publicRow));
   }catch{res.status(503).json({error:"Scheme plans temporarily unavailable"})}
  });
@@ -124,7 +124,7 @@ export function schemeManagementRouter(db:Pool){
    if(!q.rowCount){res.status(404).json({error:"Plan not found"});return}
    const p=q.rows[0];
    res.json({dryRun:true,collectionEnabled:false,merchantApprovalRequired:true,
-    proposedPlan:{period:p.frequency==="QUARTERLY"?"quarterly":"monthly",interval:1,
+    proposedPlan:{period:"monthly",interval:p.frequency==="QUARTERLY"?3:1,
      item:{name:p.name,amount:p.amount_paise,currency:"INR",description:p.description},
      notes:{src_scheme_code:p.code}},
     proposedBillingCycles:p.billing_cycles,
