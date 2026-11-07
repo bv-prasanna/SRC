@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 import {execFileSync} from "node:child_process";
 const read=p=>readFileSync(p,"utf8");
-const pages=["index.html","admin.html","scheme-admin.html","scheme-register.html","section-manager.html","billing-admin.html","customer.html","agent.html","procurement.html","packing.html","delivery.html","operations.html","reset.html"];
+const pages=["index.html","contact.html","admin.html","scheme-admin.html","scheme-register.html","section-manager.html","billing-admin.html","customer.html","agent.html","procurement.html","packing.html","delivery.html","operations.html","reset.html"];
 const sharedScripts=["assets/storefront.js","assets/workspaces.js","assets/scheme-admin.js","assets/scheme-register.js","assets/section-manager.js","assets/billing-admin.js","assets/receipt.js"];
 for(const s of sharedScripts)execFileSync(process.execPath,["--check",s],{stdio:"pipe"});
 for(const page of pages){
@@ -54,6 +54,12 @@ assert(ops.includes('["ADMIN","SUPER_ADMIN","OPERATIONS"].includes(user.role)?[]
 assert(read("admin.html").includes("/api/admin/checkout/orders/"),"Admin order details not wired");
 assert(read("reset.html").includes("confirmPassword"),"Password reset confirmation missing");
 assert(read("agent.html").includes("assets/auth-pages.css"),"Agent design not updated");
+const agentPage=read("agent.html");
+assert(agentPage.includes('assets/agent-premium.css'),"Agent must use premium operations design");
+assert(agentPage.includes('aria-live="polite"')&&agentPage.includes('aria-atomic="true"'),"Agent status announcements must be accessible");
+assert(agentPage.includes('function displayError(')&&agentPage.includes('r.status>=500'),"Agent must translate API failures into user-friendly messages");
+assert(agentPage.includes('button.disabled=true')&&agentPage.includes('finally{button.disabled=false;}'),"Agent must prevent duplicate notes submissions");
+assert(read("assets/agent-premium.css").includes("src-agent-office"),"Agent premium theme missing");
 const deploy=read("scripts/build-pages.mjs");
 for(const page of pages)assert(deploy.includes('"'+page+'"'),"Cloudflare Pages build excludes "+page);
 console.log("SRC page audit passed: 13 routes, responsive viewport, local asset/link integrity, scripts, role controls and critical workflow wiring.");

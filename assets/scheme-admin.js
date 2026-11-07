@@ -1,13 +1,14 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id),base=(window.SRC_API_BASE||(["localhost","127.0.0.1"].includes(location.hostname)&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
+function friendlyError(err){if(err?.name==="AbortError")return "The request timed out. Please try again.";if(err instanceof TypeError)return "Cannot connect to SRC right now. Check your connection and try again.";return err?.message||"Unable to complete the request. Please try again."}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=n=>"₹"+(Number(n||0)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 let token="",plans=[],summary={},editing=null;
 function notice(s,bad=false){$("feedback").textContent=s;$("feedback").className=bad?"error":"ok"}
-async function api(path,opts={}){const r=await fetch(base+path,{...opts,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});const d=r.status===204?{}:await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Request failed");return d}
-$("loginForm").onsubmit=async e=>{e.preventDefault();try{const d=await api("/api/auth/login",{method:"POST",body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});token=d.token;const access=await api("/api/staff/scopes");if(!access.isAdmin&&!access.scopes.includes("scheme")){token="";throw Error("Scheme Manager access has not been assigned to this account")};e.target.reset();$("loginPanel").classList.add("hidden");$("workspace").classList.remove("hidden");$("logout").classList.remove("hidden");await refresh();notice("Signed in")}catch(err){notice(err.message,true)}};
+async function api(path,opts={}){const r=await fetch(base+path,{...opts,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});const d=r.status===204?{}:await r.json().catch(()=>({}));if(!r.ok)throw Error(r.status===429?"Too many requests. Please try later.":r.status>=500?"SRC service is temporarily unavailable. Please try again.":d.error||"Request could not be completed.");return d}
+$("loginForm").onsubmit=async e=>{e.preventDefault();try{const d=await api("/api/auth/login",{method:"POST",body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});token=d.token;const access=await api("/api/staff/scopes");if(!access.isAdmin&&!access.scopes.includes("scheme")){token="";throw Error("Scheme Manager access has not been assigned to this account")};e.target.reset();$("loginPanel").classList.add("hidden");$("workspace").classList.remove("hidden");$("logout").classList.remove("hidden");await refresh();notice("Signed in")}catch(err){notice(friendlyError(err),true)}};
 $("logout").onclick=async()=>{await api("/api/auth/logout",{method:"POST"}).catch(()=>{});location.reload()};
-async function refresh(){try{[plans,summary]=await Promise.all([api("/api/admin/scheme-plans"),api("/api/admin/scheme-plans/summary")]);render();await loadFollowups()}catch(e){notice(e.message,true)}}
+async function refresh(){try{[plans,summary]=await Promise.all([api("/api/admin/scheme-plans"),api("/api/admin/scheme-plans/summary")]);render();await loadFollowups()}catch(e){notice(friendlyError(e),true)}}
 let followups=[];
 function reasonText(reason){
  return ({AWAITING_SETUP:"No mandate started",MANDATE_FAILED:"Authorization failed or halted",MANDATE_PENDING:"Authorization pending"})[reason]||"Not confirmed";
@@ -16,12 +17,12 @@ async function loadFollowups(){
  const filter=Number($("followupPlan").value||0);
  const data=await api("/api/admin/scheme-followups?schemePlanId="+filter);
  followups=data.members||[];
- $("followupDelivery").textContent=data.emailConfigured?"Email delivery is configured. Send only after reviewing the member.":"SMTP is not configured. Follow-up emails cannot be sent yet; registrations remain active.";
+ $("followupDelivery").textContent=data.emailConfigured?"Email delivery is configured. Send only after reviewing the member.":"Email delivery is not configured. Follow-up emails cannot be sent yet; registrations remain active.";
  $("followupList").innerHTML=followups.length?followups.map((m,i)=>
   '<article class="plan"><div class="plan-top"><div><h3>'+esc(m.fullName)+'</h3><code>'+esc(m.membershipCode)+'</code></div><span class="pill">'+esc(reasonText(m.reason))+'</span></div>'+
   '<p class="muted small">'+esc(m.schemeName)+' · '+esc(m.email)+'</p>'+
   '<p class="muted small">'+(m.lastSentAt?'Last email: '+esc(new Date(m.lastSentAt).toLocaleString("en-IN")):'No previous reminder recorded')+'</p>'+
-  '<button type="button" class="subtle" data-followup-index="'+i+'" '+(!data.emailConfigured?'disabled title="Configure SMTP on Render first"':'')+'>Send email update</button></article>').join(""):'<p class="muted">No registered members awaiting mandate follow-up for this scheme.</p>';
+  '<button type="button" class="subtle" data-followup-index="'+i+'" '+(!data.emailConfigured?'disabled title="Configure Resend HTTPS email on Render first"':'')+'>Send email update</button></article>').join(""):'<p class="muted">No registered members awaiting mandate follow-up for this scheme.</p>';
  $("followupList").querySelectorAll("button[data-followup-index]").forEach(button=>button.addEventListener("click",async()=>{
   const m=followups[Number(button.dataset.followupIndex)];if(!m)return;
   if(!confirm("Send an SRC registration update to "+m.email+"? No payment request will be sent."))return;
@@ -29,7 +30,7 @@ async function loadFollowups(){
   try{
    const result=await api("/api/admin/scheme-followups/send",{method:"POST",body:JSON.stringify({memberId:Number(m.memberId)})});
    notice(result.message||"Email request completed.");await loadFollowups();
-  }catch(e){notice(e.message,true)}finally{button.disabled=false}
+  }catch(e){notice(friendlyError(e),true)}finally{button.disabled=false}
  }));
 }
 function reset(){editing=null;$("planForm").reset();$("planForm").elements.namedItem("schemeYear").value=new Date().getFullYear()+1;$("editorTitle").textContent="Create a new scheme";$("editStatus").textContent="New draft";$("editStatus").className="pill";$("savePlan").disabled=false;calculate()}
@@ -38,10 +39,10 @@ function fill(i,copy=false){const p=plans[i];reset();editing=copy?null:p;const v
 $("planForm").onsubmit=async e=>{e.preventDefault();if(!e.target.reportValidity())return;const f=Object.fromEntries(new FormData(e.target)),amountPaise=Math.round(Number(f.amountRupees)*100);
 const v={code:String(f.code).trim().toUpperCase(),name:f.name,schemeYear:Number(f.schemeYear),durationMonths:Number(f.durationMonths),frequency:f.frequency,amountPaise,description:f.description||"",benefits:f.benefits||"",termsSummary:f.termsSummary||"",internalNotes:f.internalNotes||"",startDate:f.startDate||null,endDate:f.endDate||null,maxMembers:f.maxMembers?Number(f.maxMembers):null};
 if(v.frequency==="QUARTERLY"&&v.durationMonths%3!==0){notice("Choose monthly contributions for 10-month plans.",true);return}if(editing)v.version=Number(editing.version);$("savePlan").disabled=true;
-try{await api(editing?"/api/admin/scheme-plans/"+editing.id:"/api/admin/scheme-plans",{method:editing?"PUT":"POST",body:JSON.stringify(v)});notice("Scheme saved and audited");await refresh();reset()}catch(err){notice(err.message,true)}finally{$("savePlan").disabled=false}};
-async function transition(i,status){const p=plans[i];if(status==="PUBLISHED"&&!confirm("Publish for FREE registration only? This does not approve or activate payments."))return;if(status==="ARCHIVED"&&!confirm("Archive this plan? Existing member records remain."))return;try{await api("/api/admin/scheme-plans/"+p.id+"/status",{method:"PATCH",body:JSON.stringify({status,version:Number(p.version)})});await refresh();notice("Plan status updated")}catch(e){notice(e.message,true)}}
-async function history(i){try{const p=plans[i],r=await api("/api/admin/scheme-plans/"+p.id+"/history");alert(p.code+" — audit history\n"+r.map(x=>x.action+" at "+x.created_at).join("\n"))}catch(e){notice(e.message,true)}}
-async function gatewayPreview(i){try{const p=plans[i],data=await api("/api/admin/scheme-plans/"+p.id+"/gateway-preview");alert(p.code+" — proposed Razorpay test-mode plan mapping (NO action executed)\\n"+JSON.stringify(data.proposedPlan,null,2)+"\\nBilling cycles: "+data.proposedBillingCycles+"\\nRecurring charging: DISABLED")}catch(e){notice(e.message,true)}}
+try{await api(editing?"/api/admin/scheme-plans/"+editing.id:"/api/admin/scheme-plans",{method:editing?"PUT":"POST",body:JSON.stringify(v)});notice("Scheme saved and audited");await refresh();reset()}catch(err){notice(friendlyError(err),true)}finally{$("savePlan").disabled=false}};
+async function transition(i,status){const p=plans[i];if(status==="PUBLISHED"&&!confirm("Publish for FREE registration only? This does not approve or activate payments."))return;if(status==="ARCHIVED"&&!confirm("Archive this plan? Existing member records remain."))return;try{await api("/api/admin/scheme-plans/"+p.id+"/status",{method:"PATCH",body:JSON.stringify({status,version:Number(p.version)})});await refresh();notice("Plan status updated")}catch(e){notice(friendlyError(e),true)}}
+async function history(i){try{const p=plans[i],r=await api("/api/admin/scheme-plans/"+p.id+"/history");alert(p.code+" — audit history\n"+r.map(x=>x.action+" at "+x.created_at).join("\n"))}catch(e){notice(friendlyError(e),true)}}
+async function gatewayPreview(i){try{const p=plans[i],data=await api("/api/admin/scheme-plans/"+p.id+"/gateway-preview");alert(p.code+" — proposed Razorpay test-mode plan mapping (NO action executed)\\n"+JSON.stringify(data.proposedPlan,null,2)+"\\nBilling cycles: "+data.proposedBillingCycles+"\\nRecurring charging: DISABLED")}catch(e){notice(friendlyError(e),true)}}
 function render(){const counts=Object.fromEntries((summary.statuses||[]).map(x=>[x.status,Number(x.count)]));$("stats").innerHTML=[["Total plans",plans.length],["Published for free registration",counts.PUBLISHED||0],["All registered members",summary.members?.total||0],["Plan-linked members",summary.members?.assigned||0]].map(x=>'<div class="metric"><small>'+esc(x[0])+'</small><strong>'+Number(x[1])+'</strong></div>').join("");
 $("followupPlan").innerHTML='<option value="0">All schemes</option>'+plans.map(p=>'<option value="'+Number(p.id)+'">'+esc(p.name)+'</option>').join("");
 const g=summary.gateway||{};$("gatewayStatus").innerHTML='<p><b>Credentials:</b> '+(g.configured?"Configured on server":"Not configured")+'</p><p><b>Mode:</b> '+esc(g.mode||"NOT_CONFIGURED")+'</p><p><b>Test subscription checkout:</b> <span class="pill">'+(g.testSubscriptionEnabled?'TEST READY':'OFF')+'</span></p><p><b>Live scheme collection:</b> <span class="pill">DISABLED</span></p>';
@@ -50,8 +51,8 @@ const members=summary.planRegistrations||[];$("membersByPlan").innerHTML=members
 function renderList(){const query=$("planSearch").value.toLowerCase(),filter=$("statusFilter").value;const rows=plans.map((p,i)=>({...p,i})).filter(p=>(!filter||p.status===filter)&&(!query||(p.name+" "+p.code).toLowerCase().includes(query)));
 $("planList").innerHTML=rows.length?rows.map(p=>{const actions=p.status==="DRAFT"?'<button onclick="SM.transition('+p.i+',\'IN_REVIEW\')">Review</button>':p.status==="IN_REVIEW"?'<button onclick="SM.transition('+p.i+',\'PUBLISHED\')">Publish registration</button><button class="subtle" onclick="SM.transition('+p.i+',\'DRAFT\')">Return to draft</button>':'';
 return '<article class="plan"><div class="plan-top"><div><code>'+esc(p.code)+'</code><h3>'+esc(p.name)+'</h3></div><span class="pill '+esc(p.status)+'">'+esc(p.status)+'</span></div><div class="plan-details"><span>'+Number(p.duration_months)+' months · '+esc(p.frequency)+'</span><span>'+money(p.amount_paise)+'/cycle</span><span>'+Number(p.registered_members||0)+' registrations</span></div><div class="plan-actions">'+(["DRAFT","IN_REVIEW"].includes(p.status)?'<button class="subtle" onclick="SM.edit('+p.i+')">Edit</button>':'')+'<button class="subtle" onclick="SM.copy('+p.i+')">Duplicate</button>'+actions+(p.status!=="ARCHIVED"?'<button class="subtle" onclick="SM.transition('+p.i+',\'ARCHIVED\')">Archive</button>':'')+'<button class="subtle" onclick="SM.history('+p.i+')">Audit</button><button class="subtle" onclick="SM.gatewayPreview('+p.i+')">Gateway preview</button></div></article>'}).join(""):'<p class="muted">No matching schemes yet. Create your first draft.</p>'}
-$("followupPlan").onchange=()=>loadFollowups().catch(e=>notice(e.message,true));
-$("reloadFollowups").onclick=()=>loadFollowups().catch(e=>notice(e.message,true));
+$("followupPlan").onchange=()=>loadFollowups().catch(e=>notice(friendlyError(e),true));
+$("reloadFollowups").onclick=()=>loadFollowups().catch(e=>notice(friendlyError(e),true));
 $("newPlan").onclick=()=>{reset();$("editor").scrollIntoView({behavior:"smooth"})};$("cancelEdit").onclick=reset;$("planSearch").oninput=renderList;$("statusFilter").onchange=renderList;for(const x of $("planForm").querySelectorAll("input,select"))x.addEventListener("input",calculate);
 window.SM={edit:i=>fill(i),copy:i=>fill(i,true),transition,history,gatewayPreview};reset();
 })();
