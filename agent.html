@@ -5,7 +5,7 @@
 (()=>{"use strict";
 const apiBase=(window.SRC_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")&&location.port==="8000"?"http://localhost:8080":"")).replace(/\/$/,"");
 const $=id=>document.getElementById(id);
-const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;":"&quot;","'":"&#39;"}[c]));
+const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let token="";
 function feedback(message,kind="info"){
  const el=$("status");el.hidden=!message;el.textContent=message||"";el.dataset.kind=kind;
