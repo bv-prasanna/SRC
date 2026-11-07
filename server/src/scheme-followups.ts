@@ -25,7 +25,27 @@ export function followupMessage(name:string,scheme:string,reason:FollowupReason)
  const ending="Do not share your UPI PIN, OTP, or bank password with anyone. Do not make a payment based solely on this email. If a payment option becomes available after necessary approvals, SRC will provide verified instructions through its official website.\n\nRegards,\nSRC Enterprises";
  return {subject:"SRC scheme registration update — "+scheme,text:greeting+intro+state+ending};
 }
-const mailConfigured=()=>Boolean(process.env.SMTP_HOST&&process.env.SMTP_FROM);
+const resendConfigured=()=>Boolean(process.env.RESEND_API_KEY&&process.env.RESEND_FROM);
+const mailConfigured=()=>resendConfigured()||Boolean(process.env.SMTP_HOST&&process.env.SMTP_FROM);
+async function sendMemberEmail(to:string,msg:{subject:string;text:string},attemptId:number){
+ if(resendConfigured()){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+   const response=await fetch("https://api.resend.com/emails",{
+    method:"POST",signal:controller.signal,
+    headers:{"Authorization":"Bearer "+process.env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"src-scheme-followup-"+attemptId},
+    body:JSON.stringify({from:process.env.RESEND_FROM,to:[to],subject:msg.subject,text:msg.text})
+   });
+   if(!response.ok)throw Error("Email provider rejected message");
+   return;
+  }finally{clearTimeout(timer)}
+ }
+ const port=Number(process.env.SMTP_PORT||587);
+ const transporter=nodemailer.createTransport({host:process.env.SMTP_HOST,port,secure:port===465,
+  auth:process.env.SMTP_USER&&process.env.SMTP_PASS?{user:process.env.SMTP_USER,pass:process.env.SMTP_PASS}:undefined,
+  connectionTimeout:12000,greetingTimeout:12000,socketTimeout:12000});
+ await transporter.sendMail({from:process.env.SMTP_FROM,to,subject:msg.subject,text:msg.text});
+}
 export function schemeFollowupsRouter(db:Pool){
  const r=Router(),schemeAccess=scopedAccess(db,"scheme");
  const limiter=rateLimit({windowMs:60*60*1000,limit:30,standardHeaders:"draft-7",legacyHeaders:false,message:{error:"Too many follow-up requests. Please try again later."}});
@@ -53,7 +73,7 @@ export function schemeFollowupsRouter(db:Pool){
  r.post("/api/admin/scheme-followups/send",...schemeAccess,limiter,async(req,res)=>{
   const v=sendSchema.safeParse(req.body);
   if(!v.success){res.status(400).json({error:"Select a valid member"});return}
-  if(!mailConfigured()){res.status(503).json({error:"SMTP email is not configured. No reminder was sent."});return}
+  if(!mailConfigured()){res.status(503).json({error:"Email delivery is not configured. Add a Resend HTTPS API key and verified sender on Render."});return}
   const memberId=v.data.memberId;
   let client;
   let attemptId:number|undefined;
@@ -85,13 +105,8 @@ export function schemeFollowupsRouter(db:Pool){
    res.status(503).json({error:"Could not prepare the follow-up email"});return
   }finally{client?.release()}
   try{
-   const port=Number(process.env.SMTP_PORT||587);
-   const transporter=nodemailer.createTransport({
-    host:process.env.SMTP_HOST,port,secure:port===465,
-    auth:process.env.SMTP_USER&&process.env.SMTP_PASS?{user:process.env.SMTP_USER,pass:process.env.SMTP_PASS}:undefined
-   });
    const msg=followupMessage(String(item.full_name),String(item.plan_name),followupReason(item.subscription_status)!);
-   await transporter.sendMail({from:process.env.SMTP_FROM,to:item.email,subject:msg.subject,text:msg.text});
+   await sendMemberEmail(item.email,msg,attemptId!);
    await db.query("UPDATE src_scheme_member_followups SET delivery_status='SENT',sent_at=now() WHERE id=$1",[attemptId]);
    res.json({message:"Follow-up email accepted by the email server.",deliveryStatus:"SENT",memberId});
   }catch{
