@@ -12,6 +12,15 @@
 <div class="preview" id="calculator">Expected instalment schedule will appear here.</div><div class="actions"><button type="submit" id="savePlan">Save draft</button><button type="button" id="cancelEdit" class="subtle">Clear</button></div>
 </form></section>
 <aside class="right"><section class="panel"><div class="eyebrow">Plans &amp; versions</div><h2>Manage plans</h2><div class="filter-row"><input id="planSearch" placeholder="Find by name or code" aria-label="Search scheme plans"><select id="statusFilter" aria-label="Filter status"><option value="">All statuses</option><option>DRAFT</option><option>IN_REVIEW</option><option>PUBLISHED</option><option>ARCHIVED</option></select></div><div id="planList" class="plans"><p class="muted">Sign in to load your plans.</p></div></section>
+<section class="panel" id="followupPanel" style="margin-bottom:18px">
+<div class="eyebrow">Registered members · pending UPI authorization</div>
+<h2>Member follow-ups</h2>
+<p class="muted small">Registrations are accepted without a UPI mandate. The list includes members without a mandate or with an incomplete/failed TEST attempt. Emails are sent only when explicitly selected and HTTPS email delivery is configured. No payment or mandate is created by sending a reminder.</p>
+<div class="filter-row"><label for="followupPlan">Scheme</label><select id="followupPlan" aria-label="Filter members by scheme"><option value="0">All schemes</option></select></div>
+<p id="followupDelivery" class="muted small">Loading email delivery status…</p>
+<div id="followupList" aria-live="polite" class="plans"><p class="muted">Sign in to review follow-ups.</p></div>
+<button type="button" class="subtle" id="reloadFollowups">Refresh follow-ups</button>
+</section>
 <section class="panel"><div class="eyebrow">Payment gateway preparation</div><h2>Razorpay readiness</h2><div id="gatewayStatus" class="muted">Gateway credentials are checked only on the server.</div><div id="subscriptionStatuses" class="muted" aria-live="polite"></div><p class="muted small">Never enter a secret key in this page. The server reports only configured/not configured and test/live mode. Subscriptions remain disabled.</p></section>
 <section class="panel"><div class="eyebrow">Scheme registrations</div><h2>Members by scheme</h2><div id="membersByPlan" class="muted">No records loaded.</div><p class="muted small">Older members without an assigned plan remain in the general Festival Members register.</p><a class="text-link" href="admin.html">Open administration &amp; member verification</a></section></aside></div>
 </section><div id="feedback" role="status" aria-live="polite"></div></main>
