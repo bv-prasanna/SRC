@@ -153,3 +153,13 @@ Authoritative source is versioned SQL in the repo; Postgres Flyway history appli
 **Existing guides:** [Architecture/deployment/KT](README.md) · [Schema/ER](SCHEMA_INDEX.md) · [safe migration operator script](migrate-safe.sh).
 
 **Caveat:** Filename categorization does not prove a route is mounted, an endpoint is accessible, tests pass or any third-party integration is live. Validate with running application and source controls during UAT.
+
+## Runtime selection from actual Render blueprint (10 Nov 2026)
+
+The repository includes both a legacy `backend/` Java source tree and the active-looking `server/` Node/TypeScript implementation. The [`render.yaml`](../../render.yaml) selects **`./server/Dockerfile`**, `/ready` health check and `server/src/server.ts`-based API through its Docker image. **Do not describe the Java backend as the deployed production API merely because its controllers exist.**
+
+The blueprint specifies a **staging/UAT free Render service** in Singapore, with the public storefront proposed at Cloudflare Pages and API custom subdomain `api.srcenterprises.in`. These settings are a deployment proposal, **not verification** that the service is currently running.
+
+**Critical defaults:** `SRC_PAYMENTS_ENABLED=false`, `SRC_SCHEME_SUBSCRIPTIONS_ENABLED=false`, and `DATABASE_URL`, `SRC_JWT_SECRET`, `SRC_PAN_ENCRYPTION_KEY` supplied as secrets. The server entrypoint enforces a configured database URL, 48-byte minimum JWT secret and additional live-payment prerequisites. Never enable regulated payment or scheme flows solely for UAT; require legal and payment-provider written clearance, plus finance/security testing.
+
+For KT, show `render.yaml` → `server/Dockerfile` → `server/src/server.ts` → application routes → PostgreSQL numbered migrations; separately identify legacy Java as reference/unverified runtime. Validate the actual deployment SHA and readiness check before calling it live.
