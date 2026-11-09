@@ -38,13 +38,15 @@ The ER uses `CREATE TABLE` and declared `REFERENCES` found in **1 selected basel
 ```mermaid
 erDiagram
     PRODUCTS {
-        string id PK
-        string name
-        string category
-        string description
-        string image_url
+        BIGINT id PK
+        VARCHAR name
+        VARCHAR category
+        VARCHAR description
+        TEXT image_url
+        TEXT demo_video_url
+        BOOLEAN published
+        BOOLEAN fireworks
     }
-
 ```
 
 ## 4. Database schema and migration registry
